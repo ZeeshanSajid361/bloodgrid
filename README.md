@@ -5,13 +5,13 @@ A full-stack MERN platform connecting blood donors, seekers, hospitals, and admi
 ## Screenshots
 
 <div align="center">
-  <img src="images/1-register.png" alt="Registration Form" width="48%">
-  <img src="images/2-donor-dashboard.png" alt="Donor Dashboard" width="48%">
+  <img src="images/signup_page.png" alt="Registration Form" width="48%">
+  <img src="images/donor_profile.png" alt="Donor Dashboard" width="48%">
 </div>
 <br/>
 <div align="center">
-  <img src="images/3-seeker-dashboard.png" alt="Seeker Dashboard - Find Donors" width="48%">
-  <img src="images/4-seeker-request.png" alt="Seeker Dashboard - Blood Request" width="48%">
+  <img src="images/seeker_profile.png" alt="Seeker Dashboard" width="48%">
+  <img src="images/signin_page.png" alt="Sign In Page" width="48%">
 </div>
 
 ## Stack
