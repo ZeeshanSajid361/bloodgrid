@@ -1,0 +1,502 @@
+/**
+ * Admin & Verification routes  —  Phase 5
+ *
+ * All routes require authentication + admin role.
+ *
+ * Route map:
+ *
+ *  Hospitals:
+ *   GET    /api/admin/hospitals              All orgs with optional status filter
+ *   PATCH  /api/admin/hospitals/:id/approve  Approve + issue API key
+ *   PATCH  /api/admin/hospitals/:id/reject   Reject with admin note
+ *   POST   /api/admin/hospitals/:id/revoke-key  Revoke issued API key
+ *
+ *  Requests:
+ *   GET    /api/admin/requests               All requests with optional status filter
+ *   PATCH  /api/admin/requests/:id/approve   Approve a pending_review request
+ *   PATCH  /api/admin/requests/:id/reject    Reject + delete Cloudinary document
+ *   PATCH  /api/admin/requests/:id/fulfill   Mark as fulfilled (donation confirmed)
+ *
+ *  Users:
+ *   GET    /api/admin/users                  Search / list all users
+ *   PATCH  /api/admin/users/:id/block        Block or unblock a user account
+ *
+ *  Analytics:
+ *   GET    /api/admin/analytics              Platform-wide stats
+ */
+
+'use strict';
+
+const router   = require('express').Router();
+const mongoose = require('mongoose');
+
+const { requireAuth, requireRole } = require('../../middleware/auth');
+const { Organization }             = require('../../models/Organization');
+const { Inventory }                = require('../../models/Inventory');
+const { Request }                  = require('../../models/Request');
+const { User }                     = require('../../models/User');
+const { generateApiKey }           = require('../../utils/apiKey');
+const { deleteAsset }              = require('../../utils/cloudinaryUpload');
+
+// Every admin route requires a valid admin JWT.
+router.use(requireAuth, requireRole(['admin']));
+
+/* ── Helpers ────────────────────────────────────────────────────────────── */
+
+function validateId(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(400).json({ success: false, message: 'Invalid ID.' });
+    return false;
+  }
+  return true;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HOSPITAL / ORGANISATION MANAGEMENT
+══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * GET /api/admin/hospitals?status=pending&type=hospital&page=1
+ *
+ * Lists all organisations with optional filters.
+ * Populates owner name and email for the admin review view.
+ */
+router.get('/hospitals', async (req, res, next) => {
+  try {
+    const { status, type, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (type)   filter.type   = type;
+
+    const [orgs, total] = await Promise.all([
+      Organization.find(filter)
+        .populate('owner', 'name email createdAt')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .lean(),
+      Organization.countDocuments(filter),
+    ]);
+
+    res.json({ success: true, data: { orgs, total, page: Number(page) } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/admin/hospitals/:id/approve
+ *
+ * Approves an organisation and issues a one-time API key.
+ * The raw key is returned in the response and must be shared with the hospital
+ * by the admin — it is never retrievable again.
+ */
+router.patch('/hospitals/:id/approve', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const org = await Organization.findById(req.params.id);
+    if (!org) return res.status(404).json({ success: false, message: 'Organisation not found.' });
+    if (org.status === 'approved') {
+      return res.status(409).json({ success: false, message: 'Organisation is already approved.' });
+    }
+
+    const { rawKey, hash } = await generateApiKey();
+
+    org.status     = 'approved';
+    org.approvedAt = new Date();
+    org.adminNote  = req.body.note || undefined;
+    org.apiKeyHash = hash;
+
+    await org.save();
+
+    res.json({
+      success: true,
+      message: 'Organisation approved and API key issued.',
+      data: {
+        org,
+        apiKey: rawKey, // shown ONCE — admin must copy this for the hospital
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/admin/hospitals/:id/reject
+ *
+ * Rejects a pending organisation with an optional note explaining why.
+ */
+router.patch('/hospitals/:id/reject', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const org = await Organization.findById(req.params.id);
+    if (!org) return res.status(404).json({ success: false, message: 'Organisation not found.' });
+
+    org.status     = 'rejected';
+    org.rejectedAt = new Date();
+    org.adminNote  = req.body.note || 'Your application did not meet the current criteria.';
+
+    await org.save();
+
+    res.json({ success: true, message: 'Organisation rejected.', data: { org } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/admin/hospitals/:id/revoke-key
+ *
+ * Invalidates the API key for an approved hospital.  The hospital can request
+ * a new one by contacting the admin, who then calls approve again.
+ */
+router.post('/hospitals/:id/revoke-key', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const org = await Organization.findById(req.params.id).select('+apiKeyHash');
+    if (!org)          return res.status(404).json({ success: false, message: 'Organisation not found.' });
+    if (!org.apiKeyHash) return res.status(400).json({ success: false, message: 'No active API key to revoke.' });
+
+    org.apiKeyHash = undefined;
+    await org.save();
+
+    res.json({ success: true, message: 'API key revoked. The hospital can no longer use /inventory/sync.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BLOOD REQUEST VERIFICATION
+══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * GET /api/admin/requests?status=pending_review&bloodGroup=O%2B&page=1
+ *
+ * Lists requests for the admin review queue with optional filters.
+ * Populates seeker name/email (anonymised display — only shown to admin).
+ */
+router.get('/requests', async (req, res, next) => {
+  try {
+    const { status, bloodGroup, urgency, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (status)     filter.status             = status;
+    if (bloodGroup) filter.patientBloodGroup  = bloodGroup;
+    if (urgency)    filter.urgency            = urgency;
+
+    const [requests, total] = await Promise.all([
+      Request.find(filter)
+        .populate('seeker', 'name email phone city')
+        .populate('hospital', 'name address.city')
+        .select('+documentPublicId')
+        .sort({ urgency: -1, createdAt: 1 }) // critical first, then FIFO
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .lean(),
+      Request.countDocuments(filter),
+    ]);
+
+    res.json({ success: true, data: { requests, total, page: Number(page) } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/admin/requests/:id/approve
+ *
+ * Approves a pending_review request. Phase 6 will fire donor notifications here.
+ */
+router.patch('/requests/:id/approve', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const request = await Request.findById(req.params.id);
+    if (!request) return res.status(404).json({ success: false, message: 'Request not found.' });
+    if (request.status !== 'pending_review') {
+      return res.status(409).json({ success: false, message: `Cannot approve a request with status '${request.status}'.` });
+    }
+
+    request.status     = 'approved';
+    request.adminNote  = req.body.note || undefined;
+    request.reviewedAt = new Date();
+
+    await request.save();
+
+    // TODO Phase 6: trigger donor notification pipeline here.
+
+    res.json({
+      success: true,
+      message: 'Request approved. Donor notifications will fire in Phase 6.',
+      data: { request },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/admin/requests/:id/reject
+ *
+ * Rejects a request and deletes the uploaded document from Cloudinary to
+ * avoid storing unverified medical documents.
+ */
+router.patch('/requests/:id/reject', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const request = await Request.findById(req.params.id).select('+documentPublicId');
+    if (!request) return res.status(404).json({ success: false, message: 'Request not found.' });
+    if (!['pending_review'].includes(request.status)) {
+      return res.status(409).json({ success: false, message: `Cannot reject a request with status '${request.status}'.` });
+    }
+
+    // Delete the uploaded document from Cloudinary.
+    if (request.documentPublicId) {
+      await deleteAsset(request.documentPublicId).catch(() => {
+        // Non-fatal — log but don't block the rejection.
+        console.warn(`[admin] Failed to delete Cloudinary asset: ${request.documentPublicId}`);
+      });
+    }
+
+    request.status     = 'rejected';
+    request.adminNote  = req.body.note || 'Your request document could not be verified.';
+    request.reviewedAt = new Date();
+
+    await request.save();
+
+    res.json({ success: true, message: 'Request rejected and document removed.', data: { request } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/admin/requests/:id/fulfill
+ *
+ * Marks a request as fulfilled (donation completed). Also updates the
+ * donor's lastDonationDate if a donorId is passed in the body (used in Phase 7
+ * when QR check-in is wired up).
+ */
+router.patch('/requests/:id/fulfill', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const request = await Request.findById(req.params.id);
+    if (!request) return res.status(404).json({ success: false, message: 'Request not found.' });
+    if (request.status !== 'approved') {
+      return res.status(409).json({ success: false, message: 'Only approved requests can be marked as fulfilled.' });
+    }
+
+    request.status      = 'fulfilled';
+    request.fulfilledAt = new Date();
+
+    await request.save();
+
+    // Update the donor's last donation date if the responding donor is known.
+    if (req.body.donorId && mongoose.isValidObjectId(req.body.donorId)) {
+      await User.findByIdAndUpdate(req.body.donorId, {
+        lastDonationDate: new Date(),
+      });
+    }
+
+    res.json({ success: true, message: 'Request marked as fulfilled.', data: { request } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   USER MANAGEMENT
+══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * GET /api/admin/users?role=donor&search=zeeshan&page=1
+ *
+ * Lists all users with optional role filter and name/email search.
+ */
+router.get('/users', async (req, res, next) => {
+  try {
+    const { role, search, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (role) filter.role = role;
+    if (search) {
+      filter.$or = [
+        { name:  { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      User.find(filter, { password: 0, emailVerificationToken: 0, refreshTokens: 0 })
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .lean(),
+      User.countDocuments(filter),
+    ]);
+
+    res.json({ success: true, data: { users, total, page: Number(page) } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/admin/users/:id/block
+ *
+ * Toggles the isBlocked flag on a user account.
+ * Body: { block: true | false }
+ */
+router.patch('/users/:id/block', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+    if (user.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin accounts cannot be blocked.' });
+    }
+
+    const block = Boolean(req.body.block);
+    user.isBlocked = block;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: block ? 'User account blocked.' : 'User account unblocked.',
+      data: { userId: user._id, isBlocked: user.isBlocked },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ANALYTICS
+══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * GET /api/admin/analytics
+ *
+ * Returns platform-wide aggregated statistics for the admin dashboard.
+ * All queries run in parallel for fast response time.
+ */
+router.get('/analytics', async (req, res, next) => {
+  try {
+    const [
+      totalUsers,
+      usersByRole,
+      totalRequests,
+      requestsByStatus,
+      requestsByBloodGroup,
+      totalOrgs,
+      orgsByStatus,
+      totalInventoryUnits,
+      lowStockItems,
+      recentRequests,
+    ] = await Promise.all([
+      // Total registered users
+      User.countDocuments(),
+
+      // Users broken down by role
+      User.aggregate([
+        { $group: { _id: '$role', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+
+      // Total blood requests
+      Request.countDocuments(),
+
+      // Requests by status
+      Request.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+
+      // Most-requested blood groups
+      Request.aggregate([
+        { $group: { _id: '$patientBloodGroup', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+
+      // Total registered organisations
+      Organization.countDocuments(),
+
+      // Orgs by status
+      Organization.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+
+      // Total blood units across all approved hospitals
+      Inventory.aggregate([
+        { $group: { _id: null, total: { $sum: '$units' } } },
+      ]),
+
+      // Low-stock inventory items (units ≤ threshold)
+      Inventory.aggregate([
+        { $match: { $expr: { $lte: ['$units', '$lowStockThreshold'] } } },
+        {
+          $lookup: {
+            from: 'organizations',
+            localField: 'hospital',
+            foreignField: '_id',
+            as: 'hospitalInfo',
+          },
+        },
+        { $unwind: '$hospitalInfo' },
+        {
+          $project: {
+            bloodGroup: 1,
+            units: 1,
+            lowStockThreshold: 1,
+            hospitalName: '$hospitalInfo.name',
+            hospitalCity: '$hospitalInfo.address.city',
+          },
+        },
+        { $sort: { units: 1 } },
+        { $limit: 10 },
+      ]),
+
+      // Last 5 requests (for the activity feed)
+      Request.find()
+        .populate('seeker', 'name city')
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('patientBloodGroup urgency status hospitalName createdAt')
+        .lean(),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        users: {
+          total: totalUsers,
+          byRole: usersByRole,
+        },
+        requests: {
+          total: totalRequests,
+          byStatus: requestsByStatus,
+          byBloodGroup: requestsByBloodGroup,
+        },
+        organisations: {
+          total: totalOrgs,
+          byStatus: orgsByStatus,
+        },
+        inventory: {
+          totalUnits: totalInventoryUnits[0]?.total ?? 0,
+          lowStockItems,
+        },
+        recentRequests,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;

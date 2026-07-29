@@ -1,0 +1,325 @@
+/*
+ * admin.css  —  Admin Dashboard styles
+ *
+ * Accent: the platform's emergency red — the admin console is the control
+ * room and warrants a more authoritative tone than the blue hospital theme.
+ * All potentially destructive actions (block, reject, revoke) use the danger
+ * variant to make their weight clear.
+ */
+
+/* ── Shell ───────────────────────────────────────────────────────────────── */
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100dvh;
+  background: var(--surface-base);
+}
+
+@media (max-width: 768px) {
+  .admin-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.admin-sidebar {
+  background: var(--surface-raised);
+  border-right: 1px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6) 0;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--surface-border);
+  margin-bottom: var(--space-4);
+}
+
+.admin-brand .brand-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--red-600), var(--red-800));
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.admin-brand .brand-name  { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); }
+.admin-brand .brand-role  { font-size: 0.72rem; color: var(--red-400); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+
+.admin-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-3);
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  position: relative;
+}
+
+.admin-nav-item:hover { background: var(--surface-hover); color: var(--text-primary); }
+.admin-nav-item.active { background: rgba(192, 57, 43, 0.12); color: var(--red-300); }
+.admin-nav-item.active svg { color: var(--red-400); }
+
+.admin-nav-badge {
+  margin-left: auto;
+  background: var(--red-600);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  min-width: 18px;
+  text-align: center;
+}
+
+.admin-sidebar-footer {
+  padding: var(--space-4) var(--space-3) 0;
+  border-top: 1px solid var(--surface-border);
+  margin-top: auto;
+}
+
+/* ── Main ────────────────────────────────────────────────────────────────── */
+.admin-main {
+  padding: var(--space-8) var(--space-10);
+  max-width: 1100px;
+}
+
+@media (max-width: 900px) { .admin-main { padding: var(--space-6); } }
+
+.admin-section-header {
+  margin-bottom: var(--space-6);
+}
+
+.admin-section-header h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: var(--space-1); }
+.admin-section-header p  { font-size: 0.875rem; color: var(--text-muted); }
+
+/* ── Stat cards ──────────────────────────────────────────────────────────── */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.admin-stat-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  transition: border-color var(--transition-fast);
+}
+
+.admin-stat-card:hover { border-color: var(--red-700); }
+
+.admin-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.admin-stat-value {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.admin-stat-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+
+/* ── Queue table ─────────────────────────────────────────────────────────── */
+.admin-table-wrap {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-6);
+}
+
+.admin-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--surface-border);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.admin-table-toolbar h3 { font-size: 0.9375rem; font-weight: 600; }
+
+.admin-filter-group {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.admin-filter-chip {
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--surface-border);
+  background: transparent;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.admin-filter-chip.active,
+.admin-filter-chip:hover {
+  background: rgba(192, 57, 43, 0.12);
+  border-color: var(--red-700);
+  color: var(--red-300);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.admin-table th {
+  background: var(--surface-float);
+  padding: var(--space-3) var(--space-5);
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.admin-table td {
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--surface-border);
+  color: var(--text-primary);
+  vertical-align: top;
+}
+
+.admin-table tr:hover td { background: var(--surface-hover); }
+
+.admin-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-10);
+  font-size: 0.875rem;
+}
+
+/* ── Document preview link ───────────────────────────────────────────────── */
+.doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--blue-400);
+  font-size: 0.8125rem;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.doc-link:hover { color: var(--blue-200); text-decoration: underline; }
+
+/* ── Action button group ─────────────────────────────────────────────────── */
+.admin-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ── Note textarea ───────────────────────────────────────────────────────── */
+.admin-note-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.admin-note-dialog {
+  background: var(--surface-float);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  width: min(480px, calc(100vw - 2rem));
+  animation: slideUp 0.22s cubic-bezier(0.16,1,0.3,1);
+}
+
+.admin-note-dialog h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: var(--space-2); }
+.admin-note-dialog p  { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: var(--space-5); }
+
+/* ── Low stock list ──────────────────────────────────────────────────────── */
+.low-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.low-stock-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: rgba(192,57,43,0.06);
+  border: 1px solid rgba(192,57,43,0.18);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+/* ── Recent activity feed ────────────────────────────────────────────────── */
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.activity-item .activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.activity-dot.critical { background: var(--red-500); }
+.activity-dot.urgent   { background: var(--color-warning); }
+.activity-dot.routine  { background: var(--color-success); }

@@ -21,6 +21,7 @@ const authRouter     = require('./routes/auth');
 const donorRouter    = require('./routes/donors');
 const seekerRouter   = require('./routes/seekers');
 const hospitalRouter = require('./routes/hospitals');
+const adminRouter    = require('./routes/admin');
 
 const app = express();
 
@@ -78,6 +79,7 @@ app.use('/api/auth',      authLimiter, authRouter);
 app.use('/api/donors',    donorRouter);
 app.use('/api/seekers',   seekerRouter);
 app.use('/api/hospitals', hospitalRouter);
+app.use('/api/admin',     adminRouter);
 
 // ── 404 and error handling ────────────────────────────────────────────────────
 // Order matters: notFound must come before errorHandler.

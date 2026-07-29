@@ -19,6 +19,7 @@ import DashboardPage   from './pages/dashboard/DashboardPage';
 import DonorDashboard    from './pages/dashboard/DonorDashboard';
 import SeekerDashboard   from './pages/dashboard/SeekerDashboard';
 import HospitalDashboard from './pages/dashboard/HospitalDashboard';
+import AdminDashboard    from './pages/dashboard/AdminDashboard';
 
 export default function App() {
   return (
@@ -66,6 +67,16 @@ export default function App() {
             element={
               <ProtectedRoute roles={['hospital']}>
                 <HospitalDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin dashboard (Phase 5) */}
+          <Route
+            path="/dashboard/admin"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

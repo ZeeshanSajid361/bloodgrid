@@ -97,8 +97,8 @@ npm test
 | 2     | ✅      | Donor module · Eligibility engine · Recognition levels   |
 | 3     | ✅      | Seeker module · Compatibility matrix · Document upload   |
 | 4     | ✅      | Hospital & Partner network · Inventory · Code Red        |
-| 5     | 🔄      | Admin & Verification module                              |
-| 6     | ⏳      | Real-time notifications & analytics                      |
+| 5     | ✅      | Admin module · Verification queues · Analytics           |
+| 6     | 🔄      | Real-time notifications & analytics                      |
 | 7     | ⏳      | QR donation check-in (stretch)                           |
 | 8     | ⏳      | Integration · Testing · Deployment                       |
 
