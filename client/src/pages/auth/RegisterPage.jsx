@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Phone, MapPin, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, Mail, Lock, Phone, MapPin, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import api from '../../lib/api';
 import '../../styles/auth.css';
 
@@ -32,6 +32,9 @@ export default function RegisterPage() {
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -204,13 +207,36 @@ export default function RegisterPage() {
                   <input
                     id="reg-password"
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     className={`input has-icon${errors.password ? ' error' : ''}`}
                     placeholder="Minimum 8 characters"
                     value={form.password}
                     onChange={handleChange}
                     autoComplete="new-password"
+                    style={{ paddingRight: '40px' }}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '4px',
+                      zIndex: 10,
+                    }}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
                 {errors.password && <span className="input-error-msg"><AlertCircle size={13} />{errors.password}</span>}
               </div>
@@ -225,13 +251,36 @@ export default function RegisterPage() {
                   <input
                     id="reg-confirm"
                     name="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     className={`input has-icon${errors.confirmPassword ? ' error' : ''}`}
                     placeholder="Repeat your password"
                     value={form.confirmPassword}
                     onChange={handleChange}
                     autoComplete="new-password"
+                    style={{ paddingRight: '40px' }}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '4px',
+                      zIndex: 10,
+                    }}
+                    title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
                 {errors.confirmPassword && <span className="input-error-msg"><AlertCircle size={13} />{errors.confirmPassword}</span>}
               </div>
