@@ -13,6 +13,10 @@ A full-stack MERN platform connecting blood donors, seekers, hospitals, and admi
   <img src="images/seeker_profile.png" alt="Seeker Dashboard" width="48%">
   <img src="images/signin_page.png" alt="Sign In Page" width="48%">
 </div>
+<br/>
+<div align="center">
+  <img src="images/email_verfication.png" alt="Email Verification" width="48%">
+</div>
 
 ## Stack
 
