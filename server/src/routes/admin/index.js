@@ -37,6 +37,7 @@ const { Request }                  = require('../../models/Request');
 const { User }                     = require('../../models/User');
 const { generateApiKey }           = require('../../utils/apiKey');
 const { deleteAsset }              = require('../../utils/cloudinaryUpload');
+const { notifyUser, notifyCompatibleDonors } = require('../../utils/webPush');
 
 // Every admin route requires a valid admin JWT.
 router.use(requireAuth, requireRole(['admin']));
@@ -227,11 +228,24 @@ router.patch('/requests/:id/approve', async (req, res, next) => {
 
     await request.save();
 
-    // TODO Phase 6: trigger donor notification pipeline here.
+    // Phase 6: notify compatible donors + notify seeker.
+    const org = request.hospital
+      ? await Organization.findById(request.hospital).lean()
+      : null;
+
+    // Fire-and-forget — don't block the HTTP response.
+    notifyCompatibleDonors(request, org).catch(() => {});
+    notifyUser({
+      userId:  request.seeker,
+      type:    'request_approved',
+      title:   'Blood Request Approved ✅',
+      message: `Your ${request.patientBloodGroup} request at ${request.hospitalName} has been verified. Donors are being notified.`,
+      link:    '/dashboard/seeker',
+    }).catch(() => {});
 
     res.json({
       success: true,
-      message: 'Request approved. Donor notifications will fire in Phase 6.',
+      message: 'Request approved. Donors notified.',
       data: { request },
     });
   } catch (err) {
@@ -268,6 +282,15 @@ router.patch('/requests/:id/reject', async (req, res, next) => {
     request.reviewedAt = new Date();
 
     await request.save();
+
+    // Phase 6: notify seeker of rejection.
+    notifyUser({
+      userId:  request.seeker,
+      type:    'request_rejected',
+      title:   'Blood Request Rejected',
+      message: `Your ${request.patientBloodGroup} request could not be verified. Reason: ${request.adminNote}`,
+      link:    '/dashboard/seeker',
+    }).catch(() => {});
 
     res.json({ success: true, message: 'Request rejected and document removed.', data: { request } });
   } catch (err) {

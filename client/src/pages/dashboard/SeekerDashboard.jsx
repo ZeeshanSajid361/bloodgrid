@@ -18,6 +18,8 @@ import toast from 'react-hot-toast';
 
 import { useAuth }                          from '../../context/AuthContext';
 import { useSeekerRequests, useDonorSearch } from '../../hooks/useSeekerData';
+import useNotifications                     from '../../hooks/useNotifications';
+import NotificationBell                     from '../../components/NotificationBell';
 import api                                  from '../../lib/api';
 import '../../styles/dashboard.css';
 import '../../styles/seeker.css';
@@ -35,6 +37,7 @@ export default function SeekerDashboard() {
   const { user, logout }   = useAuth();
   const navigate           = useNavigate();
   const [activeTab, setTab] = useState('search');
+  const notifs = useNotifications();
 
   const { requests, loading: reqLoading, error: reqError, total, refetch } = useSeekerRequests();
 
@@ -81,6 +84,9 @@ export default function SeekerDashboard() {
         </nav>
 
         <div className="sidebar-footer">
+          <div style={{ padding: 'var(--space-2) var(--space-4)', marginBottom: 'var(--space-2)' }}>
+            <NotificationBell {...notifs} />
+          </div>
           <button id="seeker-logout" className="sidebar-nav-link" onClick={handleLogout}>
             <LogOut size={18} />
             Sign out

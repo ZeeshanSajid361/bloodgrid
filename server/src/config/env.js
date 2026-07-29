@@ -63,4 +63,13 @@ module.exports = {
     apiKey:     process.env.CLOUDINARY_API_KEY,
     apiSecret:  process.env.CLOUDINARY_API_SECRET,
   },
+
+  // VAPID keys for Web Push (Phase 6).
+  // Generate with: node -e "require('web-push').generateVAPIDKeys()"
+  // Optional — push notifications are disabled if not configured.
+  vapid: {
+    publicKey:  process.env.VAPID_PUBLIC_KEY  || null,
+    privateKey: process.env.VAPID_PRIVATE_KEY || null,
+    subject:    process.env.VAPID_SUBJECT     || 'mailto:admin@bloodlink.pk',
+  },
 };

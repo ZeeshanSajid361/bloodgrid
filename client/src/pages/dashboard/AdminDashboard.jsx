@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useAdminData from '../../hooks/useAdminData';
+import useNotifications from '../../hooks/useNotifications';
+import NotificationBell from '../../components/NotificationBell';
 import '../../styles/admin.css';
 
 /* ── shared note modal ───────────────────────────────────────────────────── */
@@ -515,6 +517,7 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [tab, setTab]   = useState('overview');
   const admin           = useAdminData();
+  const notifs          = useNotifications();
 
   // Badge counts for sidebar
   const pendingHospitals = admin.hospitals.orgs.filter(o => o.status === 'pending').length;
@@ -554,6 +557,9 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="admin-sidebar-footer">
+          <div style={{ padding: 'var(--space-2) var(--space-3)', marginBottom: 'var(--space-2)' }}>
+            <NotificationBell {...notifs} />
+          </div>
           <div style={{ padding: 'var(--space-3) var(--space-4)', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 'var(--space-2)' }}>
             {user?.name}
           </div>

@@ -354,10 +354,165 @@ Content-Type: application/json
 ###
 
 ### ─────────────────────────────────────────────────────────────
+###  ADMIN MODULE  (set @adminToken after admin login)
+### ─────────────────────────────────────────────────────────────
+
+@adminToken = PASTE_ADMIN_ACCESS_TOKEN_HERE
+
+### [ADMIN-01] List pending hospitals
+GET {{baseUrl}}/api/admin/hospitals?status=pending
+Authorization: Bearer {{adminToken}}
+
+###
+
+### [ADMIN-02] Approve a hospital (replace HOSPITAL_ORG_ID)
+PATCH {{baseUrl}}/api/admin/hospitals/HOSPITAL_ORG_ID_HERE/approve
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "note": "Documents verified. Welcome to BloodLink."
+}
+
+###
+
+### [ADMIN-03] Reject a hospital (replace HOSPITAL_ORG_ID)
+PATCH {{baseUrl}}/api/admin/hospitals/HOSPITAL_ORG_ID_HERE/reject
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "note": "Invalid documentation — please reapply with a valid registration certificate."
+}
+
+###
+
+### [ADMIN-04] Revoke API key (replace HOSPITAL_ORG_ID)
+POST {{baseUrl}}/api/admin/hospitals/HOSPITAL_ORG_ID_HERE/revoke-key
+Authorization: Bearer {{adminToken}}
+
+###
+
+### [ADMIN-05] List pending_review blood requests
+GET {{baseUrl}}/api/admin/requests?status=pending_review
+Authorization: Bearer {{adminToken}}
+
+###
+
+### [ADMIN-06] Approve a blood request (replace REQUEST_ID)
+PATCH {{baseUrl}}/api/admin/requests/REQUEST_ID_HERE/approve
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "note": "Document verified. Donor notifications sent."
+}
+
+###
+
+### [ADMIN-07] Reject a blood request (replace REQUEST_ID)
+PATCH {{baseUrl}}/api/admin/requests/REQUEST_ID_HERE/reject
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "note": "Hospital slip appears altered. Please resubmit with an original document."
+}
+
+###
+
+### [ADMIN-08] Mark request as fulfilled (replace REQUEST_ID)
+PATCH {{baseUrl}}/api/admin/requests/REQUEST_ID_HERE/fulfill
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "donorId": "OPTIONAL_DONOR_ID_HERE"
+}
+
+###
+
+### [ADMIN-09] List all users
+GET {{baseUrl}}/api/admin/users?role=seeker
+Authorization: Bearer {{adminToken}}
+
+###
+
+### [ADMIN-10] Block a user (replace USER_ID)
+PATCH {{baseUrl}}/api/admin/users/USER_ID_HERE/block
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "block": true }
+
+###
+
+### [ADMIN-11] Platform analytics
+GET {{baseUrl}}/api/admin/analytics
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ─────────────────────────────────────────────────────────────
+###  NOTIFICATIONS  (Phase 6)
+### ─────────────────────────────────────────────────────────────
+
+### [NOTIF-01] Get own notifications
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{donorToken}}
+
+###
+
+### [NOTIF-02] Get unread count (badge poll)
+GET {{baseUrl}}/api/notifications/unread-count
+Authorization: Bearer {{donorToken}}
+
+###
+
+### [NOTIF-03] Mark one notification as read (replace NOTIF_ID)
+PATCH {{baseUrl}}/api/notifications/NOTIF_ID_HERE/read
+Authorization: Bearer {{donorToken}}
+
+###
+
+### [NOTIF-04] Mark all as read
+PATCH {{baseUrl}}/api/notifications/read-all
+Authorization: Bearer {{donorToken}}
+
+###
+
+### [NOTIF-05] Delete a notification (replace NOTIF_ID)
+DELETE {{baseUrl}}/api/notifications/NOTIF_ID_HERE
+Authorization: Bearer {{donorToken}}
+
+###
+
+### [NOTIF-06] Demand forecast (admin only)
+GET {{baseUrl}}/api/notifications/forecast
+Authorization: Bearer {{adminToken}}
+
+###
+
+### [NOTIF-07] Register push subscription (browser sends this automatically)
+POST {{baseUrl}}/api/notifications/subscribe
+Authorization: Bearer {{donorToken}}
+Content-Type: application/json
+
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/example-endpoint",
+  "keys": {
+    "p256dh": "BNcRdreALRFXTkOOUHK5qbL...",
+    "auth":   "tBHItJI5svbpez7KI4CCXg=="
+  }
+}
+
+###
+
+### ─────────────────────────────────────────────────────────────
 ###  HEALTH
 ### ─────────────────────────────────────────────────────────────
 
 ### [HEALTH] API health check
 GET {{baseUrl}}/health
 
-###
+###

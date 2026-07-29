@@ -98,8 +98,8 @@ npm test
 | 3     | ✅      | Seeker module · Compatibility matrix · Document upload   |
 | 4     | ✅      | Hospital & Partner network · Inventory · Code Red        |
 | 5     | ✅      | Admin module · Verification queues · Analytics           |
-| 6     | 🔄      | Real-time notifications & analytics                      |
-| 7     | ⏳      | QR donation check-in (stretch)                           |
+| 6     | ✅      | Web Push notifications · Demand forecast · In-app bell   |
+| 7     | 🔄      | QR donation check-in                                     |
 | 8     | ⏳      | Integration · Testing · Deployment                       |
 
 ## Team

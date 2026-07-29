@@ -22,6 +22,8 @@ import toast from 'react-hot-toast';
 
 import { useAuth }          from '../../context/AuthContext';
 import { useDonorProfile }  from '../../hooks/useDonorProfile';
+import useNotifications     from '../../hooks/useNotifications';
+import NotificationBell     from '../../components/NotificationBell';
 import api                  from '../../lib/api';
 import '../../styles/dashboard.css';
 
@@ -40,6 +42,7 @@ export default function DonorDashboard() {
   const { donor, loading, error, refetch } = useDonorProfile();
   const navigate               = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const notifs = useNotifications();
 
   async function handleLogout() {
     await logout();
@@ -89,6 +92,9 @@ export default function DonorDashboard() {
         </nav>
 
         <div className="sidebar-footer">
+          <div style={{ padding: 'var(--space-2) var(--space-4)', marginBottom: 'var(--space-2)' }}>
+            <NotificationBell {...notifs} />
+          </div>
           <button id="donor-logout" className="sidebar-nav-link" onClick={handleLogout}>
             <LogOut size={18} />
             Sign out
