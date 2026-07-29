@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useHospitalData from '../../hooks/useHospitalData';
+import useNotifications from '../../hooks/useNotifications';
+import NotificationBell from '../../components/NotificationBell';
 import '../../styles/hospital.css';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -561,6 +563,7 @@ export default function HospitalDashboard() {
 
   const hookData = useHospitalData();
   const { profile, loading, error } = hookData;
+  const notifs = useNotifications();
 
   if (loading) {
     return (
@@ -583,6 +586,9 @@ export default function HospitalDashboard() {
             </div>
           </div>
           <div className="hospital-sidebar-footer">
+            <div style={{ padding: 'var(--space-2) var(--space-4)', marginBottom: 'var(--space-2)' }}>
+              <NotificationBell {...notifs} />
+            </div>
             <button className="hospital-nav-item" onClick={logout} style={{ color: 'var(--red-400)' }}>
               <LogOut size={18} /> Sign out
             </button>
@@ -628,6 +634,9 @@ export default function HospitalDashboard() {
         </nav>
 
         <div className="hospital-sidebar-footer">
+          <div style={{ padding: 'var(--space-2) var(--space-4)', marginBottom: 'var(--space-2)' }}>
+            <NotificationBell {...notifs} />
+          </div>
           <div style={{ padding: 'var(--space-3) var(--space-4)', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 'var(--space-2)' }}>
             {user?.name}
           </div>
