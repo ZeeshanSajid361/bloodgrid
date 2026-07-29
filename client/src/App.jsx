@@ -16,8 +16,9 @@ import RegisterPage    from './pages/auth/RegisterPage';
 import LoginPage       from './pages/auth/LoginPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import DashboardPage   from './pages/dashboard/DashboardPage';
-import DonorDashboard  from './pages/dashboard/DonorDashboard';
-import SeekerDashboard from './pages/dashboard/SeekerDashboard';
+import DonorDashboard    from './pages/dashboard/DonorDashboard';
+import SeekerDashboard   from './pages/dashboard/SeekerDashboard';
+import HospitalDashboard from './pages/dashboard/HospitalDashboard';
 
 export default function App() {
   return (
@@ -55,6 +56,16 @@ export default function App() {
             element={
               <ProtectedRoute roles={['seeker']}>
                 <SeekerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Hospital dashboard (Phase 4) */}
+          <Route
+            path="/dashboard/hospital"
+            element={
+              <ProtectedRoute roles={['hospital']}>
+                <HospitalDashboard />
               </ProtectedRoute>
             }
           />

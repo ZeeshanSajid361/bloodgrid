@@ -1,0 +1,463 @@
+/*
+ * hospital.css  —  Hospital Dashboard styles
+ *
+ * Layout: identical three-column sidebar pattern used by DonorDashboard and
+ * SeekerDashboard so the app feels consistent.  Accent colour is the
+ * platform's medical blue (--blue-*) because hospitals represent trust and
+ * reliability — red is reserved for Code Red alerts.
+ */
+
+/* ── Shell & grid ────────────────────────────────────────────────────────── */
+.hospital-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100dvh;
+  background: var(--surface-base);
+}
+
+@media (max-width: 768px) {
+  .hospital-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.hospital-sidebar {
+  background: var(--surface-raised);
+  border-right: 1px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-8) 0;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.hospital-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-6) var(--space-8);
+  border-bottom: 1px solid var(--surface-border);
+  margin-bottom: var(--space-4);
+}
+
+.hospital-sidebar-brand .brand-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-800));
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.hospital-sidebar-brand .brand-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.hospital-sidebar-brand .brand-role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.hospital-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-4);
+}
+
+.hospital-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.hospital-nav-item:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.hospital-nav-item.active {
+  background: rgba(21, 101, 192, 0.15);
+  color: var(--blue-300);
+}
+
+.hospital-nav-item.active svg { color: var(--blue-400); }
+
+.hospital-sidebar-footer {
+  padding: var(--space-4) var(--space-4) 0;
+  border-top: 1px solid var(--surface-border);
+  margin-top: auto;
+}
+
+/* ── Main content ────────────────────────────────────────────────────────── */
+.hospital-main {
+  padding: var(--space-8) var(--space-10);
+  max-width: 960px;
+}
+
+@media (max-width: 900px) {
+  .hospital-main { padding: var(--space-6) var(--space-6); }
+}
+
+.hospital-section-header {
+  margin-bottom: var(--space-8);
+}
+
+.hospital-section-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.hospital-section-header p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ── Pending banner ──────────────────────────────────────────────────────── */
+.pending-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-8);
+}
+
+.pending-banner svg { color: var(--color-warning); flex-shrink: 0; margin-top: 2px; }
+
+.pending-banner h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-warning);
+  margin-bottom: 2px;
+}
+
+.pending-banner p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* ── Stats grid ──────────────────────────────────────────────────────────── */
+.hospital-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.hospital-stat-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+}
+
+.hospital-stat-card .stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.hospital-stat-card .stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.hospital-stat-card .stat-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+/* ── Inventory table ─────────────────────────────────────────────────────── */
+.inventory-table-wrap {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-6);
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.inventory-table th {
+  background: var(--surface-float);
+  padding: var(--space-3) var(--space-5);
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.inventory-table td {
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--surface-border);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.inventory-table tr:hover td { background: var(--surface-hover); }
+
+.blood-group-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 0.25rem 0.6rem;
+  background: rgba(21, 101, 192, 0.15);
+  color: var(--blue-300);
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.units-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.units-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-float);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.units-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--transition-normal);
+}
+
+.units-bar-fill.good   { background: var(--color-success); }
+.units-bar-fill.low    { background: var(--color-warning); }
+.units-bar-fill.critical { background: var(--red-500); }
+
+.units-count { font-weight: 700; min-width: 28px; }
+
+/* ── Code Red badge on table row ─────────────────────────────────────────── */
+.code-red-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.2rem 0.6rem;
+  background: rgba(192, 57, 43, 0.2);
+  color: var(--red-300);
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.code-red-badge .pulse-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--red-400);
+  border-radius: 50%;
+  animation: pulse-red 1.4s ease-in-out infinite;
+}
+
+/* ── Add/Edit inventory form ─────────────────────────────────────────────── */
+.inventory-form-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.inventory-form-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: var(--space-6);
+  color: var(--text-primary);
+}
+
+.inventory-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+/* ── Code Red modal overlay ──────────────────────────────────────────────── */
+.code-red-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.code-red-modal {
+  background: var(--surface-float);
+  border: 1px solid rgba(192, 57, 43, 0.4);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  max-width: 440px;
+  width: calc(100% - 2rem);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.code-red-modal .modal-icon {
+  width: 52px;
+  height: 52px;
+  background: rgba(192, 57, 43, 0.15);
+  border-radius: var(--radius-lg);
+  display: grid;
+  place-items: center;
+  color: var(--red-400);
+  margin-bottom: var(--space-5);
+}
+
+.code-red-modal h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.code-red-modal p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-6);
+}
+
+.code-red-modal .modal-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+
+/* ── Profile edit card ───────────────────────────────────────────────────── */
+.hospital-profile-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.hospital-profile-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: var(--space-6);
+}
+
+.profile-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+@media (max-width: 600px) {
+  .profile-form-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Directory view card ─────────────────────────────────────────────────── */
+.directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-5);
+}
+
+.directory-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.directory-card:hover {
+  border-color: var(--blue-700);
+  transform: translateY(-2px);
+}
+
+.directory-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.directory-card-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(21, 101, 192, 0.12);
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  color: var(--blue-400);
+  flex-shrink: 0;
+}
+
+.directory-card-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.directory-card-city {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.directory-inventory-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

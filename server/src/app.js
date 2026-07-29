@@ -17,9 +17,10 @@ const rateLimit = require('express-rate-limit');
 const { clientUrl, nodeEnv } = require('./config/env');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
-const authRouter   = require('./routes/auth');
-const donorRouter  = require('./routes/donors');
-const seekerRouter = require('./routes/seekers');
+const authRouter     = require('./routes/auth');
+const donorRouter    = require('./routes/donors');
+const seekerRouter   = require('./routes/seekers');
+const hospitalRouter = require('./routes/hospitals');
 
 const app = express();
 
@@ -73,9 +74,10 @@ app.get('/health', (_req, res) => {
 });
 
 // ── API routes ────────────────────────────────────────────────────────────────
-app.use('/api/auth',    authLimiter, authRouter);
-app.use('/api/donors',  donorRouter);
-app.use('/api/seekers', seekerRouter);
+app.use('/api/auth',      authLimiter, authRouter);
+app.use('/api/donors',    donorRouter);
+app.use('/api/seekers',   seekerRouter);
+app.use('/api/hospitals', hospitalRouter);
 
 // ── 404 and error handling ────────────────────────────────────────────────────
 // Order matters: notFound must come before errorHandler.

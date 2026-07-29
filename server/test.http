@@ -219,6 +219,141 @@ Authorization: Bearer {{seekerToken}}
 ###
 
 ### ─────────────────────────────────────────────────────────────
+###  HOSPITAL MODULE  (set @hospitalToken after hospital login)
+### ─────────────────────────────────────────────────────────────
+
+@hospitalToken = PASTE_HOSPITAL_ACCESS_TOKEN_HERE
+@hospitalApiKey = PASTE_HOSPITAL_API_KEY_HERE
+
+### [HOSPITAL-01] Register hospital account (auth step — use AUTH-02 template)
+# Register with role: hospital, then login to get hospitalToken
+
+###
+
+### [HOSPITAL-02] Register organisation profile
+POST {{baseUrl}}/api/hospitals/register
+Authorization: Bearer {{hospitalToken}}
+Content-Type: application/json
+
+{
+  "name":     "PIMS Hospital",
+  "type":     "hospital",
+  "city":     "Islamabad",
+  "street":   "G-8/3, Islamabad",
+  "province": "ICT",
+  "phone":    "051-9261170",
+  "email":    "blood@pims.gov.pk"
+}
+
+###
+
+### [HOSPITAL-03] Get own org profile + inventory
+GET {{baseUrl}}/api/hospitals/me
+Authorization: Bearer {{hospitalToken}}
+
+###
+
+### [HOSPITAL-04] Update org profile
+PUT {{baseUrl}}/api/hospitals/me
+Authorization: Bearer {{hospitalToken}}
+Content-Type: application/json
+
+{
+  "phone": "051-9261172",
+  "street": "G-8/3 Mauve Area, Islamabad"
+}
+
+###
+
+### [HOSPITAL-05] Public directory — all approved hospitals
+GET {{baseUrl}}/api/hospitals/directory
+
+###
+
+### [HOSPITAL-06] Public directory — filtered by city
+GET {{baseUrl}}/api/hospitals/directory?city=Islamabad&type=hospital
+
+###
+
+### [HOSPITAL-07] Add blood group stock (requires approved status)
+POST {{baseUrl}}/api/hospitals/inventory
+Authorization: Bearer {{hospitalToken}}
+Content-Type: application/json
+
+{
+  "bloodGroup":        "O+",
+  "units":             15,
+  "expiresAt":         "2026-09-30",
+  "lowStockThreshold": 3
+}
+
+###
+
+### [HOSPITAL-08] Add another blood group
+POST {{baseUrl}}/api/hospitals/inventory
+Authorization: Bearer {{hospitalToken}}
+Content-Type: application/json
+
+{
+  "bloodGroup":        "B-",
+  "units":             2,
+  "lowStockThreshold": 3
+}
+
+###
+
+### [HOSPITAL-09] Update inventory entry (replace INVENTORY_ID)
+PUT {{baseUrl}}/api/hospitals/inventory/INVENTORY_ID_HERE
+Authorization: Bearer {{hospitalToken}}
+Content-Type: application/json
+
+{
+  "units": 20,
+  "lowStockThreshold": 4
+}
+
+###
+
+### [HOSPITAL-10] Delete inventory entry (replace INVENTORY_ID)
+DELETE {{baseUrl}}/api/hospitals/inventory/INVENTORY_ID_HERE
+Authorization: Bearer {{hospitalToken}}
+
+###
+
+### [HOSPITAL-11] Issue Code Red broadcast (replace INVENTORY_ID)
+POST {{baseUrl}}/api/hospitals/broadcast
+Authorization: Bearer {{hospitalToken}}
+Content-Type: application/json
+
+{
+  "inventoryId": "INVENTORY_ID_HERE",
+  "message":     "Critical shortage of B- blood at PIMS. Donors please report immediately."
+}
+
+###
+
+### [HOSPITAL-12] Cancel Code Red (replace INVENTORY_ID)
+DELETE {{baseUrl}}/api/hospitals/broadcast/INVENTORY_ID_HERE
+Authorization: Bearer {{hospitalToken}}
+
+###
+
+### [HOSPITAL-13] Machine sync via API key (demo — replace key after admin issues it)
+POST {{baseUrl}}/api/hospitals/inventory/sync
+Authorization: ApiKey {{hospitalApiKey}}
+Content-Type: application/json
+
+{
+  "updates": [
+    { "bloodGroup": "A+",  "units": 8,  "expiresAt": "2026-10-15" },
+    { "bloodGroup": "AB-", "units": 1 },
+    { "bloodGroup": "O-",  "units": 5,  "expiresAt": "2026-10-01" }
+  ]
+}
+
+###
+
+### ─────────────────────────────────────────────────────────────
 ###  HEALTH
 ### ─────────────────────────────────────────────────────────────
 
