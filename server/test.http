@@ -515,4 +515,46 @@ Content-Type: application/json
 ### [HEALTH] API health check
 GET {{baseUrl}}/health
 
-###
+###
+
+### ─────────────────────────────────────────────────────────────
+###  QR DONATION CHECK-IN  (Phase 7)
+### ─────────────────────────────────────────────────────────────
+
+@donorToken = PASTE_DONOR_ACCESS_TOKEN_HERE
+
+### [QR-01] Get donor's matched requests (for History tab)
+GET {{baseUrl}}/api/donors/requests
+Authorization: Bearer {{donorToken}}
+
+###
+
+### [QR-02] Generate QR code for an approved request (replace REQUEST_ID)
+POST {{baseUrl}}/api/qr/generate
+Authorization: Bearer {{donorToken}}
+Content-Type: application/json
+
+{
+  "requestId": "REQUEST_ID_HERE"
+}
+
+###
+
+### [QR-03] Get QR token status for a request (donor polls this)
+GET {{baseUrl}}/api/qr/REQUEST_ID_HERE
+Authorization: Bearer {{donorToken}}
+
+###
+
+### [QR-04] Verify / scan QR (hospital or admin — replace TOKEN_VALUE)
+GET {{baseUrl}}/api/qr/verify/TOKEN_VALUE_HERE
+Authorization: Bearer {{adminToken}}
+
+###
+
+### [QR-05] Cancel/regenerate a QR token (donor)
+DELETE {{baseUrl}}/api/qr/REQUEST_ID_HERE
+Authorization: Bearer {{donorToken}}
+
+###
+

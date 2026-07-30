@@ -24,6 +24,7 @@ import { useAuth }          from '../../context/AuthContext';
 import { useDonorProfile }  from '../../hooks/useDonorProfile';
 import useNotifications     from '../../hooks/useNotifications';
 import NotificationBell     from '../../components/NotificationBell';
+import QRCheckIn            from '../../components/QRCheckIn';
 import api                  from '../../lib/api';
 import '../../styles/dashboard.css';
 
@@ -116,7 +117,7 @@ export default function DonorDashboard() {
               <EditProfileTab donor={donor} refetch={refetch} onSaved={() => setActiveTab('overview')} />
             )}
             {activeTab === 'history' && (
-              <HistoryTab confirmedDonations={donor.confirmedDonations} />
+              <HistoryTab donor={donor} />
             )}
           </>
         )}
@@ -678,26 +679,116 @@ function EditProfileTab({ donor, refetch, onSaved }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  HISTORY TAB  (Phase 7 placeholder)
+//  HISTORY TAB  (Phase 7 — QR Check-in)
 // ═══════════════════════════════════════════════════════════════════════════
-function HistoryTab({ confirmedDonations }) {
+function useDonorRequests() {
+  const [requests, setRequests] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+
+  useEffect(() => {
+    api.get('/donors/requests')
+      .then(r => setRequests(r.data.data || []))
+      .catch(() => setRequests([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { requests, loading };
+}
+
+const STATUS_LABELS = {
+  pending_review: { label: 'Pending Review', color: 'var(--color-warning)' },
+  approved:       { label: 'Approved',        color: 'var(--color-success)' },
+  fulfilled:      { label: 'Fulfilled',       color: 'var(--blue-400)'      },
+  rejected:       { label: 'Rejected',        color: 'var(--red-400)'       },
+  cancelled:      { label: 'Cancelled',       color: 'var(--text-muted)'    },
+};
+
+function HistoryTab({ donor }) {
+  const { requests, loading } = useDonorRequests();
+
+  const approved  = requests.filter(r => r.status === 'approved');
+  const fulfilled = requests.filter(r => r.status === 'fulfilled');
+  const other     = requests.filter(r => !['approved','fulfilled'].includes(r.status));
+  const grouped   = [...approved, ...fulfilled, ...other];
+
   return (
     <>
       <div className="dashboard-topbar animate-fade-up">
         <div>
           <h1 className="dashboard-page-title">Donation History</h1>
-          <p className="dashboard-page-subtitle">Your confirmed donation record.</p>
+          <p className="dashboard-page-subtitle">
+            {donor.confirmedDonations} confirmed donation{donor.confirmedDonations !== 1 ? 's' : ''} · QR check-in available for approved requests.
+          </p>
         </div>
       </div>
 
-      <div className="card animate-fade-up" style={{ textAlign: 'center', padding: 'var(--space-12)' }}>
-        <div style={{ fontSize: '3.5rem', marginBottom: 'var(--space-5)' }}>🩺</div>
-        <h3>Confirmed donations: {confirmedDonations}</h3>
-        <p className="mt-4" style={{ maxWidth: 380, margin: 'var(--space-4) auto 0' }}>
-          Per-donation records with QR check-in confirmation will be available
-          after Phase 7 is implemented.
-        </p>
-      </div>
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          {[1,2].map(i => <div key={i} className="skeleton" style={{ height: 100, borderRadius: 16 }} />)}
+        </div>
+      )}
+
+      {!loading && grouped.length === 0 && (
+        <div className="card animate-fade-up" style={{ textAlign: 'center', padding: 'var(--space-12)' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: 'var(--space-5)' }}>🩺</div>
+          <h3>No donation activity yet</h3>
+          <p className="mt-4" style={{ maxWidth: 380, margin: 'var(--space-4) auto 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            Once a blood seeker&apos;s request compatible with your blood group is approved, it will appear here.
+            You can then generate a QR code to present at the hospital.
+          </p>
+        </div>
+      )}
+
+      {!loading && grouped.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          {grouped.map(req => {
+            const { label, color } = STATUS_LABELS[req.status] || { label: req.status, color: 'var(--text-muted)' };
+            return (
+              <div
+                key={req._id}
+                className="card animate-fade-up"
+                style={{
+                  padding: 'var(--space-5) var(--space-6)',
+                  borderLeft: `3px solid ${color}`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
+                      <span style={{
+                        background: 'linear-gradient(135deg, var(--red-700), var(--red-900))',
+                        color: 'var(--red-200)',
+                        padding: '2px 10px',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '0.8rem',
+                        fontWeight: 800,
+                      }}>{req.bloodGroup}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                        {req.hospitalName}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      {req.hospitalCity && <span>{req.hospitalCity} · </span>}
+                      Submitted {formatDate(req.createdAt)}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color, padding: '3px 10px', borderRadius: 'var(--radius-full)', border: `1px solid ${color}40`, background: `${color}10`, whiteSpace: 'nowrap' }}>
+                    {label}
+                  </span>
+                </div>
+
+                {/* QR Check-in — only shown for approved requests */}
+                <QRCheckIn
+                  requestId={req._id}
+                  requestStatus={req.status}
+                  hospitalName={req.hospitalName}
+                  bloodGroup={req.bloodGroup}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }

@@ -19,6 +19,7 @@ const express = require('express');
 
 const { DonorProfile, BLOOD_GROUPS } = require('../../models/DonorProfile');
 const { User }                       = require('../../models/User');
+const { Request }                    = require('../../models/Request');
 const { requireAuth, requireRole }   = require('../../middleware/auth');
 const { getEligibility }             = require('../../utils/eligibility');
 const { getDonorLevel, getLevelProgress, LEVELS } = require('../../utils/donorLevels');
@@ -281,5 +282,66 @@ router.get('/search', async (req, res, next) => {
     next(err);
   }
 });
+
+// ── GET /api/donors/requests ──────────────────────────────────────────────────
+/**
+ * Returns requests that a donor might have fulfilled or been matched to.
+ * For Phase 7 history + QR check-in, we return approved/fulfilled requests
+ * where the donor's blood group is compatible with the requested blood group.
+ * This is a best-effort history — in a real system the donor would explicitly
+ * accept a request. For now we show all approved requests that match their group.
+ */
+router.get('/requests', async (req, res, next) => {
+  try {
+    const [user, profile] = await Promise.all([
+      User.findById(req.user.id),
+      DonorProfile.findOne({ user: req.user.id }),
+    ]);
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Donor profile not found.' });
+    }
+
+    // Fetch requests where the donor was recorded as the fulfilling donor
+    const asFullfiller = await Request.find({
+      fulfilledBy: req.user.id,
+    }).sort({ createdAt: -1 }).limit(50).lean();
+
+    // Also fetch any approved requests compatible with this donor's blood group
+    // in their city (so they can generate QRs for requests they haven't fulfilled yet)
+    const compatible = await Request.find({
+      status:     'approved',
+      bloodGroup: { $in: getCompatibleGroups(profile.bloodGroup) },
+      fulfilledBy: { $exists: false },
+    }).sort({ createdAt: -1 }).limit(20).lean();
+
+    // Merge, deduplicate, and sort newest first
+    const seen = new Set();
+    const merged = [...asFullfiller, ...compatible].filter(r => {
+      if (seen.has(String(r._id))) return false;
+      seen.add(String(r._id));
+      return true;
+    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json({ success: true, data: merged });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** Returns blood groups compatible with the donor's group (can donate to) */
+function getCompatibleGroups(donorGroup) {
+  const map = {
+    'O-':  ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+    'O+':  ['O+', 'A+', 'B+', 'AB+'],
+    'A-':  ['A-', 'A+', 'AB-', 'AB+'],
+    'A+':  ['A+', 'AB+'],
+    'B-':  ['B-', 'B+', 'AB-', 'AB+'],
+    'B+':  ['B+', 'AB+'],
+    'AB-': ['AB-', 'AB+'],
+    'AB+': ['AB+'],
+  };
+  return map[donorGroup] || [donorGroup];
+}
 
 module.exports = router;

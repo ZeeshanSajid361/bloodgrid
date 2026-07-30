@@ -1,0 +1,179 @@
+/* QRCheckIn.css — Donor QR check-in panel styles */
+
+/* ── Expand button (shows in request card) ───────────────────────────────── */
+.qr-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--blue-400);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  margin-top: var(--space-3);
+}
+
+.qr-expand-btn:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+/* ── Panel ───────────────────────────────────────────────────────────────── */
+.qr-panel {
+  margin-top: var(--space-4);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  overflow: hidden;
+  animation: panelSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes panelSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.qr-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--surface-float);
+}
+
+.qr-panel-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.qr-close-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-md);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.qr-close-btn:hover { background: var(--surface-hover); color: var(--text-primary); }
+
+.qr-panel-body {
+  padding: var(--space-5) var(--space-6);
+}
+
+/* ── Instructions ────────────────────────────────────────────────────────── */
+.qr-instructions {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-5);
+  text-align: center;
+}
+
+/* ── QR code ─────────────────────────────────────────────────────────────── */
+.qr-code-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.qr-code-wrap svg,
+.qr-code-wrap canvas {
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+
+/* ── Expiry ──────────────────────────────────────────────────────────────── */
+.qr-expiry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+.qr-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+/* ── Error ───────────────────────────────────────────────────────────────── */
+.qr-error {
+  font-size: 0.82rem;
+  color: var(--red-400);
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  text-align: center;
+}
+
+/* ── Fulfilled state ─────────────────────────────────────────────────────── */
+.qr-fulfilled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+}
+
+.qr-fulfilled-icon {
+  color: var(--color-success);
+  animation: badgePop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.qr-fulfilled h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+.qr-fulfilled p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.qr-fulfilled-date {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+}
+
+/* ── Expired state ───────────────────────────────────────────────────────── */
+.qr-expired {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-4) 0;
+  color: var(--text-muted);
+}
+
+.qr-expired svg { color: var(--color-warning); }
+.qr-expired p  { font-size: 0.85rem; max-width: 260px; line-height: 1.6; }
+
+@keyframes badgePop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}

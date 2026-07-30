@@ -20,6 +20,7 @@ import DonorDashboard    from './pages/dashboard/DonorDashboard';
 import SeekerDashboard   from './pages/dashboard/SeekerDashboard';
 import HospitalDashboard from './pages/dashboard/HospitalDashboard';
 import AdminDashboard    from './pages/dashboard/AdminDashboard';
+import QRVerifyPage      from './pages/qr/QRVerifyPage';
 
 export default function App() {
   return (
@@ -30,6 +31,9 @@ export default function App() {
           <Route path="/register"     element={<RegisterPage />} />
           <Route path="/login"        element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+          {/* QR donation verify — public so hospitals can scan without logging in */}
+          <Route path="/qr/verify/:token" element={<QRVerifyPage />} />
 
           {/* Generic /dashboard resolves to the role-specific dashboard */}
           <Route
