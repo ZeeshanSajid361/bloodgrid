@@ -100,7 +100,14 @@ npm test
 | 5     | ✅      | Admin module · Verification queues · Analytics           |
 | 6     | ✅      | Web Push notifications · Demand forecast · In-app bell   |
 | 7     | ✅      | QR donation check-in · Donor history · Verify page       |
-| 8     | 🔄      | Integration · Testing · Deployment                       |
+| 8     | ✅      | Integration · Testing · Deployment configs               |
+
+## Deployment
+
+The project includes configuration files for seamless deployment to modern PaaS providers:
+
+- **Frontend (`client/vercel.json`)**: Configured for Vercel deployment with correct SPA routing and caching headers.
+- **Full-stack (`render.yaml`)**: Infrastructure-as-code for Render.com. Defines both the Node.js API and the React static site with all required environment variables.
 
 ## Team
 
