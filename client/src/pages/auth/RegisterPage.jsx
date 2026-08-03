@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Phone, MapPin, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import PhoneInput from '../../components/PhoneInput';
 import api from '../../lib/api';
 import '../../styles/auth.css';
 
@@ -57,6 +58,11 @@ export default function RegisterPage() {
       else if (Number(form.age) < 18)        e.age = 'Donors must be at least 18 years old.';
       else if (Number(form.age) > 65)        e.age = 'Donors must be 65 or younger.';
     }
+
+    if (form.phone && !/^\+?\d{10,14}$/.test(form.phone.replace(/[\s-]/g, ''))) {
+      e.phone = 'Enter a valid phone number (e.g. 03001234567 or +923001234567).';
+    }
+
     return e;
   }
 
@@ -285,36 +291,32 @@ export default function RegisterPage() {
                 {errors.confirmPassword && <span className="input-error-msg"><AlertCircle size={13} />{errors.confirmPassword}</span>}
               </div>
 
-              {/* Phone + City row */}
-              <div className="flex gap-4">
-                <div className="input-group w-full">
-                  <label className="input-label" htmlFor="reg-phone">Phone</label>
-                  <div className="input-wrapper">
-                    <Phone className="input-icon" size={18} />
-                    <input
-                      id="reg-phone"
-                      name="phone"
-                      className="input has-icon"
-                      placeholder="+92 300 0000000"
-                      value={form.phone}
-                      onChange={handleChange}
-                    />
-                  </div>
+              {/* Phone */}
+              <div className="input-group w-full">
+                <label className="input-label" htmlFor="reg-phone">Phone</label>
+                <div className="input-wrapper" style={{ display: 'block' }}>
+                  <PhoneInput
+                    value={form.phone}
+                    onChange={handleChange}
+                    name="phone"
+                  />
                 </div>
+                {errors.phone && <span className="input-error-msg" style={{ marginTop: '4px', display: 'block' }}><AlertCircle size={13} />{errors.phone}</span>}
+              </div>
 
-                <div className="input-group w-full">
-                  <label className="input-label" htmlFor="reg-city">City</label>
-                  <div className="input-wrapper">
-                    <MapPin className="input-icon" size={18} />
-                    <input
-                      id="reg-city"
-                      name="city"
-                      className="input has-icon"
-                      placeholder="Islamabad"
-                      value={form.city}
-                      onChange={handleChange}
-                    />
-                  </div>
+              {/* City */}
+              <div className="input-group w-full">
+                <label className="input-label" htmlFor="reg-city">City</label>
+                <div className="input-wrapper">
+                  <MapPin className="input-icon" size={18} />
+                  <input
+                    id="reg-city"
+                    name="city"
+                    className="input has-icon"
+                    placeholder="Islamabad"
+                    value={form.city}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 

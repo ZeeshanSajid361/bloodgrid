@@ -13,9 +13,9 @@
  */
 
 import { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { Loader2, QrCode, RefreshCw, Download, CheckCircle2, X, Clock } from 'lucide-react';
-import useQR from '../../hooks/useQR';
+import useQR from '../hooks/useQR';
 import './QRCheckIn.css';
 
 function formatExpiry(dateStr) {
@@ -38,14 +38,13 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, bloo
   if (requestStatus !== 'approved') return null;
 
   function handleDownload() {
+    const canvas = document.querySelector(`#qr-canvas-${requestId}`);
+    if (!canvas) return;
+    
+    const pngUrl = canvas.toDataURL('image/png');
     const a = document.createElement('a');
-    // Convert verifyUrl into a downloadable SVG via canvas
-    const svg = document.querySelector(`#qr-svg-${requestId}`);
-    if (!svg) return;
-    const data = new XMLSerializer().serializeToString(svg);
-    const blob = new Blob([data], { type: 'image/svg+xml' });
-    a.href = URL.createObjectURL(blob);
-    a.download = `bloodlink-qr-${requestId}.svg`;
+    a.href = pngUrl;
+    a.download = `bloodlink-qr-${requestId}.png`;
     a.click();
   }
 
@@ -110,8 +109,8 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, bloo
             </div>
 
             <div className="qr-code-wrap">
-              <QRCodeSVG
-                id={`qr-svg-${requestId}`}
+              <QRCodeCanvas
+                id={`qr-canvas-${requestId}`}
                 value={qrData.verifyUrl}
                 size={220}
                 level="H"

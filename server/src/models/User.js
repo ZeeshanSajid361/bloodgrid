@@ -159,6 +159,10 @@ userSchema.methods.verifyRefreshToken = function (rawToken) {
   return this.refreshTokenHash === hash;
 };
 
+// TTL index to automatically delete unverified accounts after 24 hours.
+// When an account is verified, emailVerificationExpires is removed, so it won't be deleted.
+userSchema.index({ emailVerificationExpires: 1 }, { expireAfterSeconds: 0 });
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = { User, ROLES };

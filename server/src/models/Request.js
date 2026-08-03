@@ -90,13 +90,18 @@ const requestSchema = new mongoose.Schema(
 
     // ── Document verification ─────────────────────────────────────────────────
     // URL to the hospital-issued blood request slip uploaded to Cloudinary.
-    documentUrl: {
-      type:     String,
-      required: [true, 'A supporting document (hospital blood request slip) is required'],
+    documentUrls: {
+      type:     [String],
+      validate: {
+        validator: function(v) {
+          return v && v.length > 0;
+        },
+        message: 'At least one hospital blood request slip is required for verification'
+      }
     },
 
-    documentPublicId: {
-      type:   String,
+    documentPublicIds: {
+      type:   [String],
       select: false, // only fetched when admin needs to delete it
     },
 

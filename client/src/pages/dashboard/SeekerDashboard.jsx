@@ -263,7 +263,7 @@ function RequestTab({ onSubmitted }) {
     patientName:       '',
     additionalNotes:   '',
   });
-  const [file,     setFile]     = useState(null);
+  const [files,    setFiles]    = useState([]);
   const [saving,   setSaving]   = useState(false);
   const [apiError, setApiError] = useState('');
   const fileRef                 = useRef();
@@ -275,15 +275,25 @@ function RequestTab({ onSubmitted }) {
   }
 
   function handleFile(e) {
-    const f = e.target.files?.[0];
-    if (f) setFile(f);
+    if (e.target.files) {
+      const selected = Array.from(e.target.files);
+      if (files.length + selected.length > 3) {
+        toast.error('You can only upload up to 3 documents.');
+        return;
+      }
+      setFiles(prev => [...prev, ...selected].slice(0, 3));
+    }
+  }
+
+  function removeFile(index) {
+    setFiles(prev => prev.filter((_, i) => i !== index));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.patientBloodGroup) { toast.error('Select patient blood group.'); return; }
     if (!form.hospitalName.trim()) { toast.error('Hospital name is required.'); return; }
-    if (!file) { toast.error('Please upload the hospital blood request slip.'); return; }
+    if (files.length === 0) { toast.error('Please upload at least one hospital blood request slip.'); return; }
 
     setSaving(true);
     setApiError('');
@@ -291,7 +301,7 @@ function RequestTab({ onSubmitted }) {
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
-      fd.append('document', file);
+      files.forEach(f => fd.append('documents', f));
 
       await api.post('/seekers/requests', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -459,29 +469,34 @@ function RequestTab({ onSubmitted }) {
                   ref={fileRef}
                   id="req-document"
                   type="file"
+                  multiple
                   accept="image/jpeg,image/png,image/webp,application/pdf"
                   onChange={handleFile}
                   style={{ display: 'none' }}
                 />
                 <div className="file-drop-icon">📄</div>
-                <div className="file-drop-label">Click to choose file</div>
-                <div className="file-drop-hint">JPEG · PNG · WebP · PDF — max 5 MB</div>
+                <div className="file-drop-label">Click to choose files</div>
+                <div className="file-drop-hint">JPEG · PNG · WebP · PDF — max 3 files, 5 MB each</div>
               </div>
 
-              {file && (
-                <div className="file-selected">
-                  <CheckCircle2 size={16} />
-                  <span>{file.name}</span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                    ({(file.size / 1024).toFixed(0)} KB)
-                  </span>
-                  <button
-                    type="button"
-                    style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
-                    onClick={() => { setFile(null); fileRef.current.value = ''; }}
-                  >
-                    <X size={14} />
-                  </button>
+              {files.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+                  {files.map((f, index) => (
+                    <div key={index} className="file-selected">
+                      <CheckCircle2 size={16} />
+                      <span>{f.name}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                        ({(f.size / 1024).toFixed(0)} KB)
+                      </span>
+                      <button
+                        type="button"
+                        style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
+                        onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -655,19 +670,40 @@ function RequestCard({ request, onCancel }) {
         </div>
       )}
 
-      {/* Document link */}
-      {request.documentUrl && (
-        <a
-          className="doc-link"
-          href={request.documentUrl}
-          target="_blank"
-          rel="noreferrer"
-          style={{ marginBottom: 'var(--space-4)', display: 'inline-flex' }}
-        >
-          <FileText size={13} />
-          View uploaded document
-          <ExternalLink size={12} />
-        </a>
+      {/* Document links */}
+      {(request.documentUrls?.length > 0 || request.documentUrl) && (
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+          {request.documentUrls && request.documentUrls.length > 0 ? (
+            request.documentUrls.map((url, i) => (
+              <a
+                key={i}
+                className="doc-link"
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: 'inline-flex' }}
+              >
+                <FileText size={13} />
+                View document {request.documentUrls.length > 1 ? i + 1 : ''}
+                <ExternalLink size={12} />
+              </a>
+            ))
+          ) : (
+            request.documentUrl && (
+              <a
+                className="doc-link"
+                href={request.documentUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: 'inline-flex' }}
+              >
+                <FileText size={13} />
+                View uploaded document
+                <ExternalLink size={12} />
+              </a>
+            )
+          )}
+        </div>
       )}
 
       {/* Status timeline — skip for cancelled/rejected */}

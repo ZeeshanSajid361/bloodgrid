@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import useHospitalData from '../../hooks/useHospitalData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
+import PhoneInput from '../../components/PhoneInput';
 import '../../styles/hospital.css';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -463,15 +464,25 @@ function ProfileTab({ profile, hooks }) {
         ].map(({ label, key, icon: Icon }) => (
           <div className="input-group" key={key}>
             <label className="input-label">{label}</label>
-            <div className="input-wrapper">
-              <Icon className="input-icon" size={17} />
-              <input
-                className="input has-icon"
-                value={form[key]}
-                onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-                placeholder={label}
-              />
-            </div>
+            {key === 'phone' ? (
+              <div className="input-wrapper" style={{ display: 'block' }}>
+                <PhoneInput 
+                  value={form[key]} 
+                  onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))} 
+                  name={key} 
+                />
+              </div>
+            ) : (
+              <div className="input-wrapper">
+                <Icon className="input-icon" size={17} />
+                <input
+                  className="input has-icon"
+                  value={form[key]}
+                  onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+                  placeholder={label}
+                />
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -490,19 +501,34 @@ function ProfileTab({ profile, hooks }) {
 /* ── Registration form (shown before org exists) ─────────────────────────── */
 
 function RegisterOrgForm({ onSave }) {
-  const [form, setForm]   = useState({ name: '', type: 'hospital', city: '', street: '', province: '', phone: '', email: '' });
+  const [form, setForm]     = useState({ type: 'hospital', name: '', city: '', street: '', province: '', phone: '', email: '' });
+  const [files, setFiles]   = useState([]);
   const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState('');
+  const [error, setError]   = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.name || !form.city) { setError('Name and city are required.'); return; }
+    if (!form.name || !form.city) return setError('Name and city are required.');
+    
+    // Phone validation: allow optional + at start, and 10 to 14 digits (Pakistani format is typically 11 digits starting with 0, or +92 followed by 10 digits)
+    if (form.phone && !/^\+?\d{10,14}$/.test(form.phone.replace(/[\s-]/g, ''))) {
+      return setError('Please enter a valid phone number (e.g. 03001234567 or +923001234567).');
+    }
+    
+    if (!files || files.length === 0) return setError('Verification document is required.');
+
     setSaving(true);
     setError('');
     try {
-      await onSave(form, false);
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      files.forEach(f => fd.append('verificationDocuments', f));
+
+      await onSave(fd, false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed.');
+      const msg = err.response?.data?.message || 'Registration failed.';
+      const details = err.response?.data?.errors?.map(e => e.message).join(' | ');
+      setError(details ? `${msg} (${details})` : msg);
     } finally {
       setSaving(false);
     }
@@ -536,9 +562,51 @@ function RegisterOrgForm({ onSave }) {
             ].map(({ label, key, span }) => (
               <div className="input-group" key={key} style={span ? { gridColumn: '1 / -1' } : {}}>
                 <label className="input-label">{label}</label>
-                <input className="input" value={form[key]} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))} placeholder={label.replace(' *', '')} />
+                {key === 'phone' ? (
+                  <PhoneInput 
+                    value={form[key]} 
+                    onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))} 
+                    name={key} 
+                  />
+                ) : (
+                  <input className="input" value={form[key]} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))} placeholder={label.replace(' *', '')} />
+                )}
               </div>
             ))}
+            
+            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="input-label">Registration / Verification Documents (Max 3) *</label>
+              
+              <input 
+                type="file" 
+                className="input" 
+                accept="image/*,.pdf"
+                multiple
+                onChange={e => {
+                  const selected = Array.from(e.target.files);
+                  if (selected.length > 3) {
+                    setError('You can only upload a maximum of 3 documents.');
+                    return;
+                  }
+                  setError('');
+                  setFiles(selected);
+                }}
+                style={{ padding: '0.5rem' }}
+              />
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                Upload PMC certificate, Health Board License, or official registration proof.
+              </p>
+              
+              {files.length > 0 && (
+                <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {files.map((f, i) => (
+                    <div key={i} style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      • {f.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <button type="submit" className="btn btn-secondary mt-4" disabled={saving}>
             {saving ? <Loader2 size={16} className="spin" /> : 'Submit for Review'}

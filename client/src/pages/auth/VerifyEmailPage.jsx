@@ -5,7 +5,7 @@
  * endpoint. Shows loading, success, or error states accordingly.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../../lib/api';
 
@@ -16,12 +16,17 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState('verifying'); // 'verifying' | 'success' | 'error'
   const [message, setMessage] = useState('');
 
+  const calledRef = useRef(false);
+
   useEffect(() => {
     if (!token) {
       setStatus('error');
       setMessage('No verification token found in the link. Please check your email.');
       return;
     }
+
+    if (calledRef.current) return;
+    calledRef.current = true;
 
     api
       .post('/auth/verify-email', { token })

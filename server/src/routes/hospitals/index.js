@@ -27,6 +27,8 @@ const { requireAuth, requireRole } = require('../../middleware/auth');
 const { Organization }             = require('../../models/Organization');
 const { Inventory, BLOOD_GROUPS }  = require('../../models/Inventory');
 const { generateApiKey, verifyApiKey } = require('../../utils/apiKey');
+const upload                       = require('../../middleware/upload');
+const { uploadBuffer }             = require('../../utils/cloudinaryUpload');
 
 /* ─── helpers ──────────────────────────────────────────────────────────────── */
 
@@ -120,6 +122,7 @@ router.post(
   '/register',
   requireAuth,
   requireRole(['hospital']),
+  upload.array('verificationDocuments', 3),
   async (req, res, next) => {
     try {
       const { name, type = 'hospital', city, street, province, phone, email } = req.body;
@@ -128,7 +131,11 @@ router.post(
         return res.status(400).json({ success: false, message: 'Name and city are required.' });
       }
 
-      const existing = await Organization.findOne({ owner: req.user._id });
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ success: false, message: 'At least one registration/verification document is required.' });
+      }
+
+      const existing = await Organization.findOne({ owner: req.user.id });
       if (existing) {
         return res.status(409).json({
           success: false,
@@ -136,14 +143,24 @@ router.post(
         });
       }
 
+      const uploadPromises = req.files.map(file => 
+        uploadBuffer(file.buffer, 'bloodlink/hospitals', null, file.mimetype)
+      );
+      const uploadResults = await Promise.all(uploadPromises);
+
+      const verificationDocumentUrls = uploadResults.map(r => r.secure_url);
+      const verificationDocumentPublicIds = uploadResults.map(r => r.public_id);
+
       const org = await Organization.create({
-        owner:   req.user._id,
+        owner:   req.user.id,
         name,
         type,
         address: { city, street, province },
         phone,
         email:   email || req.user.email,
         status:  'pending',
+        verificationDocumentUrls,
+        verificationDocumentPublicIds,
       });
 
       res.status(201).json({

@@ -311,7 +311,7 @@ router.get('/requests', async (req, res, next) => {
     // in their city (so they can generate QRs for requests they haven't fulfilled yet)
     const compatible = await Request.find({
       status:     'approved',
-      bloodGroup: { $in: getCompatibleGroups(profile.bloodGroup) },
+      patientBloodGroup: { $in: getCompatibleGroups(profile.bloodGroup) },
       fulfilledBy: { $exists: false },
     }).sort({ createdAt: -1 }).limit(20).lean();
 

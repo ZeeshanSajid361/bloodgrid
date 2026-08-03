@@ -46,9 +46,12 @@ export default function useHospitalData() {
    * @param {boolean} isUpdate - true → PUT, false → POST
    */
   async function saveProfile(payload, isUpdate = false) {
+    const isFormData = payload instanceof FormData;
+    const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+    
     const { data } = isUpdate
-      ? await api.put('/hospitals/me', payload)
-      : await api.post('/hospitals/register', payload);
+      ? await api.put('/hospitals/me', payload, config)
+      : await api.post('/hospitals/register', payload, config);
     await fetchProfile();
     return data;
   }

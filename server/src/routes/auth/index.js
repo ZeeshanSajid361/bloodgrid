@@ -79,6 +79,21 @@ router.post('/register', async (req, res, next) => {
     let rawToken;
 
     await session.withTransaction(async () => {
+      // Check if email already exists
+      const existing = await User.findOne({ email });
+      if (existing) {
+        if (existing.isEmailVerified) {
+          throw new Error('DUPLICATE_VERIFIED');
+        } else {
+          // Overwrite logic: delete the old unverified user and their linked profile
+          await User.deleteOne({ _id: existing._id }, { session });
+          if (existing.role === 'donor') {
+            await mongoose.model('DonorProfile').deleteOne({ user: existing._id }, { session });
+          }
+          // (Other roles like Organization/Seeker aren't created at registration time, so we only clean up DonorProfile)
+        }
+      }
+
       const user = new User({ name, email, password, role, phone, city });
       rawToken = user.generateEmailVerificationToken();
       await user.save({ session });
@@ -108,6 +123,12 @@ router.post('/register', async (req, res, next) => {
       data: { userId, role },
     });
   } catch (err) {
+    if (err.message === 'DUPLICATE_VERIFIED') {
+      return res.status(409).json({
+        success: false,
+        message: 'An account with this email already exists and is verified.',
+      });
+    }
     next(err);
   } finally {
     session.endSession();

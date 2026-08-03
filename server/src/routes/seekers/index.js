@@ -135,15 +135,13 @@ router.post(
   '/requests',
   requireAuth,
   requireRole(['seeker']),
-  upload.single('document'),
+  upload.array('documents', 3),
   async (req, res, next) => {
     try {
-      // Multer fileFilter error surfaces here as req.fileValidationError or
-      // is caught by our error handler if multer threw it as a real Error.
-      if (!req.file) {
+      if (!req.files || req.files.length === 0) {
         return res.status(400).json({
           success: false,
-          message: 'A document file (hospital blood request slip) is required.',
+          message: 'At least one document file (hospital blood request slip) is required.',
         });
       }
 
@@ -171,11 +169,11 @@ router.post(
         });
       }
 
-      // Upload the document buffer to Cloudinary.
-      const uploadResult = await uploadBuffer(
-        req.file.buffer,
-        'bloodlink/requests'
+      // Upload all document buffers to Cloudinary.
+      const uploadPromises = req.files.map(file => 
+        uploadBuffer(file.buffer, 'bloodlink/requests', null, file.mimetype)
       );
+      const uploadResults = await Promise.all(uploadPromises);
 
       const request = await Request.create({
         seeker:            req.user.id,
@@ -186,8 +184,8 @@ router.post(
         urgency:           urgency || 'routine',
         patientName:       patientName?.trim(),
         additionalNotes:   additionalNotes?.trim(),
-        documentUrl:       uploadResult.secure_url,
-        documentPublicId:  uploadResult.public_id,
+        documentUrls:      uploadResults.map(res => res.secure_url),
+        documentPublicIds: uploadResults.map(res => res.public_id),
       });
 
       return res.status(201).json({

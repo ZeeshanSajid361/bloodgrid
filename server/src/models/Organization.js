@@ -45,6 +45,14 @@ const organizationSchema = new mongoose.Schema(
       default: 'pending',
     },
 
+    // Proof of existence (PMC certificate, health board license, etc.)
+    verificationDocumentUrls: [{
+      type: String,
+    }],
+    verificationDocumentPublicIds: [{
+      type: String,
+    }],
+
     // Physical location — used for proximity-based donor matching in Phase 6.
     address: {
       street: String,
@@ -57,11 +65,9 @@ const organizationSchema = new mongoose.Schema(
       type: {
         type: String,
         enum: ['Point'],
-        default: 'Point',
       },
       coordinates: {
         type: [Number], // [longitude, latitude]
-        default: undefined,
       },
     },
 

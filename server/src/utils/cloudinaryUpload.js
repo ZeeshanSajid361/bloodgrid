@@ -32,12 +32,20 @@ cloudinary.config({
  * @param {string} [publicId] - Optional explicit public_id (e.g. for updates)
  * @returns {Promise<import('cloudinary').UploadApiResponse>}
  */
-function uploadBuffer(buffer, folder = 'bloodlink/requests', publicId) {
+function uploadBuffer(buffer, folder = 'bloodlink/requests', publicId, mimetype) {
   return new Promise((resolve, reject) => {
+    const isPdf = mimetype === 'application/pdf';
+    
+    let finalPublicId = publicId;
+    if (isPdf && !finalPublicId) {
+      const crypto = require('crypto');
+      finalPublicId = crypto.randomBytes(12).toString('hex') + '.pdf';
+    }
+
     const options = {
       folder,
-      resource_type: 'auto',
-      ...(publicId && { public_id: publicId }),
+      resource_type: isPdf ? 'raw' : 'auto',
+      ...(finalPublicId && { public_id: finalPublicId }),
     };
 
     const stream = cloudinary.uploader.upload_stream(options, (err, result) => {

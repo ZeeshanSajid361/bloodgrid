@@ -232,10 +232,10 @@ function HospitalsTab({ admin }) {
         {loading
           ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
           : <table className="admin-table">
-              <thead><tr><th>Name</th><th>Type</th><th>City</th><th>Owner</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Name</th><th>Type</th><th>City</th><th>Owner</th><th>Document</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 {hospitals.orgs.length === 0
-                  ? <tr><td colSpan={6} className="admin-empty">No organisations found.</td></tr>
+                  ? <tr><td colSpan={7} className="admin-empty">No organisations found.</td></tr>
                   : hospitals.orgs.map(org => (
                       <tr key={org._id}>
                         <td style={{ fontWeight: 600 }}>{org.name}</td>
@@ -243,6 +243,22 @@ function HospitalsTab({ admin }) {
                         <td style={{ color: 'var(--text-secondary)' }}>{org.address?.city || '—'}</td>
                         <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                           {org.owner?.name}<br /><span style={{ color: 'var(--text-muted)' }}>{org.owner?.email}</span>
+                        </td>
+                        <td>
+                          {org.verificationDocumentUrls && org.verificationDocumentUrls.length > 0
+                            ? <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                {org.verificationDocumentUrls.map((url, i) => (
+                                  <a key={i} className="doc-link" href={url} target="_blank" rel="noreferrer">
+                                    <ExternalLink size={13} /> View Doc {org.verificationDocumentUrls.length > 1 ? i+1 : ''}
+                                  </a>
+                                ))}
+                              </div>
+                            : (org.verificationDocumentUrl 
+                                ? <a className="doc-link" href={org.verificationDocumentUrl} target="_blank" rel="noreferrer">
+                                    <ExternalLink size={13} /> View Doc
+                                  </a>
+                                : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>)
+                          }
                         </td>
                         <td>
                           <span className={`badge badge-${org.status==='approved'?'green':org.status==='rejected'?'red':'amber'}`}>
@@ -354,11 +370,19 @@ function RequestsTab({ admin }) {
                         <td style={{ fontWeight: 700 }}>{r.unitsNeeded}</td>
                         <td><span className={`badge ${URGENCY_COLOR[r.urgency]}`}>{r.urgency}</span></td>
                         <td>
-                          {r.documentUrl
-                            ? <a className="doc-link" href={r.documentUrl} target="_blank" rel="noreferrer">
-                                <ExternalLink size={13} /> View Slip
-                              </a>
-                            : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>
+                          {r.documentUrls && r.documentUrls.length > 0
+                            ? <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                {r.documentUrls.map((url, i) => (
+                                  <a key={i} className="doc-link" href={url} target="_blank" rel="noreferrer">
+                                    <ExternalLink size={13} /> View Slip {r.documentUrls.length > 1 ? i+1 : ''}
+                                  </a>
+                                ))}
+                              </div>
+                            : (r.documentUrl 
+                                ? <a className="doc-link" href={r.documentUrl} target="_blank" rel="noreferrer">
+                                    <ExternalLink size={13} /> View Slip
+                                  </a> 
+                                : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>)
                           }
                         </td>
                         <td>

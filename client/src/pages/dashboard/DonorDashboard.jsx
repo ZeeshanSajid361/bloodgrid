@@ -11,7 +11,7 @@
  * in sync without needing a state management library.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, History, LogOut,
@@ -703,7 +703,27 @@ const STATUS_LABELS = {
   cancelled:      { label: 'Cancelled',       color: 'var(--text-muted)'    },
 };
 
-function HistoryTab({ donor }) {
+class HistoryTabErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div style={{ color: 'red', padding: 20 }}>
+        <h2>HistoryTab Crashed</h2>
+        <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error?.toString()}</pre>
+        <pre style={{ whiteSpace: 'pre-wrap', marginTop: 10 }}>{this.state.error?.stack}</pre>
+      </div>;
+    }
+    return <HistoryTabInner {...this.props} />;
+  }
+}
+
+function HistoryTabInner({ donor }) {
   const { requests, loading } = useDonorRequests();
 
   const approved  = requests.filter(r => r.status === 'approved');
@@ -762,10 +782,20 @@ function HistoryTab({ donor }) {
                         borderRadius: 'var(--radius-full)',
                         fontSize: '0.8rem',
                         fontWeight: 800,
-                      }}>{req.bloodGroup}</span>
+                      }}>{req.patientBloodGroup}</span>
                       <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                         {req.hospitalName}
                       </span>
+                      {req.urgency === 'critical' && (
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--red-400)', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+                          🚨 CRITICAL
+                        </span>
+                      )}
+                      {req.urgency === 'urgent' && (
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+                          ⚠️ URGENT
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                       {req.hospitalCity && <span>{req.hospitalCity} · </span>}
@@ -782,7 +812,7 @@ function HistoryTab({ donor }) {
                   requestId={req._id}
                   requestStatus={req.status}
                   hospitalName={req.hospitalName}
-                  bloodGroup={req.bloodGroup}
+                  bloodGroup={req.patientBloodGroup}
                 />
               </div>
             );
@@ -791,6 +821,10 @@ function HistoryTab({ donor }) {
       )}
     </>
   );
+}
+
+function HistoryTab(props) {
+  return <HistoryTabErrorBoundary {...props} />;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -40,7 +40,7 @@ router.post('/subscribe', requireAuth, async (req, res, next) => {
     await PushSubscription.findOneAndUpdate(
       { endpoint },
       {
-        user:      req.user._id,
+        user:      req.user.id,
         endpoint,
         keys,
         expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
@@ -62,7 +62,7 @@ router.post('/subscribe', requireAuth, async (req, res, next) => {
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const { page = 1, limit = 20, unreadOnly } = req.query;
-    const filter = { recipient: req.user._id };
+    const filter = { recipient: req.user.id };
     if (unreadOnly === 'true') filter.isRead = false;
 
     const [notifications, total, unreadCount] = await Promise.all([
@@ -72,7 +72,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         .limit(Number(limit))
         .lean(),
       Notification.countDocuments(filter),
-      Notification.countDocuments({ recipient: req.user._id, isRead: false }),
+      Notification.countDocuments({ recipient: req.user.id, isRead: false }),
     ]);
 
     res.json({ success: true, data: { notifications, total, unreadCount, page: Number(page) } });
@@ -89,7 +89,7 @@ router.get('/', requireAuth, async (req, res, next) => {
  */
 router.get('/unread-count', requireAuth, async (req, res, next) => {
   try {
-    const count = await Notification.countDocuments({ recipient: req.user._id, isRead: false });
+    const count = await Notification.countDocuments({ recipient: req.user.id, isRead: false });
     res.json({ success: true, data: { count } });
   } catch (err) {
     next(err);
@@ -105,7 +105,7 @@ router.patch('/:id/read', requireAuth, async (req, res, next) => {
     }
 
     const notif = await Notification.findOneAndUpdate(
-      { _id: req.params.id, recipient: req.user._id },
+      { _id: req.params.id, recipient: req.user.id },
       { isRead: true },
       { new: true }
     );
@@ -121,7 +121,7 @@ router.patch('/:id/read', requireAuth, async (req, res, next) => {
 router.patch('/read-all', requireAuth, async (req, res, next) => {
   try {
     const { modifiedCount } = await Notification.updateMany(
-      { recipient: req.user._id, isRead: false },
+      { recipient: req.user.id, isRead: false },
       { isRead: true }
     );
     res.json({ success: true, message: `${modifiedCount} notification(s) marked as read.` });
@@ -138,7 +138,7 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid notification ID.' });
     }
 
-    const notif = await Notification.findOneAndDelete({ _id: req.params.id, recipient: req.user._id });
+    const notif = await Notification.findOneAndDelete({ _id: req.params.id, recipient: req.user.id });
     if (!notif) return res.status(404).json({ success: false, message: 'Notification not found.' });
 
     res.json({ success: true, message: 'Notification deleted.' });
