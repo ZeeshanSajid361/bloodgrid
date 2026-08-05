@@ -4,21 +4,16 @@
  * Document proxy route — GET /api/docs/view?url=<encoded-cloudinary-url>
  *
  * Why this exists:
- *   Cloudinary stores PDFs as 'raw' resource type which means the server sends
- *   Content-Disposition: attachment — forcing a download instead of rendering.
- *   We cannot change Cloudinary's response headers from the client side.
+ *   Cloudinary stores PDFs as 'raw' resource type which means Cloudinary sends
+ *   Content-Disposition: attachment — forcing a browser download instead of viewing.
  *
  * How it works:
  *   1. Client calls GET /api/docs/view?url=<encoded-url>
- *   2. This proxy fetches the file from Cloudinary using Node's built-in https
- *   3. We pipe the response back to the browser with:
- *        Content-Type: application/pdf  (or image/jpeg etc)
- *        Content-Disposition: inline    (FORCES browser to render, not download)
- *
- * Security:
- *   - Only Cloudinary URLs are allowed (whitelist check)
- *   - No auth required — documents are already semi-public via Cloudinary links
- *     (knowing the URL is the only requirement, same as before)
+ *   2. Server proxy fetches the file from Cloudinary (with fallback logic for raw vs image)
+ *   3. Server streams it back to browser with:
+ *        Content-Type: application/pdf
+ *        Content-Disposition: inline; filename="..."
+ *      This forces the browser to render the PDF natively in the tab!
  */
 
 const express = require('express');
@@ -28,11 +23,41 @@ const url     = require('url');
 
 const router = express.Router();
 
-// ─── Whitelist: only proxy from trusted hosts ────────────────────────────────
 const ALLOWED_HOSTS = ['res.cloudinary.com'];
 
+/**
+ * Helper to perform an HTTP(S) GET request following redirects and handling fallbacks.
+ */
+function fetchUrl(targetUrl, maxRedirects = 3) {
+  return new Promise((resolve, reject) => {
+    let parsed;
+    try {
+      parsed = new url.URL(targetUrl);
+    } catch (e) {
+      return reject(e);
+    }
+
+    const transport = parsed.protocol === 'https:' ? https : http;
+
+    const req = transport.get(targetUrl, (res) => {
+      // Follow redirects (301, 302, 307, 308)
+      if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location && maxRedirects > 0) {
+        let redirectTarget = res.headers.location;
+        if (redirectTarget.startsWith('/')) {
+          redirectTarget = `${parsed.protocol}//${parsed.host}${redirectTarget}`;
+        }
+        return fetchUrl(redirectTarget, maxRedirects - 1).then(resolve).catch(reject);
+      }
+
+      resolve({ statusCode: res.statusCode, headers: res.headers, stream: res });
+    });
+
+    req.on('error', reject);
+  });
+}
+
 // ─── GET /api/docs/view ──────────────────────────────────────────────────────
-router.get('/view', (req, res) => {
+router.get('/view', async (req, res) => {
   const rawUrl = req.query.url;
 
   if (!rawUrl) {
@@ -46,7 +71,7 @@ router.get('/view', (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid URL encoding.' });
   }
 
-  // Security: only allow whitelisted hosts
+  // Security whitelist check
   let parsed;
   try {
     parsed = new url.URL(decoded);
@@ -59,48 +84,65 @@ router.get('/view', (req, res) => {
     return res.status(403).json({ success: false, message: 'URL host not permitted.' });
   }
 
-  // Choose http or https module based on protocol
-  const transport = parsed.protocol === 'https:' ? https : http;
+  // Clean invalid transformation flags if present (e.g. fl_inline on raw URLs causes Cloudinary 400)
+  let cleanUrl = decoded.replace('/fl_inline/', '/').replace('/fl_attachment/', '/');
 
-  const proxyReq = transport.get(decoded, (cloudRes) => {
-    // Determine content type from file extension and upstream headers
-    const upstreamType = cloudRes.headers['content-type'] || '';
-    const lowerUrl     = decoded.toLowerCase();
+  try {
+    let result = await fetchUrl(cleanUrl);
 
-    let contentType;
-    if (lowerUrl.endsWith('.pdf')) {
-      contentType = 'application/pdf';
-    } else if (lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg')) {
-      contentType = 'image/jpeg';
-    } else if (lowerUrl.endsWith('.png')) {
-      contentType = 'image/png';
-    } else if (lowerUrl.endsWith('.webp')) {
-      contentType = 'image/webp';
-    } else {
-      contentType = upstreamType || 'application/octet-stream';
+    // FALLBACK LOGIC:
+    // If Cloudinary returned 400 or 404, check if swapping resource type (/image/upload/ <-> /raw/upload/) resolves it.
+    if ((result.statusCode === 400 || result.statusCode === 404) && cleanUrl.includes('/image/upload/')) {
+      const altUrl = cleanUrl.replace('/image/upload/', '/raw/upload/');
+      const altResult = await fetchUrl(altUrl);
+      if (altResult.statusCode === 200) {
+        result = altResult;
+        cleanUrl = altUrl;
+      }
+    } else if ((result.statusCode === 400 || result.statusCode === 404) && cleanUrl.includes('/raw/upload/')) {
+      const altUrl = cleanUrl.replace('/raw/upload/', '/image/upload/');
+      const altResult = await fetchUrl(altUrl);
+      if (altResult.statusCode === 200) {
+        result = altResult;
+        cleanUrl = altUrl;
+      }
     }
 
-    // Derive filename from URL
-    const filename = decoded.split('/').pop().split('?')[0] || 'document';
+    if (result.statusCode !== 200) {
+      return res.status(result.statusCode).json({
+        success: false,
+        message: `Upstream Cloudinary returned status ${result.statusCode}`,
+      });
+    }
 
-    // Pass through status code (200, 206 for range requests, etc.)
-    res.status(cloudRes.statusCode === 200 ? 200 : cloudRes.statusCode);
+    // Determine content type
+    const lower = cleanUrl.toLowerCase().split('?')[0];
+    let contentType = result.headers['content-type'] || 'application/octet-stream';
+    if (lower.endsWith('.pdf') || contentType.includes('pdf')) {
+      contentType = 'application/pdf';
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      contentType = 'image/jpeg';
+    } else if (lower.endsWith('.png')) {
+      contentType = 'image/png';
+    } else if (lower.endsWith('.webp')) {
+      contentType = 'image/webp';
+    }
 
-    // Set headers that tell the browser to RENDER inline, not download
+    const filename = cleanUrl.split('/').pop().split('?')[0] || 'document';
+
+    // Set headers that instruct browser to display inline
+    res.status(200);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
 
-    // Pipe the upstream body directly to the response
-    cloudRes.pipe(res);
-  });
-
-  proxyReq.on('error', (err) => {
-    console.error('[DocProxy] Upstream fetch error:', err.message);
+    result.stream.pipe(res);
+  } catch (err) {
+    console.error('[DocProxy] Error:', err.message);
     if (!res.headersSent) {
-      res.status(502).json({ success: false, message: 'Failed to fetch document from upstream.' });
+      res.status(502).json({ success: false, message: 'Failed to proxy document.', error: err.message });
     }
-  });
+  }
 });
 
 module.exports = router;

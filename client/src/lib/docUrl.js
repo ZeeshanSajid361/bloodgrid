@@ -1,7 +1,7 @@
 /**
  * docUrl.js — Document URL utilities
  *
- * Routes document links through our own server-side proxy (/api/docs/view).
+ * Routes document links through our server-side proxy (/api/docs/view).
  * The proxy fetches the file from Cloudinary and re-serves it with:
  *   Content-Type: application/pdf
  *   Content-Disposition: inline
@@ -10,7 +10,8 @@
  * how Cloudinary originally stored it (raw, image, etc.).
  */
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const rawUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const API_BASE = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
 
 /**
  * Returns a URL that opens the document inline in the browser.
@@ -25,7 +26,7 @@ export function getViewableDocUrl(url) {
 
   if (isPdfUrl(url)) {
     // Route through server proxy which sets Content-Disposition: inline
-    return `${API_BASE}/api/docs/view?url=${encodeURIComponent(url)}`;
+    return `${API_BASE}/docs/view?url=${encodeURIComponent(url)}`;
   }
 
   // Images open fine directly
