@@ -1,25 +1,31 @@
 /**
  * docUrl.js — Cloudinary document URL transformer
  *
- * Problem: Cloudinary serves uploaded PDFs with a `Content-Disposition: attachment`
- * header by default, causing the browser to DOWNLOAD the file instead of opening
- * it as a PDF in a new tab.
+ * Problem: Cloudinary serves PDFs with Content-Disposition: attachment by
+ * default, causing the browser to DOWNLOAD the file instead of opening it.
  *
- * Solution:
- *   For Cloudinary URLs, inject the `fl_inline` flag into the transformation
- *   segment, which tells Cloudinary to serve the file with
- *   `Content-Disposition: inline` so the browser renders it natively.
+ * Solution strategy:
  *
- * For non-Cloudinary URLs (e.g. S3, direct uploads) the URL is returned as-is
- * since those should already be served correctly.
+ *   NEW uploads  → Uploaded as resource_type: 'image' on the server.
+ *                  URL looks like: .../image/upload/v.../folder/file.pdf
+ *                  We inject `fl_inline` → renders PDF in browser tab. ✅
+ *
+ *   LEGACY uploads → Were uploaded as resource_type: 'raw'.
+ *                    URL looks like: .../raw/upload/v.../folder/file.pdf
+ *                    raw type does NOT support transformations.
+ *                    We rewrite raw → image in the URL so fl_inline works. ✅
+ *                    (Cloudinary allows this cross-resource-type URL rewrite
+ *                    for PDFs because it actually stores the content either way.)
+ *
+ * For non-Cloudinary URLs the original URL is returned unchanged.
  */
 
 /**
- * Returns a URL that will open as a viewable document (PDF or image) in a
- * new browser tab rather than triggering a download.
+ * Returns a URL that opens as a viewable PDF/document in a new browser tab
+ * instead of triggering a file download.
  *
- * @param {string} url - The raw document URL from the database.
- * @returns {string}   - The transformed URL safe for use in target="_blank".
+ * @param {string} url - Raw document URL from the database.
+ * @returns {string}   - Transformed URL with fl_inline for PDFs.
  */
 export function getViewableDocUrl(url) {
   if (!url) return '';
@@ -27,27 +33,27 @@ export function getViewableDocUrl(url) {
   // Only transform Cloudinary delivery URLs
   if (!url.includes('res.cloudinary.com')) return url;
 
-  // If this is a PDF, inject `fl_inline` into the Cloudinary transformation
-  // chain so the browser opens it as a PDF instead of downloading it.
-  //
-  // Cloudinary URL anatomy:
-  //   https://res.cloudinary.com/<cloud>/image/upload/<transforms>/<public_id>
-  //                                                              ^^^^^^^^^^^
-  //   We insert `fl_inline` before the public_id segment.
-  //
-  // Also handles `raw/upload` (Cloudinary's resource_type for arbitrary files)
-  // which is how PDFs with crypto filenames are stored.
+  let transformed = url;
 
-  // Already has fl_inline → return as-is
-  if (url.includes('fl_inline')) return url;
+  // STEP 1: Rewrite legacy raw/upload → image/upload
+  // raw resource type doesn't support transformations. Rewriting to image
+  // makes fl_inline work and Cloudinary will still serve the file correctly.
+  if (transformed.includes('/raw/upload/')) {
+    transformed = transformed.replace('/raw/upload/', '/image/upload/');
+  }
 
-  // Replace `/upload/` with `/upload/fl_inline/`
-  return url.replace('/upload/', '/upload/fl_inline/');
+  // STEP 2: Inject fl_inline if not already present
+  // fl_inline sets Content-Disposition: inline so the browser renders the
+  // file natively instead of downloading it.
+  if (!transformed.includes('fl_inline')) {
+    transformed = transformed.replace('/image/upload/', '/image/upload/fl_inline/');
+  }
+
+  return transformed;
 }
 
 /**
  * Returns true if the URL points to a PDF file.
- * Used to render a PDF icon vs. image icon in the UI.
  *
  * @param {string} url
  * @returns {boolean}
@@ -55,5 +61,5 @@ export function getViewableDocUrl(url) {
 export function isPdfUrl(url) {
   if (!url) return false;
   const lower = url.toLowerCase().split('?')[0]; // strip query params
-  return lower.endsWith('.pdf') || lower.includes('/pdf') || url.includes('.pdf');
+  return lower.endsWith('.pdf') || lower.includes('.pdf');
 }
