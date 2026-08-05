@@ -14,12 +14,15 @@ const { smtp, clientUrl } = require('../config/env');
 // Create the transporter once at module load — reused for every send call.
 const transporter = nodemailer.createTransport({
   host: smtp.host,
-  port: smtp.port,
-  secure: smtp.port === 465, // true for port 465, STARTTLS for 587
+  port: Number(smtp.port),
+  secure: Number(smtp.port) === 465, // true for port 465, STARTTLS for 587
   auth: {
     user: smtp.user,
     pass: smtp.pass,
   },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 /**

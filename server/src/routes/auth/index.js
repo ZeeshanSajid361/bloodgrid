@@ -111,11 +111,12 @@ router.post('/register', async (req, res, next) => {
       }
     });
 
-    // Fire-and-forget — don't block the response on SMTP latency.
     const user = await User.findById(userId);
-    sendVerificationEmail({ name: user.name, email: user.email, token: rawToken }).catch((err) =>
-      console.error('[email] Verification send failed:', err.message)
-    );
+    try {
+      await sendVerificationEmail({ name: user.name, email: user.email, token: rawToken });
+    } catch (err) {
+      console.error('[email] Verification send failed:', err.message);
+    }
 
     return res.status(201).json({
       success: true,
@@ -172,9 +173,11 @@ router.post('/verify-email', async (req, res, next) => {
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    sendWelcomeEmail({ name: user.name, email: user.email, role: user.role }).catch((err) =>
-      console.error('[email] Welcome send failed:', err.message)
-    );
+    try {
+      await sendWelcomeEmail({ name: user.name, email: user.email, role: user.role });
+    } catch (err) {
+      console.error('[email] Welcome send failed:', err.message);
+    }
 
     return res.status(200).json({
       success: true,
