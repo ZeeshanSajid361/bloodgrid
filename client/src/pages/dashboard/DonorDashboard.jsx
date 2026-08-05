@@ -43,7 +43,7 @@ export default function DonorDashboard() {
   const { donor, loading, error, refetch } = useDonorProfile();
   const navigate               = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const notifs = useNotifications();
 
   async function handleLogout() {
@@ -60,14 +60,14 @@ export default function DonorDashboard() {
 
   return (
     <div className="dashboard-shell">
-      {/* ── Desktop Fixed Sidebar (250px) ── */}
+      {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
       <aside className="sidebar">
         <a href="/" className="sidebar-logo">
           <div className="sidebar-logo-icon">🩸</div>
           <span className="sidebar-logo-text">Blood<span>Link</span></span>
         </a>
 
-        <div className="sidebar-user">
+        <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
           <div className="sidebar-user-card">
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
@@ -86,7 +86,7 @@ export default function DonorDashboard() {
               className={`sidebar-nav-link${activeTab === id ? ' active' : ''}`}
               onClick={() => setActiveTab(id)}
             >
-              <Icon size={18} />
+              <Icon size={20} />
               <span>{label}</span>
             </button>
           ))}
@@ -94,7 +94,7 @@ export default function DonorDashboard() {
 
         <div className="sidebar-footer">
           <button id="donor-logout" className="sidebar-nav-link" onClick={handleLogout}>
-            <LogOut size={18} />
+            <LogOut size={20} />
             <span>Sign out</span>
           </button>
         </div>
@@ -109,37 +109,14 @@ export default function DonorDashboard() {
             <div className="mobile-header-title">Blood<span>Link</span></div>
           </div>
           
-          {/* User Avatar Pill with Dropdown */}
-          <div style={{ position: 'relative' }}>
-            <button 
-              className="user-avatar-pill" 
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              aria-label="User menu"
-            >
-              {initials}
-            </button>
-
-            {showUserMenu && (
-              <div className="user-menu-dropdown">
-                <div className="user-menu-header">
-                  <div className="user-menu-name">{user?.name}</div>
-                  <div className="user-menu-email">{user?.email}</div>
-                </div>
-                <button 
-                  className="user-menu-item"
-                  onClick={() => { setActiveTab('edit'); setShowUserMenu(false); }}
-                >
-                  <Edit3 size={16} /> Edit Profile
-                </button>
-                <button 
-                  className="user-menu-item logout"
-                  onClick={handleLogout}
-                >
-                  <LogOut size={16} /> Sign out
-                </button>
-              </div>
-            )}
-          </div>
+          {/* User Avatar Pill */}
+          <button 
+            className="user-avatar-pill" 
+            onClick={() => setShowProfileModal(true)}
+            aria-label="View profile details"
+          >
+            {initials}
+          </button>
         </header>
 
         {/* Main Content Area */}
@@ -162,7 +139,7 @@ export default function DonorDashboard() {
           )}
         </main>
 
-        {/* Mobile Bottom Navigation (Cleaned — core tabs only) */}
+        {/* Mobile Bottom Navigation (Clean 3 Tabs) */}
         <nav className="mobile-bottom-nav">
           {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
             <button
@@ -176,6 +153,65 @@ export default function DonorDashboard() {
           ))}
         </nav>
       </div>
+
+      {/* ── Full Profile View Modal (Opens when tapping [ZS] Avatar) ── */}
+      {showProfileModal && (
+        <div className="profile-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <button 
+                className="profile-modal-close" 
+                onClick={() => setShowProfileModal(false)}
+              >
+                <X size={18} />
+              </button>
+              <div className="profile-avatar-large">{initials}</div>
+              <div className="profile-modal-name">{user?.name}</div>
+              <div className="profile-modal-role">Voluntary Blood Donor</div>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-info-row">
+                <span className="profile-info-label">Email</span>
+                <span className="profile-info-val">{user?.email}</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Blood Group</span>
+                <span className="blood-group-badge">{donor?.bloodGroup || 'Not set'}</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">City</span>
+                <span className="profile-info-val">{donor?.city || 'Not set'}</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Availability</span>
+                <span className={`badge ${donor?.isAvailable ? 'badge-green' : 'badge-amber'}`}>
+                  {donor?.isAvailable ? '✓ Active in Search' : 'Unavailable'}
+                </span>
+              </div>
+            </div>
+
+            <div className="profile-modal-actions">
+              <button 
+                className="btn btn-primary btn-full"
+                onClick={() => {
+                  setActiveTab('edit');
+                  setShowProfileModal(false);
+                }}
+              >
+                <Edit3 size={18} /> Edit Profile Details
+              </button>
+              <button 
+                className="btn btn-ghost btn-full"
+                style={{ color: 'var(--red-400)' }}
+                onClick={handleLogout}
+              >
+                <LogOut size={18} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />

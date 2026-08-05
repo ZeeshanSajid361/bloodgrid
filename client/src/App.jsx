@@ -22,12 +22,15 @@ import HospitalDashboard from './pages/dashboard/HospitalDashboard';
 import AdminDashboard    from './pages/dashboard/AdminDashboard';
 import QRVerifyPage      from './pages/qr/QRVerifyPage';
 
+import LandingPage   from './pages/public/LandingPage';
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
+          <Route path="/"             element={<LandingPage />} />
           <Route path="/register"     element={<RegisterPage />} />
           <Route path="/login"        element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -95,8 +98,6 @@ export default function App() {
             }
           />
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* 404 fallback */}
           <Route
