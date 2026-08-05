@@ -447,7 +447,7 @@ export default function LandingPage() {
         <div className="section-title-wrap">
           <div className="section-tag">Direct Support & Demo Desks</div>
           <h2 className="section-main-title">Contact & Support Center</h2>
-          <p className="section-desc">Reach out directly to zeeshansajid361@gmail.com or view emergency hospital demo desks.</p>
+          <p className="section-desc">Reach out directly to our BloodSync Support Desk or view emergency hospital demo desks.</p>
         </div>
 
         <div className="dashboard-grid-2" style={{ gap: 'var(--space-6)' }}>
@@ -488,12 +488,12 @@ export default function LandingPage() {
               <Mail size={20} color="var(--blue-400)" /> Send Email to Support
             </h3>
             <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
-              Target email inbox for testing: <strong>zeeshansajid361@gmail.com</strong>
+              Have questions or need assistance? Send a message directly to our BloodSync Support Desk.
             </p>
 
             {contactSubmitted ? (
               <div className="badge badge-green" style={{ padding: 'var(--space-4)', fontSize: '0.875rem', width: '100%', justifyContent: 'center', textAlign: 'center', lineHeight: 1.5 }}>
-                ✓ Mail application launched! Email targeting <strong>zeeshansajid361@gmail.com</strong>.
+                ✓ Mail application opened! Preparing your message for the BloodSync Support Team.
               </div>
             ) : (
               <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -532,17 +532,17 @@ export default function LandingPage() {
                   />
                 </div>
                 <button type="submit" className="btn btn-primary">
-                  <Send size={16} /> Send Email to zeeshansajid361@gmail.com
+                  <Send size={16} /> Send Email to Support Team
                 </button>
               </form>
             )}
 
             <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
               <a 
-                href="mailto:zeeshansajid361@gmail.com?subject=BloodSync%20Direct%20Inquiry" 
+                href="mailto:zeeshansajid361@gmail.com?subject=BloodSync%20Support%20Inquiry" 
                 style={{ fontSize: '0.825rem', color: 'var(--red-400)', fontWeight: 700, textDecoration: 'none' }}
               >
-                ✉️ Direct Mail: zeeshansajid361@gmail.com
+                ✉️ Contact Support Team
               </a>
             </div>
           </div>

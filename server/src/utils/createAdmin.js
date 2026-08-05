@@ -4,7 +4,7 @@ const { User } = require('../models/User');
 
 async function createAdmin() {
   try {
-    const email = process.argv[2] || 'admin@bloodlink.com';
+    const email = process.argv[2] || 'admin@bloodsync.com';
     const password = process.argv[3] || 'Password123!';
 
     if (!process.env.MONGO_URI) {

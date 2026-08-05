@@ -19,7 +19,7 @@ const { PushSubscription }  = require('../models/PushSubscription');
 
 const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@bloodlink.pk';
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@bloodsync.app';
 
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webPush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);

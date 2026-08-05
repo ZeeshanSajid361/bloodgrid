@@ -73,6 +73,6 @@ module.exports = {
   vapid: {
     publicKey:  process.env.VAPID_PUBLIC_KEY  || null,
     privateKey: process.env.VAPID_PRIVATE_KEY || null,
-    subject:    process.env.VAPID_SUBJECT     || 'mailto:admin@bloodlink.pk',
+    subject:    process.env.VAPID_SUBJECT     || 'mailto:admin@bloodsync.app',
   },
 };

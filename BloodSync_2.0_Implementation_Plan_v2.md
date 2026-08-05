@@ -1,4 +1,4 @@
-# BloodLink 2.0 — Implementation Plan (v2)
+# BloodSync 2.0 — Implementation Plan (v2)
 
 **Prepared by:** Zeeshan Sajid · zeeshansajid361@gmail.com
 **Team:** Zeeshan Sajid & Irtaza
@@ -11,7 +11,7 @@
 
 Before revising the plan, it's worth knowing who else is solving this problem, because it changes what "hospital integration" should realistically mean.
 
-- **Blood Link Pakistan** (bloodlink.pk) — an initiative of the Family and Fellows Foundation, registered with SECP and the Punjab Charity Commission. 900+ donors, 40+ facilitated donations, partners including NUST's Community Service Club, Air University, and Sundas Foundation Islamabad. Its model: donors and recipients use the app, but every request is **manually reviewed by foundation staff** against uploaded ID and a hospital-issued request document before any donor is notified. Donation always happens *at* a hospital or blood bank — the app never claims to integrate with a hospital's internal systems. Donors are gamified with verified-donation tiers (Spark → Pulse → Life Saver → Guardian → Anchor).
+- **BloodSync Pakistan** (bloodsync.pk) — an initiative of the Family and Fellows Foundation, registered with SECP and the Punjab Charity Commission. 900+ donors, 40+ facilitated donations, partners including NUST's Community Service Club, Air University, and Sundas Foundation Islamabad. Its model: donors and recipients use the app, but every request is **manually reviewed by foundation staff** against uploaded ID and a hospital-issued request document before any donor is notified. Donation always happens *at* a hospital or blood bank — the app never claims to integrate with a hospital's internal systems. Donors are gamified with verified-donation tiers (Spark → Pulse → Life Saver → Guardian → Anchor).
 - **E Blood** (eblood.com.pk) — AI/location-based matching; testimonials describe donors routed directly to named hospitals (e.g. Shifa International, Islamabad) for the actual donation.
 - **Pakistan Red Crescent Society (PRCS)** — already runs a national Regional Blood Donor Program that collaborates directly with hospitals and blood banks for donation camps, screening, and distribution.
 - **Academic MERN precedents** (BloodConnect, and a 2026 "Blood Bank Management System with AI Demand Forecasting" study) — both validate MERN as the right stack for this problem and add two ideas worth borrowing: **QR-code check-in** to confirm a donation actually happened, and a **simple moving-average forecast** for anticipating shortages instead of a flat low-stock threshold.
@@ -19,7 +19,7 @@ Before revising the plan, it's worth knowing who else is solving this problem, b
 **Two takeaways that reshape this plan:**
 
 1. **Even a registered, funded NGO doesn't attempt live hospital API integration.** No one in this market does. So Phase 4 below stops treating that as the goal and instead builds what actually works: hospitals as a *verified location directory*, manual document-based request verification, and partnerships with organizations that already have hospital relationships (PRCS, university community-service clubs) rather than hospital IT departments.
-2. **The name "BloodLink" is already in active use** by a registered Pakistani NGO with a Play Store app. Fine for a university project, but worth knowing — don't publicly launch or promote this build under that exact name without checking, and it's worth a one-line acknowledgment in your report that a similarly named platform already exists (shows awareness of the space, which reads well to a grader).
+2. **The name "BloodSync" is already in active use** by a registered Pakistani NGO with a Play Store app. Fine for a university project, but worth knowing — don't publicly launch or promote this build under that exact name without checking, and it's worth a one-line acknowledgment in your report that a similarly named platform already exists (shows awareness of the space, which reads well to a grader).
 
 ---
 
@@ -81,7 +81,7 @@ function getEligibility(gender, lastDonationDate) {
 
 **Availability vs. eligibility — keep separate.** A donor can be medically eligible but personally unavailable. Only donors who are both eligible and available surface in search or Code Red alerts.
 
-**Donor recognition levels** (borrowed directly from the real Blood Link Pakistan model — a free, purely cosmetic engagement feature): count each *confirmed* donation (see Phase 7) and assign a tier — Spark (1+), Pulse (3+), Life Saver (7+), Guardian (12+), Anchor (20+). Shown as a badge on the donor's dashboard. Costs nothing but a field and a lookup table; noticeably increases perceived polish.
+**Donor recognition levels** (borrowed directly from the real BloodSync Pakistan model — a free, purely cosmetic engagement feature): count each *confirmed* donation (see Phase 7) and assign a tier — Spark (1+), Pulse (3+), Life Saver (7+), Guardian (12+), Anchor (20+). Shown as a badge on the donor's dashboard. Costs nothing but a field and a lookup table; noticeably increases perceived polish.
 
 **Deliverables:** `GET/PUT /api/donors/me`, `PATCH /api/donors/me/availability`, eligibility utility function (unit-testable), donor dashboard UI with eligibility card and level badge.
 

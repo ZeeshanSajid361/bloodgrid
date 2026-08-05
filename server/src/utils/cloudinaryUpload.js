@@ -5,7 +5,7 @@
  * awaited directly from route handlers. Multer provides the file buffer via
  * memoryStorage — no temp files are written to disk.
  *
- * All uploads go into the 'bloodlink/requests' folder on Cloudinary so they
+ * All uploads go into the 'bloodsync/requests' folder on Cloudinary so they
  * are easy to find and bulk-delete if needed.
  *
  * Returns the Cloudinary upload result object, from which the caller extracts:
@@ -32,7 +32,7 @@ cloudinary.config({
  * @param {string} [publicId] - Optional explicit public_id (e.g. for updates)
  * @returns {Promise<import('cloudinary').UploadApiResponse>}
  */
-function uploadBuffer(buffer, folder = 'bloodlink/requests', publicId, mimetype) {
+function uploadBuffer(buffer, folder = 'bloodsync/requests', publicId, mimetype) {
   return new Promise((resolve, reject) => {
     const isPdf = mimetype === 'application/pdf';
     

@@ -144,7 +144,7 @@ router.post(
       }
 
       const uploadPromises = req.files.map(file => 
-        uploadBuffer(file.buffer, 'bloodlink/hospitals', null, file.mimetype)
+        uploadBuffer(file.buffer, 'bloodsync/hospitals', null, file.mimetype)
       );
       const uploadResults = await Promise.all(uploadPromises);
 

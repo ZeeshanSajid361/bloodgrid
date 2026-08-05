@@ -3,7 +3,7 @@
  *
  * Flow:
  *   1. Donor's blood request is approved by admin.
- *   2. Donor goes to the hospital and opens their BloodLink dashboard.
+ *   2. Donor goes to the hospital and opens their BloodSync dashboard.
  *   3. Donor clicks "Generate QR" on their approved request — a one-time
  *      QR code is created, encoding the verify URL (valid for 24 h).
  *   4. Hospital staff (or admin) scans the QR code, which opens a browser

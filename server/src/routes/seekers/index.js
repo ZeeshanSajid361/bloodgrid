@@ -171,7 +171,7 @@ router.post(
 
       // Upload all document buffers to Cloudinary.
       const uploadPromises = req.files.map(file => 
-        uploadBuffer(file.buffer, 'bloodlink/requests', null, file.mimetype)
+        uploadBuffer(file.buffer, 'bloodsync/requests', null, file.mimetype)
       );
       const uploadResults = await Promise.all(uploadPromises);
 

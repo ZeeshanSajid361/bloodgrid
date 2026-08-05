@@ -2,22 +2,6 @@
 
 A full-stack MERN platform connecting blood donors, seekers, hospitals, and administrators — built with document-based request verification and real-time notifications.
 
-## Screenshots
-
-<div align="center">
-  <img src="images/signup_page.png" alt="Registration Form" width="70%">
-  <img src="images/donor_profile.png" alt="Donor Dashboard" width="70%">
-</div>
-<br/>
-<div align="center">
-  <img src="images/seeker_profile.png" alt="Seeker Dashboard" width="70%">
-  <img src="images/signin_page.png" alt="Sign In Page" width="70%">
-</div>
-<br/>
-<div align="center">
-  <img src="images/email_verfication.png" alt="Email Verification" width="70%">
-</div>
-
 ## Stack
 
 | Layer    | Technology                                      |
@@ -33,7 +17,7 @@ A full-stack MERN platform connecting blood donors, seekers, hospitals, and admi
 ## Project Structure
 
 ```
-Bloodlink/
+Bloodsync/
 ├── client/          # React + Vite frontend
 │   └── src/
 │       ├── context/     # AuthContext

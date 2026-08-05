@@ -1,5 +1,5 @@
 ### ═══════════════════════════════════════════════════════════
-###  BloodLink 2.0 — REST API Test Collection
+###  BloodSync 2.0 — REST API Test Collection
 ###  Use with VS Code REST Client extension (humao.rest-client)
 ### ═══════════════════════════════════════════════════════════
 
@@ -171,38 +171,38 @@ GET {{baseUrl}}/api/seekers/compatibility?bloodGroup=B%2B
 # Replace the file path with a real image path on your machine.
 POST {{baseUrl}}/api/seekers/requests
 Authorization: Bearer {{seekerToken}}
-Content-Type: multipart/form-data; boundary=BloodLinkBoundary
+Content-Type: multipart/form-data; boundary=BloodSyncBoundary
 
---BloodLinkBoundary
+--BloodSyncBoundary
 Content-Disposition: form-data; name="patientBloodGroup"
 
 O+
---BloodLinkBoundary
+--BloodSyncBoundary
 Content-Disposition: form-data; name="hospitalName"
 
 PIMS Hospital
---BloodLinkBoundary
+--BloodSyncBoundary
 Content-Disposition: form-data; name="hospitalCity"
 
 Islamabad
---BloodLinkBoundary
+--BloodSyncBoundary
 Content-Disposition: form-data; name="unitsNeeded"
 
 2
---BloodLinkBoundary
+--BloodSyncBoundary
 Content-Disposition: form-data; name="urgency"
 
 urgent
---BloodLinkBoundary
+--BloodSyncBoundary
 Content-Disposition: form-data; name="patientName"
 
 Ahmed Khan
---BloodLinkBoundary
+--BloodSyncBoundary
 Content-Disposition: form-data; name="document"; filename="slip.jpg"
 Content-Type: image/jpeg
 
 < ./test-files/sample-slip.jpg
---BloodLinkBoundary--
+--BloodSyncBoundary--
 
 ###
 
@@ -371,7 +371,7 @@ Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
-  "note": "Documents verified. Welcome to BloodLink."
+  "note": "Documents verified. Welcome to BloodSync."
 }
 
 ###
