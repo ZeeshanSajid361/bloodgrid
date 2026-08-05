@@ -466,14 +466,14 @@ export default function LandingPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               {EMERGENCY_HOSPITALS.map((hosp) => (
-                <div key={hosp.id} className="profile-info-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{hosp.name}</span>
+                <div key={hosp.id} className="hosp-demo-item">
+                  <div className="hosp-demo-top">
+                    <span className="hosp-demo-name">{hosp.name}</span>
                     <span className="badge badge-green">DEMO LINE</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginTop: '2px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {hosp.city}</span>
-                    <a href={`tel:${hosp.phone.replace(/[^0-9+]/g, '')}`} className="btn btn-primary btn-sm" style={{ gap: '4px' }}>
+                  <div className="hosp-demo-bottom">
+                    <span className="hosp-demo-city">📍 {hosp.city}</span>
+                    <a href={`tel:${hosp.phone.replace(/[^0-9+]/g, '')}`} className="btn btn-primary btn-sm hosp-call-btn">
                       <PhoneCall size={14} /> Call ({hosp.phone})
                     </a>
                   </div>

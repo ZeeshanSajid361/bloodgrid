@@ -575,7 +575,116 @@
   100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
+/* ── Hospital Emergency Helplines Cards ───────────────────────────────────── */
+.hosp-demo-item {
+  background: var(--surface-float);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hosp-demo-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.hosp-demo-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.hosp-demo-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.hosp-demo-city {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.hosp-call-btn {
+  gap: 6px;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+/* ── Mobile Nav Backdrop & Slide-down Menu ─────────────────────────────── */
+.landing-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+}
+
+.landing-mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(10, 14, 22, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--surface-border-hover);
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  z-index: 100;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8);
+  animation: slideDown 0.2s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.landing-mobile-top-actions {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+.mobile-nav-divider {
+  height: 1px;
+  background: var(--surface-border);
+  margin: var(--space-1) 0;
+}
+
+.landing-mobile-menu a {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.6rem var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.landing-mobile-menu a:hover,
+.landing-mobile-menu a:active {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--red-400);
+}
+
+/* ── Responsive Rules ────────────────────────────────────────────────────── */
 @media (max-width: 1023px) {
   .landing-hero { grid-template-columns: 1fr; gap: var(--space-8); text-align: center; }
   .hero-pill, .hero-ctas { justify-content: center; margin: 0 auto; }
@@ -586,12 +695,32 @@
 }
 
 @media (max-width: 767px) {
+  .landing-page {
+    overflow-x: hidden;
+  }
   .landing-nav-links { display: none; }
   .landing-nav-actions .btn { display: none; }
   .mobile-nav-toggle { display: flex; align-items: center; justify-content: center; }
   .landing-nav { padding: var(--space-3) var(--space-4); }
   .landing-hero { padding: var(--space-8) var(--space-4); }
-  .widget-grid { grid-template-columns: 1fr; }
-  .footer-inner { grid-template-columns: 1fr; }
+  .hero-title { font-size: 2.1rem; }
+  .hero-subtitle { font-size: 0.95rem; }
+  .hero-ctas { flex-direction: column; width: 100%; gap: var(--space-3); }
+  .hero-ctas .btn { width: 100%; justify-content: center; }
+  .hero-stats-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  .widget-grid { grid-template-columns: 1fr; gap: var(--space-3); }
+  .dashboard-grid-2 { grid-template-columns: 1fr !important; gap: var(--space-5) !important; }
+  .footer-inner { grid-template-columns: 1fr; text-align: center; gap: var(--space-6); }
   .emergency-float-btn { bottom: 16px; right: 16px; padding: var(--space-3) var(--space-4); font-size: 0.825rem; }
+  .hosp-demo-bottom { flex-direction: column; align-items: stretch; gap: var(--space-2); }
+  .hosp-call-btn { width: 100%; justify-content: center; padding: 0.5rem; }
+  .section-wrapper { padding-left: var(--space-4); padding-right: var(--space-4); }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 1.85rem; }
+  .hero-card-glass { padding: var(--space-5); }
+  .compat-card { padding: var(--space-4) !important; }
+  .hero-stats-grid { grid-template-columns: 1fr 1fr; }
+  .hosp-demo-top { flex-direction: column; align-items: flex-start; }
 }
