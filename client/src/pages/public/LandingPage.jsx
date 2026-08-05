@@ -79,7 +79,7 @@ export default function LandingPage() {
             Sign In
           </Link>
           <Link to="/register" className="btn btn-primary btn-sm">
-            Register as Donor
+            Register
           </Link>
         </div>
       </header>
@@ -99,7 +99,7 @@ export default function LandingPage() {
 
           <div className="hero-ctas">
             <Link to="/register" className="btn btn-primary btn-lg">
-              <UserPlus size={20} /> Join as a Voluntary Donor
+              <UserPlus size={20} /> Create an Account
             </Link>
             <Link to="/login" className="btn btn-ghost btn-lg">
               <Search size={20} /> Request Blood / Find Donors
@@ -276,6 +276,43 @@ export default function LandingPage() {
             <p className="step-desc">
               Donations are verified seamlessly using digital QR check-in, unlocking recognition badges and gamified donor levels.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Recognition Tiers ── */}
+      <section id="tiers" className="section-wrapper" style={{ background: 'var(--surface-raised)', borderRadius: 'var(--radius-2xl)', marginTop: 'var(--space-8)' }}>
+        <div className="section-title-wrap">
+          <div className="section-tag">Gamified Impact</div>
+          <h2 className="section-main-title">Donor Recognition Tiers</h2>
+          <p className="section-desc">Earn badges and level up as you complete verified blood donations.</p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+            <span style={{ fontSize: '2rem' }}>🌱</span>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Spark</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>1 Confirmed Donation</p>
+          </div>
+          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+            <span style={{ fontSize: '2rem' }}>⚡</span>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Pulse</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>3 Confirmed Donations</p>
+          </div>
+          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+            <span style={{ fontSize: '2rem' }}>❤️</span>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Life Saver</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>5 Confirmed Donations</p>
+          </div>
+          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+            <span style={{ fontSize: '2rem' }}>🛡️</span>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Guardian</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>10 Confirmed Donations</p>
+          </div>
+          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+            <span style={{ fontSize: '2rem' }}>⚓</span>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Anchor</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>25+ Confirmed Donations</p>
           </div>
         </div>
       </section>
