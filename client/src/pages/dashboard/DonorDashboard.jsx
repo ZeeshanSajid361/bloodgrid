@@ -43,6 +43,7 @@ export default function DonorDashboard() {
   const { donor, loading, error, refetch } = useDonorProfile();
   const navigate               = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const notifs = useNotifications();
 
   async function handleLogout() {
@@ -50,7 +51,6 @@ export default function DonorDashboard() {
     navigate('/login', { replace: true });
   }
 
-  // ── Sidebar ───────────────────────────────────────────────────────────────
   const initials = user?.name
     ?.split(' ')
     .map((w) => w[0])
@@ -60,7 +60,7 @@ export default function DonorDashboard() {
 
   return (
     <div className="dashboard-shell">
-      {/* ── Desktop Collapsible Sidebar ── */}
+      {/* ── Desktop Fixed Sidebar (250px) ── */}
       <aside className="sidebar">
         <a href="/" className="sidebar-logo">
           <div className="sidebar-logo-icon">🩸</div>
@@ -72,7 +72,7 @@ export default function DonorDashboard() {
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{user?.name}</div>
-              <div className="sidebar-user-role">Donor</div>
+              <div className="sidebar-user-role">Donor Profile</div>
             </div>
           </div>
         </div>
@@ -100,20 +100,49 @@ export default function DonorDashboard() {
         </div>
       </aside>
 
-      {/* ── Main content wrapper ── */}
+      {/* ── Main Content Wrapper ── */}
       <div className="dashboard-main-wrapper">
-        {/* Mobile top header */}
+        {/* Mobile Sticky Top Header */}
         <header className="mobile-header">
           <div className="mobile-header-logo">
             <div className="mobile-header-logo-icon">🩸</div>
             <div className="mobile-header-title">Blood<span>Link</span></div>
           </div>
-          <div className="mobile-header-user">
-            <div className="mobile-user-avatar">{initials}</div>
+          
+          {/* User Avatar Pill with Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="user-avatar-pill" 
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              aria-label="User menu"
+            >
+              {initials}
+            </button>
+
+            {showUserMenu && (
+              <div className="user-menu-dropdown">
+                <div className="user-menu-header">
+                  <div className="user-menu-name">{user?.name}</div>
+                  <div className="user-menu-email">{user?.email}</div>
+                </div>
+                <button 
+                  className="user-menu-item"
+                  onClick={() => { setActiveTab('edit'); setShowUserMenu(false); }}
+                >
+                  <Edit3 size={16} /> Edit Profile
+                </button>
+                <button 
+                  className="user-menu-item logout"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={16} /> Sign out
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
-        {/* Main content */}
+        {/* Main Content Area */}
         <main className="dashboard-main">
           {loading && <DashboardSkeleton />}
           {error   && <ErrorBanner message={error} onRetry={refetch} />}
@@ -133,7 +162,7 @@ export default function DonorDashboard() {
           )}
         </main>
 
-        {/* Mobile bottom nav */}
+        {/* Mobile Bottom Navigation (Cleaned — core tabs only) */}
         <nav className="mobile-bottom-nav">
           {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
             <button
@@ -145,14 +174,10 @@ export default function DonorDashboard() {
               <span>{label}</span>
             </button>
           ))}
-          <button className="mobile-nav-item" onClick={handleLogout}>
-            <LogOut size={22} />
-            <span>Sign out</span>
-          </button>
         </nav>
       </div>
 
-      {/* Notification Bell — always on top via z-index: var(--z-notif) */}
+      {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />
     </div>
   );

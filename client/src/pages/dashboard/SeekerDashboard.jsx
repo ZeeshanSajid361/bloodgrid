@@ -34,24 +34,34 @@ const NAV_ITEMS = [
 ];
 
 export default function SeekerDashboard() {
-  const { user, logout }   = useAuth();
-  const navigate           = useNavigate();
-  const [activeTab, setTab] = useState('search');
-  const notifs = useNotifications();
+  const { user, logout }              = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const activeTab                      = searchParams.get('tab') || 'search';
 
-  const { requests, loading: reqLoading, error: reqError, total, refetch } = useSeekerRequests();
+  const { requests, loading: reqLoading, error: reqError, total, refetch } = useMyRequests();
+  const navigate                      = useNavigate();
+  const notifs                        = useNotifications();
 
-  const initials = user?.name
-    ?.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  function setTab(t) {
+    setSearchParams({ tab: t });
+  }
 
   async function handleLogout() {
     await logout();
     navigate('/login', { replace: true });
   }
 
+  const initials = user?.name
+    ?.split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || '?';
+
   return (
     <div className="dashboard-shell">
-      {/* ── Sidebar ── */}
+      {/* ── Desktop Fixed Sidebar (250px) ── */}
       <aside className="sidebar">
         <a href="/" className="sidebar-logo">
           <div className="sidebar-logo-icon">🩸</div>
@@ -63,7 +73,7 @@ export default function SeekerDashboard() {
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{user?.name}</div>
-              <div className="sidebar-user-role">Seeker</div>
+              <div className="sidebar-user-role">Seeker Profile</div>
             </div>
           </div>
         </div>
@@ -78,41 +88,92 @@ export default function SeekerDashboard() {
               onClick={() => setTab(id)}
             >
               <Icon size={18} />
-              {label}
+              <span>{label}</span>
             </button>
           ))}
         </nav>
 
         <div className="sidebar-footer">
-          <div style={{ padding: 'var(--space-2) var(--space-4)', marginBottom: 'var(--space-2)' }}>
-            <NotificationBell {...notifs} />
-          </div>
           <button id="seeker-logout" className="sidebar-nav-link" onClick={handleLogout}>
             <LogOut size={18} />
-            Sign out
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
 
-      {/* ── Main ── */}
-      <main className="dashboard-main">
-        {activeTab === 'search'  && <SearchTab />}
-        {activeTab === 'request' && (
-          <RequestTab
-            onSubmitted={() => { refetch(); setTab('history'); }}
-          />
-        )}
-        {activeTab === 'history' && (
-          <HistoryTab
-            requests={requests}
-            loading={reqLoading}
-            error={reqError}
-            total={total}
-            refetch={refetch}
-            onNewRequest={() => setTab('request')}
-          />
-        )}
-      </main>
+      {/* ── Main Content Wrapper ── */}
+      <div className="dashboard-main-wrapper">
+        {/* Mobile Sticky Top Header */}
+        <header className="mobile-header">
+          <div className="mobile-header-logo">
+            <div className="mobile-header-logo-icon">🩸</div>
+            <div className="mobile-header-title">Blood<span>Link</span></div>
+          </div>
+          
+          {/* User Avatar Pill with Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="user-avatar-pill" 
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              aria-label="User menu"
+            >
+              {initials}
+            </button>
+
+            {showUserMenu && (
+              <div className="user-menu-dropdown">
+                <div className="user-menu-header">
+                  <div className="user-menu-name">{user?.name}</div>
+                  <div className="user-menu-email">{user?.email}</div>
+                </div>
+                <button 
+                  className="user-menu-item logout"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={16} /> Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="dashboard-main">
+          {activeTab === 'search'  && <SearchTab />}
+          {activeTab === 'request' && (
+            <RequestTab
+              onSubmitted={() => { refetch(); setTab('history'); }}
+            />
+          )}
+          {activeTab === 'history' && (
+            <HistoryTab
+              requests={requests}
+              loading={reqLoading}
+              error={reqError}
+              total={total}
+              refetch={refetch}
+              onNewRequest={() => setTab('request')}
+            />
+          )}
+        </main>
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="mobile-bottom-nav">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              className={`mobile-nav-item${activeTab === id ? ' active' : ''}`}
+              onClick={() => setTab(id)}
+            >
+              <Icon size={22} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Floating Notification Bell */}
+      <NotificationBell {...notifs} />
     </div>
   );
 }
