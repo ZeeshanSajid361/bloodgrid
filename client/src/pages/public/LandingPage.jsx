@@ -222,8 +222,8 @@ export default function LandingPage() {
                 <span className="hero-stat-label">Hospitals</span>
               </div>
               <div className="hero-stat-item">
-                <span className="hero-stat-num">&lt; 15 Mins</span>
-                <span className="hero-stat-label">Avg Response</span>
+                <span className="hero-stat-num">100%</span>
+                <span className="hero-stat-label">Voluntary</span>
               </div>
             </div>
           </div>
@@ -306,10 +306,6 @@ export default function LandingPage() {
                   <div>
                     <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-success)' }}>14 Donors</span>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Active & ready to donate</p>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--red-400)' }}>&lt; 15 Min Response</span>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Average emergency donor match speed</p>
                   </div>
                   <div>
                     <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--blue-400)' }}>3 Hospitals</span>

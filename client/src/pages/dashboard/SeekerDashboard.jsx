@@ -8,7 +8,7 @@
  */
 
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, FilePlus, ClipboardList, LogOut,
   MapPin, AlertCircle, CheckCircle2, FileText,
