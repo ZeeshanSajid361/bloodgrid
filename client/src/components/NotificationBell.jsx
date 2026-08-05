@@ -1,16 +1,14 @@
 /**
- * NotificationBell — reusable bell icon with badge + slide-down panel.
+ * NotificationBell — reusable bell icon with badge + slide-down panel + detail modal.
  *
  * Used in all four role dashboards (Donor, Seeker, Hospital, Admin).
- * Import useNotifications() in the parent and pass the returned object as props.
- *
- * Usage:
- *   const notifs = useNotifications();
- *   <NotificationBell {...notifs} />
+ * Displays only unseen notifications in the dropdown.
+ * Clicking a notification displays basic info, removes it from unseen, and moves it to history.
+ * An 'X' clear button lets users directly dismiss notifications to history.
  */
 
-import { useRef, useEffect } from 'react';
-import { Bell, X, CheckCheck, Loader2 } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Bell, X, CheckCheck, Loader2, Info, ArrowRight, UserCheck, ShieldAlert } from 'lucide-react';
 import './NotificationBell.css';
 
 const TYPE_ICON = {
@@ -23,6 +21,7 @@ const TYPE_ICON = {
 };
 
 function timeAgo(dateStr) {
+  if (!dateStr) return 'just now';
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
   if (diff < 60)   return 'just now';
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
@@ -36,6 +35,10 @@ export default function NotificationBell({
   markRead, markAllRead, dismiss,
 }) {
   const panelRef = useRef(null);
+  const [selectedNotif, setSelectedNotif] = useState(null);
+
+  // Filter to show ONLY unseen / unread notifications in the dropdown panel
+  const unseenNotifs = (notifications || []).filter(n => !n.isRead);
 
   // Close panel on outside click.
   useEffect(() => {
@@ -48,6 +51,19 @@ export default function NotificationBell({
     document.addEventListener('mousedown', handle);
     return () => document.removeEventListener('mousedown', handle);
   }, [panelOpen, togglePanel]);
+
+  function handleNotifClick(n) {
+    setSelectedNotif(n);
+    // Mark as read and dismiss from unseen tray (moves to history)
+    markRead(n._id);
+    dismiss(n._id);
+  }
+
+  function handleDismissSingle(e, id) {
+    e.stopPropagation();
+    markRead(id);
+    dismiss(id);
+  }
 
   return (
     <div className="notif-bell-wrap" ref={panelRef}>
@@ -68,11 +84,18 @@ export default function NotificationBell({
         <div className="notif-panel">
           {/* Header */}
           <div className="notif-panel-header">
-            <span className="notif-panel-title">Notifications</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="notif-panel-title">Unseen Notifications</span>
+              {unreadCount > 0 && (
+                <span className="badge badge-red" style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>
+                  {unreadCount} New
+                </span>
+              )}
+            </div>
             <div className="notif-panel-actions">
               {unreadCount > 0 && (
-                <button className="notif-action-btn" onClick={markAllRead} title="Mark all as read">
-                  <CheckCheck size={15} />
+                <button className="notif-action-btn" onClick={markAllRead} title="Clear all to history">
+                  <CheckCheck size={15} /> Clear All
                 </button>
               )}
               <button className="notif-action-btn" onClick={togglePanel} title="Close">
@@ -87,37 +110,80 @@ export default function NotificationBell({
               <div className="notif-loading">
                 <Loader2 size={20} className="spin" />
               </div>
-            ) : notifications.length === 0 ? (
+            ) : unseenNotifs.length === 0 ? (
               <div className="notif-empty">
                 <Bell size={28} style={{ opacity: 0.3 }} />
-                <p>No notifications yet</p>
+                <p>No unseen notifications</p>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>All notifications read & moved to history</span>
               </div>
             ) : (
-              notifications.map(n => (
+              unseenNotifs.map(n => (
                 <div
                   key={n._id}
-                  className={`notif-item${n.isRead ? '' : ' unread'}`}
-                  onClick={() => {
-                    if (!n.isRead) markRead(n._id);
-                    if (n.link) window.location.href = n.link;
-                  }}
+                  className="notif-item unread"
+                  onClick={() => handleNotifClick(n)}
                 >
-                  <span className="notif-type-icon">{TYPE_ICON[n.type] || 'ℹ️'}</span>
+                  <span className="notif-type-icon">{TYPE_ICON[n.type] || '🩸'}</span>
                   <div className="notif-content">
                     <p className="notif-title">{n.title}</p>
                     <p className="notif-msg">{n.message}</p>
-                    <span className="notif-time">{timeAgo(n.createdAt)}</span>
+                    <span className="notif-time">{timeAgo(n.createdAt)} • Tap to view details</span>
                   </div>
                   <button
                     className="notif-dismiss-btn"
-                    onClick={e => { e.stopPropagation(); dismiss(n._id); }}
-                    title="Dismiss"
+                    onClick={e => handleDismissSingle(e, n._id)}
+                    title="Clear notification (Move to history)"
                   >
-                    <X size={12} />
+                    <X size={14} />
                   </button>
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Notification Detail Modal (Opens when clicking any notification item) ── */}
+      {selectedNotif && (
+        <div className="profile-modal-overlay" onClick={() => setSelectedNotif(null)}>
+          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+            <div className="profile-modal-header" style={{ background: 'linear-gradient(135deg, rgba(192,57,43,0.3), rgba(15,21,32,0.95))' }}>
+              <button className="profile-modal-close" onClick={() => setSelectedNotif(null)}>
+                <X size={18} />
+              </button>
+              <div style={{ fontSize: '2.2rem', marginBottom: 'var(--space-2)' }}>
+                {TYPE_ICON[selectedNotif.type] || '🩸'}
+              </div>
+              <div className="profile-modal-name">{selectedNotif.title}</div>
+              <div className="profile-modal-role">Notification Details</div>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-info-row" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                <span className="profile-info-label">Message</span>
+                <span className="profile-info-val" style={{ textAlign: 'right' }}>{selectedNotif.message}</span>
+              </div>
+
+              <div className="profile-info-row">
+                <span className="profile-info-label">Received</span>
+                <span className="profile-info-val">{timeAgo(selectedNotif.createdAt)}</span>
+              </div>
+
+              <div className="profile-info-row">
+                <span className="profile-info-label">Status</span>
+                <span className="badge badge-green">Moved to History</span>
+              </div>
+
+              <div style={{ padding: 'var(--space-3)', background: 'rgba(52, 152, 219, 0.08)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(52, 152, 219, 0.2)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                ℹ️ This notification has been marked as seen and cleared from your active dropdown menu.
+              </div>
+            </div>
+
+            <div className="profile-modal-actions">
+              <button className="btn btn-primary btn-full" onClick={() => setSelectedNotif(null)}>
+                Acknowledge & Close
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -17,7 +17,7 @@ const COMPATIBILITY_MAP = {
   'O-':  ['O-'],
 };
 
-// Demo Emergency Hospital Helplines (Testing Mode - No official collaboration active yet)
+// Demo Emergency Hospital Helplines (Testing Mode)
 const EMERGENCY_HOSPITALS = [
   {
     id: 'hosp-1',
@@ -82,6 +82,11 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+
+  // Contact Support Form State
+  const [contactName, setContactName]   = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMsg, setContactMsg]     = useState('');
   const [contactSubmitted, setContactSubmitted] = useState(false);
 
   const compatibleDonors = COMPATIBILITY_MAP[selectedGroup] || [selectedGroup];
@@ -94,11 +99,22 @@ export default function LandingPage() {
   function handleContactSubmit(e) {
     e.preventDefault();
     setContactSubmitted(true);
-    setTimeout(() => setContactSubmitted(false), 4000);
+
+    // Open user's email client directly targeting zeeshansajid361@gmail.com
+    const subject = encodeURIComponent(`BloodLink Support Inquiry from ${contactName}`);
+    const body = encodeURIComponent(`Sender Name: ${contactName}\nSender Email: ${contactEmail}\n\nMessage:\n${contactMsg}`);
+    window.location.href = `mailto:zeeshansajid361@gmail.com?subject=${subject}&body=${body}`;
+
+    setTimeout(() => setContactSubmitted(false), 5000);
   }
 
   return (
     <div className="landing-page">
+      {/* Backdrop overlay to close mobile menu on outside click */}
+      {mobileMenuOpen && (
+        <div className="landing-mobile-backdrop" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
       {/* ── Public Navbar ── */}
       <header className="landing-nav">
         <Link to="/" className="landing-logo">
@@ -115,7 +131,7 @@ export default function LandingPage() {
           <li><a href="#contact">Contact</a></li>
         </ul>
 
-        {/* Desktop Action Buttons */}
+        {/* Desktop & Mobile Quick Action Buttons */}
         <div className="landing-nav-actions">
           <Link to="/login" className="btn btn-ghost btn-sm">
             Sign In
@@ -123,27 +139,22 @@ export default function LandingPage() {
           <Link to="/register" className="btn btn-primary btn-sm">
             Register
           </Link>
-        </div>
 
-        {/* Mobile Hamburger Toggle (≡ 3 parallel lines button) */}
-        <button 
-          className="mobile-nav-toggle"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle navigation menu"
-        >
-          {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
-        </button>
+          {/* Mobile Hamburger Toggle (≡ 3 parallel lines button) */}
+          <button 
+            className="mobile-nav-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
 
         {/* Mobile Dropdown Slide Menu */}
         {mobileMenuOpen && (
           <div className="landing-mobile-menu">
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>📍 How It Works</a>
-            <a href="#checker" onClick={() => setMobileMenuOpen(false)}>🩸 Donor Compatibility Checker</a>
-            <a href="#emergencies" onClick={() => setMobileMenuOpen(false)}>⚡ Live Emergency Board</a>
-            <a href="#tiers" onClick={() => setMobileMenuOpen(false)}>🏆 Donor Recognition Tiers</a>
-            <a href="#contact" onClick={() => setMobileMenuOpen(false)}>📞 Contact & Support</a>
-
-            <div className="landing-mobile-actions">
+            {/* Top Quick Actions in Mobile Drawer */}
+            <div className="landing-mobile-top-actions">
               <Link to="/login" className="btn btn-ghost btn-full" onClick={() => setMobileMenuOpen(false)}>
                 Sign In
               </Link>
@@ -151,6 +162,14 @@ export default function LandingPage() {
                 Register
               </Link>
             </div>
+
+            <div className="mobile-nav-divider" />
+
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>📍 How It Works</a>
+            <a href="#checker" onClick={() => setMobileMenuOpen(false)}>🩸 Donor Compatibility Checker</a>
+            <a href="#emergencies" onClick={() => setMobileMenuOpen(false)}>⚡ Live Emergency Board</a>
+            <a href="#tiers" onClick={() => setMobileMenuOpen(false)}>🏆 Donor Recognition Tiers</a>
+            <a href="#contact" onClick={() => setMobileMenuOpen(false)}>📞 Contact & Support</a>
           </div>
         )}
       </header>
@@ -203,7 +222,7 @@ export default function LandingPage() {
                 <span className="hero-stat-label">Hospitals</span>
               </div>
               <div className="hero-stat-item">
-                <span className="hero-stat-num">&lt; 15m</span>
+                <span className="hero-stat-num">&lt; 15 Mins</span>
                 <span className="hero-stat-label">Avg Response</span>
               </div>
             </div>
@@ -269,7 +288,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Public Availability Summary (No Direct Phone Numbers to Protect Donor Privacy) */}
+          {/* Public Availability Summary */}
           {hasSearched && (
             <div className="public-search-results">
               <div className="results-header">
@@ -289,8 +308,8 @@ export default function LandingPage() {
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Active & ready to donate</p>
                   </div>
                   <div>
-                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--red-400)' }}>&lt; 15 mins</span>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Average dispatch time</p>
+                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--red-400)' }}>&lt; 15 Min Response</span>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Average emergency donor match speed</p>
                   </div>
                   <div>
                     <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--blue-400)' }}>3 Hospitals</span>
@@ -427,12 +446,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Contact & Hospital Emergency Helplines Section ── */}
+      {/* ── Contact & Support Section ── */}
       <section id="contact" className="section-wrapper">
         <div className="section-title-wrap">
           <div className="section-tag">Direct Support & Demo Desks</div>
           <h2 className="section-main-title">Contact & Support Center</h2>
-          <p className="section-desc">Reach out to the BloodLink Support Team or view demo emergency hospital blood desks.</p>
+          <p className="section-desc">Reach out directly to zeeshansajid361@gmail.com or view emergency hospital demo desks.</p>
         </div>
 
         <div className="dashboard-grid-2" style={{ gap: 'var(--space-6)' }}>
@@ -470,35 +489,66 @@ export default function LandingPage() {
           {/* Quick Contact / Support Message Desk */}
           <div className="compat-card" style={{ background: 'var(--surface-raised)', padding: 'var(--space-6)' }}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 'var(--space-2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Mail size={20} color="var(--blue-400)" /> Email Platform Support Team
+              <Mail size={20} color="var(--blue-400)" /> Send Email to Support
             </h3>
             <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
-              Have questions or feedback? Send an email message directly to BloodLink Support (support@bloodlink-demo.org).
+              Target email inbox for testing: <strong>zeeshansajid361@gmail.com</strong>
             </p>
 
             {contactSubmitted ? (
               <div className="badge badge-green" style={{ padding: 'var(--space-4)', fontSize: '0.875rem', width: '100%', justifyContent: 'center', textAlign: 'center', lineHeight: 1.5 }}>
-                ✓ Inquiry Sent! BloodLink Support (support@bloodlink-demo.org) will respond to your email shortly.
+                ✓ Mail application launched! Email targeting <strong>zeeshansajid361@gmail.com</strong>.
               </div>
             ) : (
               <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 <div className="input-group">
                   <label className="input-label">Your Full Name</label>
-                  <input type="text" className="input" placeholder="e.g. Zeeshan Sajid" required />
+                  <input 
+                    type="text" 
+                    className="input" 
+                    placeholder="e.g. Zeeshan Sajid" 
+                    value={contactName} 
+                    onChange={(e) => setContactName(e.target.value)} 
+                    required 
+                  />
                 </div>
                 <div className="input-group">
                   <label className="input-label">Your Email Address (For Reply)</label>
-                  <input type="email" className="input" placeholder="e.g. yourname@example.com" required />
+                  <input 
+                    type="email" 
+                    className="input" 
+                    placeholder="e.g. yourname@example.com" 
+                    value={contactEmail} 
+                    onChange={(e) => setContactEmail(e.target.value)} 
+                    required 
+                  />
                 </div>
                 <div className="input-group">
                   <label className="input-label">Message / Inquiry</label>
-                  <textarea className="input" rows={3} placeholder="How can the BloodLink support team assist you?" required style={{ resize: 'vertical' }} />
+                  <textarea 
+                    className="input" 
+                    rows={3} 
+                    placeholder="Type your message here..." 
+                    value={contactMsg} 
+                    onChange={(e) => setContactMsg(e.target.value)} 
+                    required 
+                    style={{ resize: 'vertical' }} 
+                  />
                 </div>
                 <button type="submit" className="btn btn-primary">
-                  <Send size={16} /> Send Email Support Request
+                  <Send size={16} /> Send Email to zeeshansajid361@gmail.com
                 </button>
               </form>
             )}
+
+            <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
+              <a 
+                href="mailto:zeeshansajid361@gmail.com?subject=BloodLink%20Direct%20Inquiry" 
+                style={{ fontSize: '0.825rem', color: 'var(--red-400)', fontWeight: 700, textDecoration: 'none' }}
+              >
+                ✉️ Direct Mail: zeeshansajid361@gmail.com
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -539,7 +589,7 @@ export default function LandingPage() {
             <h4>Emergency Help</h4>
             <ul>
               <li style={{ color: 'var(--red-300)', fontWeight: 700 }}>24/7 Rescue Line: 1122</li>
-              <li>Email: help@bloodlink.org</li>
+              <li>Email: zeeshansajid361@gmail.com</li>
             </ul>
           </div>
         </div>

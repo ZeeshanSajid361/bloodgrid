@@ -421,6 +421,15 @@
 }
 
 /* ── Mobile Hamburger Toggle & Menu ──────────────────────────────────────── */
+.landing-mobile-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: calc(var(--z-sticky) - 1);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
 .mobile-nav-toggle {
   display: none;
   background: transparent;
@@ -440,21 +449,34 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: rgba(12, 17, 26, 0.96);
+  z-index: var(--z-modal);
+  background: rgba(12, 17, 26, 0.98);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border-bottom: 1px solid var(--surface-border-hover);
-  padding: var(--space-6) var(--space-5);
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
   box-shadow: var(--shadow-xl);
-  animation: fadeUp 0.25s var(--transition-spring);
+  animation: fadeUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-mobile-top-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.mobile-nav-divider {
+  height: 1px;
+  background: var(--surface-border);
+  margin: var(--space-1) 0;
 }
 
 .landing-mobile-menu a {
   color: var(--text-primary);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   padding: var(--space-2) 0;
   display: flex;
@@ -462,13 +484,6 @@
   gap: var(--space-3);
   text-decoration: none;
   border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.landing-mobile-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
 }
 
 /* ── Public Search Results Grid ─────────────────────────────────────────── */
@@ -571,9 +586,10 @@
 }
 
 @media (max-width: 767px) {
-  .landing-nav-links, .landing-nav-actions { display: none; }
+  .landing-nav-links { display: none; }
+  .landing-nav-actions .btn { display: none; }
   .mobile-nav-toggle { display: flex; align-items: center; justify-content: center; }
-  .landing-nav { padding: var(--space-4); }
+  .landing-nav { padding: var(--space-3) var(--space-4); }
   .landing-hero { padding: var(--space-8) var(--space-4); }
   .widget-grid { grid-template-columns: 1fr; }
   .footer-inner { grid-template-columns: 1fr; }

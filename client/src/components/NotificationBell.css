@@ -250,20 +250,21 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 24px; height: 24px;
+  width: 26px; height: 26px;
   border-radius: var(--radius-full);
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--surface-border);
   color: var(--text-muted);
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.8;
   transition: opacity var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
   margin-top: 2px;
 }
 
 .notif-item:hover .notif-dismiss-btn { opacity: 1; }
 .notif-dismiss-btn:hover {
-  background: rgba(192, 57, 43, 0.12);
+  background: rgba(192, 57, 43, 0.2);
   color: var(--red-400);
+  border-color: rgba(192, 57, 43, 0.4);
   opacity: 1;
 }
