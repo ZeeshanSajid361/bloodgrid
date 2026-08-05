@@ -13,17 +13,11 @@
  *   - result.public_id   → stored for future deletion (admin reject flow)
  *
  * ── PDF Strategy ─────────────────────────────────────────────────────────────
- * PDFs are uploaded with resource_type: 'image' (NOT 'raw').
+ * PDFs are uploaded with resource_type: 'raw'.
  *
- * Why 'image' and not 'raw'?
- *   - 'raw' resource types do NOT support Cloudinary transformations, so you
- *     cannot control Content-Disposition headers — the browser always downloads.
- *   - 'image' resource type supports PDFs natively. Cloudinary renders the first
- *     page as a preview and, critically, serves the file with
- *     Content-Disposition: inline when the fl_inline flag is used, so the
- *     browser opens the PDF directly in a new tab instead of downloading it.
- *
- * The client-side docUrl.js utility adds fl_inline to the delivery URL.
+ * The client-side docUrl.js wraps PDF URLs in Google Docs Viewer so they open
+ * inline in the browser regardless of Cloudinary's resource type or
+ * Content-Disposition header.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -51,16 +45,16 @@ function uploadBuffer(buffer, folder = 'bloodsync/requests', publicId, mimetype)
   return new Promise((resolve, reject) => {
     const isPdf = mimetype === 'application/pdf';
 
+    let finalPublicId = publicId;
+    if (isPdf && !finalPublicId) {
+      const crypto = require('crypto');
+      finalPublicId = crypto.randomBytes(12).toString('hex') + '.pdf';
+    }
+
     const options = {
       folder,
-      // Use 'image' for PDFs — Cloudinary supports PDF as an image resource
-      // type and this allows the fl_inline transformation flag so browsers
-      // render the PDF inline instead of downloading it.
-      // Use 'auto' for all other files (images detect automatically).
-      resource_type: isPdf ? 'image' : 'auto',
-      // Explicitly tell Cloudinary this is a PDF so it handles it correctly
-      ...(isPdf && { format: 'pdf' }),
-      ...(publicId && { public_id: publicId }),
+      resource_type: isPdf ? 'raw' : 'auto',
+      ...(finalPublicId && { public_id: finalPublicId }),
     };
 
     const stream = cloudinary.uploader.upload_stream(options, (err, result) => {
@@ -76,21 +70,17 @@ function uploadBuffer(buffer, folder = 'bloodsync/requests', publicId, mimetype)
  * Deletes a Cloudinary asset by public_id.
  * Used when an admin rejects a request — cleans up the stored document.
  *
- * Tries 'image' resource_type first (covers PDFs uploaded with the new strategy
- * and regular images). Falls back to 'raw' for any legacy uploads.
- *
  * @param {string} publicId
  * @returns {Promise<void>}
  */
 async function deleteAsset(publicId) {
   try {
+    // Try 'image' resource_type first, fall back to 'raw' for PDFs
     const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
-    // If 'image' delete didn't find the resource, try 'raw' for legacy uploads
     if (result.result === 'not found') {
       await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
     }
   } catch {
-    // Non-fatal: if deletion fails (e.g. already deleted), log and continue
     console.warn(`[Cloudinary] Could not delete asset: ${publicId}`);
   }
 }
