@@ -17,27 +17,27 @@ const COMPATIBILITY_MAP = {
   'O-':  ['O-'],
 };
 
-// Verified Hospital Emergency Blood Helplines
+// Demo Emergency Hospital Helplines (Testing Mode - No official collaboration active yet)
 const EMERGENCY_HOSPITALS = [
   {
     id: 'hosp-1',
-    name: 'PIMS Hospital Emergency Blood Bank',
-    city: 'Islamabad',
-    phone: '+92 51 9261170',
+    name: 'City General Hospital (Demo Unit)',
+    city: 'Islamabad (Testing)',
+    phone: '+92 51 000-1122',
     available247: true,
   },
   {
     id: 'hosp-2',
-    name: 'Shifa International Blood Transfusion Unit',
-    city: 'Islamabad',
-    phone: '+92 51 8463666',
+    name: 'Central Blood Bank (Demo Desk)',
+    city: 'Lahore (Testing)',
+    phone: '+92 42 000-3344',
     available247: true,
   },
   {
     id: 'hosp-3',
-    name: 'Combined Military Hospital (CMH) Emergency Ward',
-    city: 'Rawalpindi',
-    phone: '+92 51 9270831',
+    name: 'National Rescue Hotline',
+    city: 'Nationwide',
+    phone: '1122',
     available247: true,
   },
 ];
@@ -430,29 +430,36 @@ export default function LandingPage() {
       {/* ── Contact & Hospital Emergency Helplines Section ── */}
       <section id="contact" className="section-wrapper">
         <div className="section-title-wrap">
-          <div className="section-tag">Direct Support & Hospital Helplines</div>
-          <h2 className="section-main-title">Contact & Hospital Emergency Wards</h2>
-          <p className="section-desc">Get in touch with BloodLink administration or call emergency hospital blood units directly.</p>
+          <div className="section-tag">Direct Support & Demo Desks</div>
+          <h2 className="section-main-title">Contact & Support Center</h2>
+          <p className="section-desc">Reach out to the BloodLink Support Team or view demo emergency hospital blood desks.</p>
         </div>
 
         <div className="dashboard-grid-2" style={{ gap: 'var(--space-6)' }}>
           {/* Hospital Emergency Desk Call Lines */}
           <div className="compat-card" style={{ background: 'var(--surface-raised)', padding: 'var(--space-6)' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Building2 size={20} color="var(--red-400)" /> Partner Hospital Emergency Helplines
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Building2 size={20} color="var(--red-400)" /> Hospital Helplines (Demo)
+              </h3>
+              <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>TEST DATA</span>
+            </div>
+
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
+              *Note: Demo numbers shown for testing & evaluation. Official hospital integration will be activated upon live partnership deployment.
+            </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               {EMERGENCY_HOSPITALS.map((hosp) => (
                 <div key={hosp.id} className="profile-info-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{hosp.name}</span>
-                    <span className="badge badge-green">24/7 LIVE</span>
+                    <span className="badge badge-green">DEMO LINE</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginTop: '2px' }}>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {hosp.city}</span>
                     <a href={`tel:${hosp.phone.replace(/[^0-9+]/g, '')}`} className="btn btn-primary btn-sm" style={{ gap: '4px' }}>
-                      <PhoneCall size={14} /> Call Hospital
+                      <PhoneCall size={14} /> Call ({hosp.phone})
                     </a>
                   </div>
                 </div>
@@ -462,30 +469,33 @@ export default function LandingPage() {
 
           {/* Quick Contact / Support Message Desk */}
           <div className="compat-card" style={{ background: 'var(--surface-raised)', padding: 'var(--space-6)' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Mail size={20} color="var(--blue-400)" /> Contact BloodLink Team
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 'var(--space-2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Mail size={20} color="var(--blue-400)" /> Email Platform Support Team
             </h3>
+            <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
+              Have questions or feedback? Send an email message directly to BloodLink Support (support@bloodlink-demo.org).
+            </p>
 
             {contactSubmitted ? (
-              <div className="badge badge-green" style={{ padding: 'var(--space-4)', fontSize: '0.9rem', width: '100%', justifyContent: 'center' }}>
-                ✓ Thank you! Your query has been received. Our emergency team will respond shortly.
+              <div className="badge badge-green" style={{ padding: 'var(--space-4)', fontSize: '0.875rem', width: '100%', justifyContent: 'center', textAlign: 'center', lineHeight: 1.5 }}>
+                ✓ Inquiry Sent! BloodLink Support (support@bloodlink-demo.org) will respond to your email shortly.
               </div>
             ) : (
               <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 <div className="input-group">
-                  <label className="input-label">Your Name</label>
+                  <label className="input-label">Your Full Name</label>
                   <input type="text" className="input" placeholder="e.g. Zeeshan Sajid" required />
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Your Email or Phone</label>
-                  <input type="text" className="input" placeholder="e.g. you@example.com or 0300..." required />
+                  <label className="input-label">Your Email Address (For Reply)</label>
+                  <input type="email" className="input" placeholder="e.g. yourname@example.com" required />
                 </div>
                 <div className="input-group">
                   <label className="input-label">Message / Inquiry</label>
-                  <textarea className="input" rows={3} placeholder="How can we assist you?" required style={{ resize: 'vertical' }} />
+                  <textarea className="input" rows={3} placeholder="How can the BloodLink support team assist you?" required style={{ resize: 'vertical' }} />
                 </div>
                 <button type="submit" className="btn btn-primary">
-                  <Send size={16} /> Send Message to Administration
+                  <Send size={16} /> Send Email Support Request
                 </button>
               </form>
             )}
