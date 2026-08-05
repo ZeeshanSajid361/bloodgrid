@@ -679,7 +679,39 @@ export default function HospitalDashboard() {
 
   return (
     <div className="hospital-layout">
-      {/* Sidebar */}
+      {/* Mobile Top Header */}
+      <header className="hospital-mobile-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className="brand-icon" style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))', display: 'grid', placeItems: 'center', color: '#fff' }}>
+            <Building2 size={18} />
+          </div>
+          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+            {profile?.org?.name || 'BloodSync Hospital'}
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <NotificationBell {...notifs} />
+          <button className="btn btn-ghost btn-sm" onClick={logout} style={{ color: 'var(--red-400)', padding: '4px 8px' }}>
+            <LogOut size={16} />
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Nav Tabs Bar */}
+      <div className="hospital-mobile-tabs">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            className={`hospital-mobile-tab${tab === id ? ' active' : ''}`}
+            onClick={() => setTab(id)}
+          >
+            <Icon size={16} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Sidebar (Desktop) */}
       <aside className="hospital-sidebar">
         <div className="hospital-sidebar-brand">
           <div className="brand-icon"><Building2 size={20} /></div>

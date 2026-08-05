@@ -1,10 +1,6 @@
 /*
- * admin.css  —  Admin Dashboard styles
- *
- * Accent: the platform's emergency red — the admin console is the control
- * room and warrants a more authoritative tone than the blue hospital theme.
- * All potentially destructive actions (block, reject, revoke) use the danger
- * variant to make their weight clear.
+ * admin.css  —  Admin Dashboard styles (Responsive Mobile Overhaul v2)
+ * Accent: emergency red (--red-*)
  */
 
 /* ── Shell ───────────────────────────────────────────────────────────────── */
@@ -13,10 +9,15 @@
   grid-template-columns: 240px 1fr;
   min-height: 100dvh;
   background: var(--surface-base);
+  position: relative;
 }
 
-@media (max-width: 768px) {
-  .admin-layout { grid-template-columns: 1fr; }
+/* Hide mobile header & backdrop on desktop */
+.admin-mobile-header,
+.admin-mobile-tabs,
+.admin-mobile-backdrop,
+.mobile-menu-toggle-btn {
+  display: none;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
@@ -30,6 +31,8 @@
   top: 0;
   height: 100dvh;
   overflow-y: auto;
+  z-index: 40;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .admin-brand {
@@ -107,21 +110,20 @@
 .admin-main {
   padding: var(--space-8) var(--space-10);
   max-width: 1100px;
+  width: 100%;
+  min-width: 0;
 }
-
-@media (max-width: 900px) { .admin-main { padding: var(--space-6); } }
 
 .admin-section-header {
   margin-bottom: var(--space-6);
 }
 
 .admin-section-header h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: var(--space-1); }
-.admin-section-header p  { font-size: 0.875rem; color: var(--text-muted); }
 
 /* ── Stat cards ──────────────────────────────────────────────────────────── */
 .admin-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-8);
 }
@@ -154,13 +156,115 @@
 
 .admin-stat-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
 
-/* ── Queue table ─────────────────────────────────────────────────────────── */
+/* ── Overview grid layout ────────────────────────────────────────────────── */
+.admin-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-6);
+}
+
+.admin-section-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.admin-card-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── Compact 2 Side-by-side Grids ────────────────────────────────────────── */
+.activity-grid-2,
+.low-stock-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.activity-card-compact,
+.low-stock-card-compact {
+  background: var(--surface-float);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.activity-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.activity-card-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.activity-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.activity-dot.critical { background: var(--red-500); }
+.activity-dot.urgent   { background: var(--color-warning); }
+.activity-dot.routine  { background: var(--color-success); }
+
+.activity-patient-name {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.activity-hospital-name {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-date-str {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.card-sub-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Queue table wrap ────────────────────────────────────────────────────── */
 .admin-table-wrap {
   background: var(--surface-raised);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
   margin-bottom: var(--space-6);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .admin-table-toolbar {
@@ -215,6 +319,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .admin-table td {
@@ -233,7 +338,6 @@
   font-size: 0.875rem;
 }
 
-/* ── Document preview link ───────────────────────────────────────────────── */
 .doc-link {
   display: inline-flex;
   align-items: center;
@@ -246,14 +350,13 @@
 
 .doc-link:hover { color: var(--blue-200); text-decoration: underline; }
 
-/* ── Action button group ─────────────────────────────────────────────────── */
 .admin-actions {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
 }
 
-/* ── Note textarea ───────────────────────────────────────────────────────── */
+/* ── Note modal ──────────────────────────────────────────────────────────── */
 .admin-note-modal {
   position: fixed;
   inset: 0;
@@ -261,65 +364,196 @@
   backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
-  z-index: 50;
+  z-index: 100;
+  padding: var(--space-4);
 }
 
 .admin-note-dialog {
   background: var(--surface-float);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-xl);
-  padding: var(--space-8);
-  width: min(480px, calc(100vw - 2rem));
+  padding: var(--space-6);
+  width: min(480px, 100%);
   animation: slideUp 0.22s cubic-bezier(0.16,1,0.3,1);
 }
 
-.admin-note-dialog h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: var(--space-2); }
-.admin-note-dialog p  { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: var(--space-5); }
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE OVERHAUL (< 768px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .admin-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
 
-/* ── Low stock list ──────────────────────────────────────────────────────── */
-.low-stock-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  /* Mobile backdrop drawer */
+  .admin-mobile-backdrop {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 98;
+  }
+
+  /* Sidebar drawer on mobile */
+  .admin-sidebar {
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    height: 100dvh;
+    z-index: 99;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .admin-sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 10px 0 40px rgba(0,0,0,0.7);
+  }
+
+  /* Sticky Header (3 Parallel Bars icon + Brand + Fixed Notification Icon) */
+  .admin-mobile-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-4);
+    height: 56px;
+    background: var(--surface-raised);
+    border-bottom: 1px solid var(--surface-border);
+    position: sticky;
+    top: 0;
+    z-index: 90;
+  }
+
+  .mobile-menu-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    padding: var(--space-2);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+  }
+
+  .mobile-menu-toggle-btn:hover {
+    background: var(--surface-hover);
+  }
+
+  .admin-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .admin-mobile-brand .brand-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--red-600), var(--red-800));
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+
+  .brand-name-text {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+
+  .brand-name-text span {
+    color: var(--red-400);
+  }
+
+  .admin-mobile-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    z-index: 91;
+  }
+
+  .admin-mobile-tabs {
+    display: flex !important;
+    background: var(--surface-float);
+    border-bottom: 1px solid var(--surface-border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+    position: sticky;
+    top: 56px;
+    z-index: 80;
+  }
+
+  .admin-mobile-tab {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid var(--surface-border);
+    background: transparent;
+    color: var(--text-muted);
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .admin-mobile-tab.active {
+    background: rgba(192, 57, 43, 0.15);
+    border-color: var(--red-600);
+    color: var(--red-300);
+  }
+
+  .admin-main {
+    padding: var(--space-4);
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .admin-section-header h2 {
+    font-size: 1.15rem;
+  }
+
+  /* 2 side-by-side layout on mobile */
+  .admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .admin-stat-card {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .admin-stat-value {
+    font-size: 1.4rem;
+  }
+
+  .admin-overview-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .activity-grid-2,
+  .low-stock-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .admin-table-toolbar {
+    padding: var(--space-3) var(--space-4);
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
-
-.low-stock-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: rgba(192,57,43,0.06);
-  border: 1px solid rgba(192,57,43,0.18);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-}
-
-/* ── Recent activity feed ────────────────────────────────────────────────── */
-.activity-feed {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.activity-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface-raised);
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-}
-
-.activity-item .activity-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-top: 5px;
-  flex-shrink: 0;
-}
-
-.activity-dot.critical { background: var(--red-500); }
-.activity-dot.urgent   { background: var(--color-warning); }
-.activity-dot.routine  { background: var(--color-success); }

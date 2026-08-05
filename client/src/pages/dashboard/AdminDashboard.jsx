@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import {
   ShieldCheck, Building2, FileText, Users, LogOut,
   CheckCircle, XCircle, Key, Lock, Unlock, ExternalLink,
-  Loader2, AlertTriangle, TrendingUp,
+  Loader2, AlertTriangle, TrendingUp, Menu, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useAdminData from '../../hooks/useAdminData';
@@ -100,71 +100,82 @@ function OverviewTab({ admin }) {
     return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 'var(--space-12)' }}><Loader2 size={28} className="spin" style={{ color: 'var(--red-400)' }} /></div>;
   }
 
-  const { users, requests, organisations, inventory, recentRequests } = analytics;
-  const byRole   = Object.fromEntries((users.byRole   || []).map(r => [r._id, r.count]));
-  const byStatus = Object.fromEntries((requests.byStatus || []).map(r => [r._id, r.count]));
+  const { users, requests, orgs, inventory } = analytics;
 
   return (
     <>
+      {/* Stat Cards - 2 side-by-side on mobile */}
       <div className="admin-stats">
-        {[
-          { label: 'Total Users',    value: users.total,        sub: `${byRole.donor||0} donors · ${byRole.seeker||0} seekers` },
-          { label: 'Blood Requests', value: requests.total,     sub: `${byStatus.pending_review||0} pending review` },
-          { label: 'Organisations',  value: organisations.total,sub: `${(organisations.byStatus||[]).find(s=>s._id==='approved')?.count||0} approved` },
-          { label: 'Total Units',    value: inventory.totalUnits, sub: 'across all hospitals' },
-        ].map(({ label, value, sub }) => (
-          <div className="admin-stat-card" key={label}>
-            <div className="admin-stat-label">{label}</div>
-            <div className="admin-stat-value">{value ?? '—'}</div>
-            <div className="admin-stat-sub">{sub}</div>
-          </div>
-        ))}
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Total Users</div>
+          <div className="admin-stat-value">{users.total}</div>
+          <div className="admin-stat-sub">{users.donors} donors · {users.seekers} seekers</div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Blood Requests</div>
+          <div className="admin-stat-value">{requests.total}</div>
+          <div className="admin-stat-sub">{requests.pending} pending review</div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Organisations</div>
+          <div className="admin-stat-value">{orgs.total}</div>
+          <div className="admin-stat-sub">{orgs.approved} approved</div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Total Units</div>
+          <div className="admin-stat-value">{inventory.totalUnits}</div>
+          <div className="admin-stat-sub">across all hospitals</div>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
-        {/* Low stock */}
-        <div>
-          <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, marginBottom: 'var(--space-4)', color: 'var(--red-400)' }}>
-            <AlertTriangle size={16} style={{ display: 'inline', marginRight: 6 }} />
-            Low Stock Alerts
+      <div className="admin-overview-grid">
+        {/* Low Stock Alerts */}
+        <div className="admin-section-card">
+          <h3 className="admin-card-title">
+            <AlertTriangle size={16} style={{ color: 'var(--red-400)' }} /> Low Stock Alerts
           </h3>
-          {inventory.lowStockItems?.length === 0
-            ? <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>All stock levels are adequate.</p>
-            : <div className="low-stock-list">
-                {inventory.lowStockItems?.slice(0, 6).map((item, i) => (
-                  <div className="low-stock-row" key={i}>
-                    <span className="blood-group-pill" style={{ fontSize: '0.75rem' }}>{item.bloodGroup}</span>
-                    <span style={{ flex: 1, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{item.hospitalName}</span>
-                    <span style={{ color: item.units === 0 ? 'var(--red-400)' : 'var(--color-warning)', fontWeight: 700 }}>{item.units} units</span>
+          {inventory.lowStock.length === 0
+            ? <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>All stock levels are adequate.</p>
+            : <div className="low-stock-grid-2">
+                {inventory.lowStock.map((item, i) => (
+                  <div key={i} className="low-stock-card-compact">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span className="badge badge-red" style={{ fontWeight: 800 }}>{item.bloodGroup}</span>
+                      <span style={{ fontWeight: 700, color: 'var(--red-400)', fontSize: '0.8rem' }}>{item.units} units</span>
+                    </div>
+                    <div className="card-sub-text">{item.orgName}</div>
                   </div>
                 ))}
               </div>
           }
         </div>
 
-        {/* Recent requests */}
-        <div>
-          <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, marginBottom: 'var(--space-4)' }}>
-            <TrendingUp size={16} style={{ display: 'inline', marginRight: 6 }} />
-            Recent Requests
+        {/* Recent Activity Feed - 2 side-by-side cards on mobile */}
+        <div className="admin-section-card">
+          <h3 className="admin-card-title">
+            <TrendingUp size={16} style={{ color: 'var(--blue-400)' }} /> Recent Requests
           </h3>
-          <div className="activity-feed">
-            {recentRequests?.map(r => (
-              <div className="activity-item" key={r._id}>
-                <span className={`activity-dot ${r.urgency}`} />
-                <div>
-                  <span style={{ fontWeight: 600 }}>{r.patientBloodGroup}</span>
-                  <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>— {r.hospitalName}</span>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    <span className={`badge badge-${r.status === 'pending_review' ? 'amber' : r.status === 'approved' ? 'green' : 'gray'}`} style={{ fontSize: '0.68rem', padding: '1px 6px' }}>
-                      {r.status.replace('_', ' ')}
-                    </span>
-                    &nbsp;· {new Date(r.createdAt).toLocaleDateString()}
+          {requests.recent.length === 0
+            ? <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No recent requests.</p>
+            : <div className="activity-grid-2">
+                {requests.recent.map(r => (
+                  <div key={r._id} className="activity-card-compact">
+                    <div className="activity-card-top">
+                      <div className="activity-card-left">
+                        <span className={`activity-dot ${r.urgency === 'critical' ? 'critical' : r.urgency === 'urgent' ? 'urgent' : 'routine'}`} />
+                        <span className="badge badge-red" style={{ fontWeight: 800, padding: '1px 5px', fontSize: '0.72rem' }}>{r.bloodGroup}</span>
+                      </div>
+                      <span className={`badge badge-${r.status === 'pending_review' ? 'amber' : r.status === 'approved' ? 'blue' : r.status === 'fulfilled' ? 'green' : 'red'}`} style={{ fontSize: '0.65rem' }}>
+                        {r.status === 'pending_review' ? 'Pending' : r.status}
+                      </span>
+                    </div>
+                    <div className="activity-patient-name">{r.patientName}</div>
+                    <div className="activity-hospital-name">{r.hospital}</div>
+                    <div className="activity-date-str">{new Date(r.createdAt).toLocaleDateString()}</div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+          }
         </div>
       </div>
     </>
@@ -173,58 +184,65 @@ function OverviewTab({ admin }) {
 
 /* ══ HOSPITALS TAB ═══════════════════════════════════════════════════════ */
 function HospitalsTab({ admin }) {
-  const { fetchHospitals, hospitals, approveHospital, rejectHospital, revokeApiKey, loading } = admin;
-  const [filter,    setFilter]    = useState('pending');
-  const [modal,     setModal]     = useState(null); // { type, org }
-  const [apiKeyInfo, setApiKeyInfo] = useState(null);
-  const [acting,    setActing]    = useState(false);
+  const { fetchHospitals, hospitals, verifyHospital, generateApiKey, revokeApiKey, loading } = admin;
+  const [statusFilter, setStatusFilter] = useState('pending');
+  const [modal,        setModal]        = useState(null);
+  const [issuedKey,    setIssuedKey]    = useState(null);
+  const [acting,       setActing]       = useState(false);
 
-  useEffect(() => { fetchHospitals(filter); }, [fetchHospitals, filter]);
+  useEffect(() => { fetchHospitals(statusFilter); }, [fetchHospitals, statusFilter]);
 
-  async function handleApprove(note) {
+  async function handleAction(note) {
+    if (!modal) return;
     setActing(true);
     try {
-      const res = await approveHospital(modal.org._id, note);
+      if (modal.type === 'approve') {
+        await verifyHospital(modal.org._id, 'approved', note);
+      } else if (modal.type === 'reject') {
+        await verifyHospital(modal.org._id, 'rejected', note);
+      }
       setModal(null);
-      setApiKeyInfo({ key: res.data.apiKey, name: modal.org.name });
-      fetchHospitals(filter);
+      fetchHospitals(statusFilter);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
     } finally { setActing(false); }
   }
 
-  async function handleReject(note) {
-    setActing(true);
-    try {
-      await rejectHospital(modal.org._id, note);
-      setModal(null);
-      fetchHospitals(filter);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Action failed.');
-    } finally { setActing(false); }
-  }
-
-  async function handleRevoke(org) {
-    if (!window.confirm(`Revoke API key for ${org.name}?`)) return;
-    try {
-      await revokeApiKey(org._id);
-      fetchHospitals(filter);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to revoke key.');
+  async function handleApiKey(org) {
+    if (org.hasApiKey) {
+      if (!confirm(`Revoke API key for ${org.name}? Integrations using this key will fail immediately.`)) return;
+      try {
+        await revokeApiKey(org._id);
+        fetchHospitals(statusFilter);
+      } catch (err) { alert(err.response?.data?.message || 'Revoke failed.'); }
+    } else {
+      try {
+        const { apiKey } = await generateApiKey(org._id);
+        setIssuedKey({ apiKey, orgName: org.name });
+        fetchHospitals(statusFilter);
+      } catch (err) { alert(err.response?.data?.message || 'Generation failed.'); }
     }
   }
 
-  const STATUS_FILTERS = ['pending', 'approved', 'rejected', ''];
+  const STATUSES = ['pending', 'approved', 'rejected', ''];
 
   return (
     <>
+      {issuedKey && (
+        <ApiKeyModal apiKey={issuedKey.apiKey} orgName={issuedKey.orgName} onClose={() => setIssuedKey(null)} />
+      )}
+
       <div className="admin-table-wrap">
         <div className="admin-table-toolbar">
-          <h3>Organisations ({hospitals.total})</h3>
+          <h3>Hospital & Partner Verification</h3>
           <div className="admin-filter-group">
-            {STATUS_FILTERS.map(s => (
-              <button key={s||'all'} className={`admin-filter-chip${filter===s?' active':''}`} onClick={() => setFilter(s)}>
-                {s || 'All'}
+            {STATUSES.map(s => (
+              <button
+                key={s || 'all'}
+                className={`admin-filter-chip${statusFilter === s ? ' active' : ''}`}
+                onClick={() => setStatusFilter(s)}
+              >
+                {s ? s.charAt(0).toUpperCase() + s.slice(1) : 'All'}
               </button>
             ))}
           </div>
@@ -232,120 +250,140 @@ function HospitalsTab({ admin }) {
 
         {loading
           ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
-          : <table className="admin-table">
-              <thead><tr><th>Name</th><th>Type</th><th>City</th><th>Owner</th><th>Document</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>
-                {hospitals.orgs.length === 0
-                  ? <tr><td colSpan={7} className="admin-empty">No organisations found.</td></tr>
-                  : hospitals.orgs.map(org => (
-                      <tr key={org._id}>
-                        <td style={{ fontWeight: 600 }}>{org.name}</td>
-                        <td><span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{org.type}</span></td>
-                        <td style={{ color: 'var(--text-secondary)' }}>{org.address?.city || '—'}</td>
-                        <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                          {org.owner?.name}<br /><span style={{ color: 'var(--text-muted)' }}>{org.owner?.email}</span>
-                        </td>
-                        <td>
-                          {org.verificationDocumentUrls && org.verificationDocumentUrls.length > 0
-                            ? <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {org.verificationDocumentUrls.map((url, i) => (
-                                  <a key={i} className="doc-link" href={getViewableDocUrl(url)} target="_blank" rel="noreferrer">
-                                    <ExternalLink size={13} /> {isPdfUrl(url) ? '📄 PDF' : '🖼 Doc'} {org.verificationDocumentUrls.length > 1 ? i+1 : ''}
-                                  </a>
-                                ))}
-                              </div>
-                            : (org.verificationDocumentUrl 
-                                ? <a className="doc-link" href={getViewableDocUrl(org.verificationDocumentUrl)} target="_blank" rel="noreferrer">
-                                    <ExternalLink size={13} /> {isPdfUrl(org.verificationDocumentUrl) ? '📄 View PDF' : '🖼 View Doc'}
-                                  </a>
-                                : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>)
-                          }
-                        </td>
-                        <td>
-                          <span className={`badge badge-${org.status==='approved'?'green':org.status==='rejected'?'red':'amber'}`}>
-                            {org.status}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="admin-actions">
-                            {org.status === 'pending' && <>
-                              <button className="btn btn-secondary btn-sm" style={{ padding: '4px 10px' }} onClick={() => setModal({ type: 'approve', org })}>
-                                <CheckCircle size={13} /> Approve
+          : <div style={{ overflowX: 'auto' }}>
+              <table className="admin-table" style={{ minWidth: '650px' }}>
+                <thead>
+                  <tr>
+                    <th>Organisation</th>
+                    <th>Type</th>
+                    <th>City / Address</th>
+                    <th>License</th>
+                    <th>Status</th>
+                    <th>API Key</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hospitals.orgs.length === 0
+                    ? <tr><td colSpan={7} className="admin-empty">No organisations found.</td></tr>
+                    : hospitals.orgs.map(org => (
+                        <tr key={org._id}>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{org.name}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{org.email}</div>
+                          </td>
+                          <td>
+                            <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{org.type}</span>
+                          </td>
+                          <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            {org.city}{org.address ? ` · ${org.address}` : ''}
+                          </td>
+                          <td>
+                            {org.licenseDoc ? (
+                              <a
+                                className="doc-link"
+                                href={getViewableDocUrl(org.licenseDoc)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ExternalLink size={13} /> {isPdfUrl(org.licenseDoc) ? 'View License (PDF)' : 'View Document'}
+                              </a>
+                            ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No doc</span>}
+                          </td>
+                          <td>
+                            <span className={`badge badge-${org.status === 'approved' ? 'green' : org.status === 'pending' ? 'amber' : 'red'}`}>
+                              {org.status}
+                            </span>
+                          </td>
+                          <td>
+                            {org.status === 'approved' ? (
+                              <button
+                                className={`btn btn-sm ${org.hasApiKey ? 'btn-ghost' : 'btn-secondary'}`}
+                                style={{ padding: '3px 8px', fontSize: '0.78rem' }}
+                                onClick={() => handleApiKey(org)}
+                              >
+                                <Key size={12} /> {org.hasApiKey ? 'Revoke Key' : 'Issue Key'}
                               </button>
-                              <button className="btn btn-danger btn-sm" style={{ padding: '4px 10px' }} onClick={() => setModal({ type: 'reject', org })}>
-                                <XCircle size={13} /> Reject
-                              </button>
-                            </>}
-                            {org.status === 'approved' && (
-                              <button className="btn btn-ghost btn-sm" style={{ padding: '4px 10px', color: 'var(--red-400)' }} onClick={() => handleRevoke(org)}>
-                                <Key size={13} /> Revoke Key
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                }
-              </tbody>
-            </table>
+                            ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>—</span>}
+                          </td>
+                          <td>
+                            <div className="admin-actions">
+                              {org.status !== 'approved' && (
+                                <button className="btn btn-secondary btn-sm" style={{ padding: '4px 8px' }} onClick={() => setModal({ type: 'approve', org })}>
+                                  <CheckCircle size={13} /> Approve
+                                </button>
+                              )}
+                              {org.status !== 'rejected' && (
+                                <button className="btn btn-danger btn-sm" style={{ padding: '4px 8px' }} onClick={() => setModal({ type: 'reject', org })}>
+                                  <XCircle size={13} /> Reject
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                  }
+                </tbody>
+              </table>
+            </div>
         }
       </div>
 
       {modal?.type === 'approve' && (
         <NoteModal
-          title={`Approve "${modal.org.name}"`}
-          description="This will activate the account and issue an API key. The key is shown once."
-          onConfirm={handleApprove} onClose={() => setModal(null)} loading={acting}
+          title={`Approve ${modal.org.name}`}
+          description="The hospital will be granted full inventory management access and visible to seekers."
+          onConfirm={handleAction} onClose={() => setModal(null)} loading={acting}
         />
       )}
       {modal?.type === 'reject' && (
         <NoteModal
-          title={`Reject "${modal.org.name}"`}
-          description="The applicant will see your reason. This action can be reversed by approving later."
-          onConfirm={handleReject} onClose={() => setModal(null)} loading={acting} isReject
+          title={`Reject ${modal.org.name}`}
+          description="Please provide a clear reason. The hospital admin will see this in their dashboard."
+          onConfirm={handleAction} onClose={() => setModal(null)} loading={acting} isReject
         />
-      )}
-      {apiKeyInfo && (
-        <ApiKeyModal apiKey={apiKeyInfo.key} orgName={apiKeyInfo.name} onClose={() => setApiKeyInfo(null)} />
       )}
     </>
   );
 }
 
-/* ══ REQUESTS TAB ════════════════════════════════════════════════════════ */
+/* ══ REQUESTS TAB ═════════════════════════════════════════════════════════ */
 function RequestsTab({ admin }) {
-  const { fetchRequests, requests, approveRequest, rejectRequest, fulfillRequest, loading } = admin;
-  const [filter, setFilter] = useState('pending_review');
-  const [modal,  setModal]  = useState(null);
-  const [acting, setActing] = useState(false);
+  const { fetchRequests, requests, reviewRequest, loading } = admin;
+  const [statusFilter, setStatusFilter] = useState('pending_review');
+  const [modal,        setModal]        = useState(null);
+  const [acting,       setActing]       = useState(false);
 
-  useEffect(() => { fetchRequests(filter); }, [fetchRequests, filter]);
+  useEffect(() => { fetchRequests(statusFilter); }, [fetchRequests, statusFilter]);
 
   async function handleAction(note) {
+    if (!modal) return;
     setActing(true);
     try {
-      if (modal.type === 'approve') await approveRequest(modal.req._id, note);
-      if (modal.type === 'reject')  await rejectRequest(modal.req._id, note);
-      if (modal.type === 'fulfill') await fulfillRequest(modal.req._id);
+      const action = modal.type === 'approve' ? 'approve' : modal.type === 'reject' ? 'reject' : 'fulfill';
+      await reviewRequest(modal.req._id, action, note);
       setModal(null);
-      fetchRequests(filter);
+      fetchRequests(statusFilter);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
     } finally { setActing(false); }
   }
 
-  const STATUS_FILTERS = ['pending_review', 'approved', 'rejected', 'fulfilled', ''];
-  const URGENCY_COLOR  = { critical: 'badge-red', urgent: 'badge-amber', routine: 'badge-green' };
+  const STATUSES = ['pending_review', 'approved', 'fulfilled', 'rejected', ''];
 
   return (
     <>
       <div className="admin-table-wrap">
         <div className="admin-table-toolbar">
-          <h3>Blood Requests ({requests.total})</h3>
+          <h3>Blood Request Queue</h3>
           <div className="admin-filter-group">
-            {STATUS_FILTERS.map(s => (
-              <button key={s||'all'} className={`admin-filter-chip${filter===s?' active':''}`} onClick={() => setFilter(s)}>
-                {s ? s.replace('_',' ') : 'All'}
+            {STATUSES.map(s => (
+              <button
+                key={s || 'all'}
+                className={`admin-filter-chip${statusFilter === s ? ' active' : ''}`}
+                onClick={() => setStatusFilter(s)}
+              >
+                {s ? s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'All'}
               </button>
             ))}
           </div>
@@ -353,66 +391,80 @@ function RequestsTab({ admin }) {
 
         {loading
           ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
-          : <table className="admin-table">
-              <thead><tr><th>Patient</th><th>Hospital</th><th>Units</th><th>Urgency</th><th>Document</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>
-                {requests.requests.length === 0
-                  ? <tr><td colSpan={7} className="admin-empty">No requests found.</td></tr>
-                  : requests.requests.map(r => (
-                      <tr key={r._id}>
-                        <td>
-                          <strong>{r.patientBloodGroup}</strong>
-                          {r.patientName && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{r.patientName}</div>}
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{r.seeker?.name} · {r.seeker?.city}</div>
-                        </td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          {r.hospitalName}<br /><span style={{ color: 'var(--text-muted)' }}>{r.hospitalCity}</span>
-                        </td>
-                        <td style={{ fontWeight: 700 }}>{r.unitsNeeded}</td>
-                        <td><span className={`badge ${URGENCY_COLOR[r.urgency]}`}>{r.urgency}</span></td>
-                        <td>
-                          {r.documentUrls && r.documentUrls.length > 0
-                            ? <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {r.documentUrls.map((url, i) => (
-                                  <a key={i} className="doc-link" href={getViewableDocUrl(url)} target="_blank" rel="noreferrer">
-                                    <ExternalLink size={13} /> {isPdfUrl(url) ? '📄 PDF' : '🖼 Slip'} {r.documentUrls.length > 1 ? i+1 : ''}
-                                  </a>
-                                ))}
-                              </div>
-                            : (r.documentUrl 
-                                ? <a className="doc-link" href={getViewableDocUrl(r.documentUrl)} target="_blank" rel="noreferrer">
-                                    <ExternalLink size={13} /> {isPdfUrl(r.documentUrl) ? '📄 View PDF' : '🖼 View Slip'}
-                                  </a> 
-                                : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>)
-                          }
-                        </td>
-                        <td>
-                          <span className={`badge badge-${r.status==='approved'?'green':r.status==='rejected'?'red':r.status==='fulfilled'?'blue':'amber'}`}>
-                            {r.status.replace('_',' ')}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="admin-actions">
-                            {r.status === 'pending_review' && <>
-                              <button className="btn btn-secondary btn-sm" style={{ padding: '4px 8px' }} onClick={() => setModal({ type: 'approve', req: r })}>
-                                <CheckCircle size={13} />
-                              </button>
-                              <button className="btn btn-danger btn-sm" style={{ padding: '4px 8px' }} onClick={() => setModal({ type: 'reject', req: r })}>
-                                <XCircle size={13} />
-                              </button>
-                            </>}
-                            {r.status === 'approved' && (
-                              <button className="btn btn-secondary btn-sm" style={{ padding: '4px 8px' }} onClick={() => { setModal({ type: 'fulfill', req: r }); handleAction(); }}>
-                                <CheckCircle size={13} /> Fulfilled
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                }
-              </tbody>
-            </table>
+          : <div style={{ overflowX: 'auto' }}>
+              <table className="admin-table" style={{ minWidth: '700px' }}>
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Hospital</th>
+                    <th>Units</th>
+                    <th>Urgency</th>
+                    <th>Doc</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.requests.length === 0
+                    ? <tr><td colSpan={7} className="admin-empty">No blood requests found.</td></tr>
+                    : requests.requests.map(r => (
+                        <tr key={r._id}>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{r.patientName}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Seeker: {r.seekerId?.name || '—'}</div>
+                          </td>
+                          <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            {r.hospital}{r.city ? ` (${r.city})` : ''}
+                          </td>
+                          <td>
+                            <span className="badge badge-red" style={{ fontWeight: 800 }}>{r.bloodGroup}</span>
+                            <span style={{ fontSize: '0.85rem', marginLeft: 4 }}>× {r.unitsNeeded}</span>
+                          </td>
+                          <td>
+                            <span className={`badge badge-${r.urgency === 'critical' ? 'red' : r.urgency === 'urgent' ? 'amber' : 'blue'}`}>
+                              {r.urgency}
+                            </span>
+                          </td>
+                          <td>
+                            {r.prescriptionDoc ? (
+                              <a
+                                className="doc-link"
+                                href={getViewableDocUrl(r.prescriptionDoc)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ExternalLink size={13} /> {isPdfUrl(r.prescriptionDoc) ? 'Prescription (PDF)' : 'Document'}
+                              </a>
+                            ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>}
+                          </td>
+                          <td>
+                            <span className={`badge badge-${r.status === 'pending_review' ? 'amber' : r.status === 'approved' ? 'blue' : r.status === 'fulfilled' ? 'green' : 'red'}`}>
+                              {r.status.replace('_', ' ')}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="admin-actions">
+                              {r.status === 'pending_review' && <>
+                                <button className="btn btn-secondary btn-sm" style={{ padding: '4px 8px' }} onClick={() => setModal({ type: 'approve', req: r })}>
+                                  <CheckCircle size={13} />
+                                </button>
+                                <button className="btn btn-danger btn-sm" style={{ padding: '4px 8px' }} onClick={() => setModal({ type: 'reject', req: r })}>
+                                  <XCircle size={13} />
+                                </button>
+                              </>}
+                              {r.status === 'approved' && (
+                                <button className="btn btn-secondary btn-sm" style={{ padding: '4px 8px' }} onClick={() => { setModal({ type: 'fulfill', req: r }); handleAction(); }}>
+                                  <CheckCircle size={13} /> Fulfilled
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                  }
+                </tbody>
+              </table>
+            </div>
         }
       </div>
 
@@ -482,49 +534,51 @@ function UsersTab({ admin }) {
 
       {loading
         ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
-        : <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City</th><th>Verified</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody>
-              {users.users.length === 0
-                ? <tr><td colSpan={7} className="admin-empty">No users found.</td></tr>
-                : users.users.map(u => (
-                    <tr key={u._id}>
-                      <td style={{ fontWeight: 600 }}>{u.name}</td>
-                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>
-                      <td><span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{u.role}</span></td>
-                      <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{u.city || '—'}</td>
-                      <td>
-                        {u.isEmailVerified
-                          ? <CheckCircle size={15} style={{ color: 'var(--color-success)' }} />
-                          : <XCircle size={15} style={{ color: 'var(--text-muted)' }} />}
-                      </td>
-                      <td>
-                        <span className={`badge badge-${u.isBlocked ? 'red' : 'green'}`}>
-                          {u.isBlocked ? 'Blocked' : 'Active'}
-                        </span>
-                      </td>
-                      <td>
-                        {u.role !== 'admin' && (
-                          <button
-                            className={`btn btn-sm ${u.isBlocked ? 'btn-secondary' : 'btn-danger'}`}
-                            style={{ padding: '4px 10px' }}
-                            disabled={acting === u._id}
-                            onClick={() => handleBlock(u)}
-                          >
-                            {acting === u._id
-                              ? <Loader2 size={13} className="spin" />
-                              : u.isBlocked
-                                ? <><Unlock size={13} /> Unblock</>
-                                : <><Lock size={13} /> Block</>
-                            }
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-              }
-            </tbody>
-          </table>
+        : <div style={{ overflowX: 'auto' }}>
+            <table className="admin-table" style={{ minWidth: '650px' }}>
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City</th><th>Verified</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                {users.users.length === 0
+                  ? <tr><td colSpan={7} className="admin-empty">No users found.</td></tr>
+                  : users.users.map(u => (
+                      <tr key={u._id}>
+                        <td style={{ fontWeight: 600 }}>{u.name}</td>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>
+                        <td><span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{u.role}</span></td>
+                        <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{u.city || '—'}</td>
+                        <td>
+                          {u.isEmailVerified
+                            ? <CheckCircle size={15} style={{ color: 'var(--color-success)' }} />
+                            : <XCircle size={15} style={{ color: 'var(--text-muted)' }} />}
+                        </td>
+                        <td>
+                          <span className={`badge badge-${u.isBlocked ? 'red' : 'green'}`}>
+                            {u.isBlocked ? 'Blocked' : 'Active'}
+                          </span>
+                        </td>
+                        <td>
+                          {u.role !== 'admin' && (
+                            <button
+                              className={`btn btn-sm ${u.isBlocked ? 'btn-secondary' : 'btn-danger'}`}
+                              style={{ padding: '4px 10px' }}
+                              disabled={acting === u._id}
+                              onClick={() => handleBlock(u)}
+                            >
+                              {acting === u._id
+                                ? <Loader2 size={13} className="spin" />
+                                : u.isBlocked
+                                  ? <><Unlock size={13} /> Unblock</>
+                                  : <><Lock size={13} /> Block</>
+                              }
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                }
+              </tbody>
+            </table>
+          </div>
       }
     </div>
   );
@@ -541,6 +595,7 @@ const TABS = [
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [tab, setTab]   = useState('overview');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const admin           = useAdminData();
   const notifs          = useNotifications();
 
@@ -556,8 +611,52 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-layout">
-      {/* Sidebar */}
-      <aside className="admin-sidebar">
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="admin-mobile-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Sticky Header (3 Parallel Bars icon + Brand + Fixed Notification Icon) */}
+      <header className="admin-mobile-header">
+        <button
+          className="mobile-menu-toggle-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle options menu"
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <div className="admin-mobile-brand">
+          <div className="brand-icon"><ShieldCheck size={16} /></div>
+          <span className="brand-name-text">BloodSync <span>Admin</span></span>
+        </div>
+
+        <div className="admin-mobile-actions">
+          <NotificationBell {...notifs} />
+        </div>
+      </header>
+
+      {/* Mobile Nav Tabs Bar */}
+      <div className="admin-mobile-tabs">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            className={`admin-mobile-tab${tab === id ? ' active' : ''}`}
+            onClick={() => { setTab(id); setMobileMenuOpen(false); }}
+          >
+            <Icon size={15} />
+            <span>{label}</span>
+            {id === 'hospitals' && pendingHospitals > 0 && <span className="admin-nav-badge">{pendingHospitals}</span>}
+            {id === 'requests'  && pendingRequests  > 0 && <span className="admin-nav-badge">{pendingRequests}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Sidebar (Desktop & Mobile Drawer Menu) */}
+      <aside className={`admin-sidebar${mobileMenuOpen ? ' mobile-open' : ''}`}>
         <div className="admin-brand">
           <div className="brand-icon"><ShieldCheck size={18} /></div>
           <div>
@@ -571,7 +670,7 @@ export default function AdminDashboard() {
             <button
               key={id}
               className={`admin-nav-item${tab === id ? ' active' : ''}`}
-              onClick={() => setTab(id)}
+              onClick={() => { setTab(id); setMobileMenuOpen(false); }}
             >
               <Icon size={17} />
               {label}

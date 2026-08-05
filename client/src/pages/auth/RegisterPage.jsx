@@ -67,7 +67,14 @@ export default function RegisterPage() {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (loading) return;
+
+    // Guard against synthetic auto-submits triggered by browser password save prompts
+    if (e && e.type === 'submit' && e.nativeEvent && !e.nativeEvent.submitter && !e.isTrusted) {
+      return;
+    }
+
     const fieldErrors = validate();
     if (Object.keys(fieldErrors).length) { setErrors(fieldErrors); return; }
 
