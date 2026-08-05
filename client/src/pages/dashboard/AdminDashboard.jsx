@@ -282,25 +282,29 @@ function HospitalsTab({ admin }) {
                         <tr key={org._id}>
                           <td>
                             <div style={{ fontWeight: 600 }}>{org.name}</div>
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{org.email}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{org.owner?.email || org.email}</div>
                           </td>
                           <td>
                             <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{org.type}</span>
                           </td>
                           <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            {org.city}{org.address ? ` · ${org.address}` : ''}
+                            {org.address?.city || org.city || '—'}{org.address?.street ? ` · ${org.address.street}` : ''}
                           </td>
                           <td>
-                            {org.licenseDoc ? (
-                              <a
-                                className="doc-link"
-                                href={getViewableDocUrl(org.licenseDoc)}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <ExternalLink size={13} /> {isPdfUrl(org.licenseDoc) ? 'View License (PDF)' : 'View Document'}
-                              </a>
-                            ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No doc</span>}
+                            {(() => {
+                              const docUrl = org.verificationDocumentUrls?.[0] || org.licenseDoc || org.verificationDocumentUrl;
+                              if (!docUrl) return <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No doc</span>;
+                              return (
+                                <a
+                                  className="doc-link"
+                                  href={getViewableDocUrl(docUrl)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <ExternalLink size={13} /> {isPdfUrl(docUrl) ? 'View License (PDF)' : 'View Document'}
+                                </a>
+                              );
+                            })()}
                           </td>
                           <td>
                             <span className={`badge badge-${org.status === 'approved' ? 'green' : org.status === 'pending' ? 'amber' : 'red'}`}>
@@ -422,15 +426,24 @@ function RequestsTab({ admin }) {
                     : requests.requests.map(r => (
                         <tr key={r._id}>
                           <td>
-                            <div style={{ fontWeight: 600 }}>{r.patientName}</div>
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Seeker: {r.seekerId?.name || '—'}</div>
+                            <div style={{ fontWeight: 600 }}>{r.patientName || r.seeker?.name || 'Patient'}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                              Seeker: {r.seeker?.name || r.seeker?.email || '—'}
+                            </div>
                           </td>
                           <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            {r.hospital}{r.city ? ` (${r.city})` : ''}
+                            <div style={{ fontWeight: 500 }}>
+                              {r.hospitalName || (typeof r.hospital === 'object' ? r.hospital?.name : r.hospital) || '—'}
+                            </div>
+                            {(r.hospitalCity || r.city) && (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{r.hospitalCity || r.city}</div>
+                            )}
                           </td>
                           <td>
-                            <span className="badge badge-red" style={{ fontWeight: 800 }}>{r.bloodGroup}</span>
-                            <span style={{ fontSize: '0.85rem', marginLeft: 4 }}>× {r.unitsNeeded}</span>
+                            <span className="badge badge-red" style={{ fontWeight: 800 }}>
+                              {r.patientBloodGroup || r.bloodGroup || 'A+'}
+                            </span>
+                            <span style={{ fontSize: '0.85rem', marginLeft: 4 }}>× {r.unitsNeeded || 1}</span>
                           </td>
                           <td>
                             <span className={`badge badge-${r.urgency === 'critical' ? 'red' : r.urgency === 'urgent' ? 'amber' : 'blue'}`}>
@@ -438,16 +451,20 @@ function RequestsTab({ admin }) {
                             </span>
                           </td>
                           <td>
-                            {r.prescriptionDoc ? (
-                              <a
-                                className="doc-link"
-                                href={getViewableDocUrl(r.prescriptionDoc)}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <ExternalLink size={13} /> {isPdfUrl(r.prescriptionDoc) ? 'Prescription (PDF)' : 'Document'}
-                              </a>
-                            ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>}
+                            {(() => {
+                              const docUrl = r.documentUrls?.[0] || r.documentUrl || r.prescriptionDoc;
+                              if (!docUrl) return <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>;
+                              return (
+                                <a
+                                  className="doc-link"
+                                  href={getViewableDocUrl(docUrl)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <ExternalLink size={13} /> {isPdfUrl(docUrl) ? 'View Document (PDF)' : 'View Document'}
+                                </a>
+                              );
+                            })()}
                           </td>
                           <td>
                             <span className={`badge badge-${r.status === 'pending_review' ? 'amber' : r.status === 'approved' ? 'blue' : r.status === 'fulfilled' ? 'green' : 'red'}`}>
