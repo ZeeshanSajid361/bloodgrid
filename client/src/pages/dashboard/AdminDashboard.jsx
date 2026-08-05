@@ -100,7 +100,19 @@ function OverviewTab({ admin }) {
     return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 'var(--space-12)' }}><Loader2 size={28} className="spin" style={{ color: 'var(--red-400)' }} /></div>;
   }
 
-  const { users, requests, orgs, inventory } = analytics;
+  const usersTotal = analytics?.users?.total ?? 0;
+  const donorsCount = analytics?.users?.byRole?.find(r => r._id === 'donor')?.count ?? 0;
+  const seekersCount = analytics?.users?.byRole?.find(r => r._id === 'seeker')?.count ?? 0;
+
+  const requestsTotal = analytics?.requests?.total ?? 0;
+  const pendingRequestsCount = analytics?.requests?.byStatus?.find(s => s._id === 'pending_review')?.count ?? 0;
+
+  const orgsTotal = analytics?.organisations?.total ?? 0;
+  const approvedOrgsCount = analytics?.organisations?.byStatus?.find(s => s._id === 'approved')?.count ?? 0;
+
+  const totalUnits = analytics?.inventory?.totalUnits ?? 0;
+  const lowStock = analytics?.inventory?.lowStockItems || [];
+  const recentReqs = analytics?.recentRequests || [];
 
   return (
     <>
@@ -108,22 +120,22 @@ function OverviewTab({ admin }) {
       <div className="admin-stats">
         <div className="admin-stat-card">
           <div className="admin-stat-label">Total Users</div>
-          <div className="admin-stat-value">{users.total}</div>
-          <div className="admin-stat-sub">{users.donors} donors · {users.seekers} seekers</div>
+          <div className="admin-stat-value">{usersTotal}</div>
+          <div className="admin-stat-sub">{donorsCount} donors · {seekersCount} seekers</div>
         </div>
         <div className="admin-stat-card">
           <div className="admin-stat-label">Blood Requests</div>
-          <div className="admin-stat-value">{requests.total}</div>
-          <div className="admin-stat-sub">{requests.pending} pending review</div>
+          <div className="admin-stat-value">{requestsTotal}</div>
+          <div className="admin-stat-sub">{pendingRequestsCount} pending review</div>
         </div>
         <div className="admin-stat-card">
           <div className="admin-stat-label">Organisations</div>
-          <div className="admin-stat-value">{orgs.total}</div>
-          <div className="admin-stat-sub">{orgs.approved} approved</div>
+          <div className="admin-stat-value">{orgsTotal}</div>
+          <div className="admin-stat-sub">{approvedOrgsCount} approved</div>
         </div>
         <div className="admin-stat-card">
           <div className="admin-stat-label">Total Units</div>
-          <div className="admin-stat-value">{inventory.totalUnits}</div>
+          <div className="admin-stat-value">{totalUnits}</div>
           <div className="admin-stat-sub">across all hospitals</div>
         </div>
       </div>
@@ -134,16 +146,16 @@ function OverviewTab({ admin }) {
           <h3 className="admin-card-title">
             <AlertTriangle size={16} style={{ color: 'var(--red-400)' }} /> Low Stock Alerts
           </h3>
-          {inventory.lowStock.length === 0
+          {lowStock.length === 0
             ? <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>All stock levels are adequate.</p>
             : <div className="low-stock-grid-2">
-                {inventory.lowStock.map((item, i) => (
+                {lowStock.map((item, i) => (
                   <div key={i} className="low-stock-card-compact">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span className="badge badge-red" style={{ fontWeight: 800 }}>{item.bloodGroup}</span>
                       <span style={{ fontWeight: 700, color: 'var(--red-400)', fontSize: '0.8rem' }}>{item.units} units</span>
                     </div>
-                    <div className="card-sub-text">{item.orgName}</div>
+                    <div className="card-sub-text">{item.hospitalName || item.orgName || 'Hospital'}</div>
                   </div>
                 ))}
               </div>
@@ -155,22 +167,22 @@ function OverviewTab({ admin }) {
           <h3 className="admin-card-title">
             <TrendingUp size={16} style={{ color: 'var(--blue-400)' }} /> Recent Requests
           </h3>
-          {requests.recent.length === 0
+          {recentReqs.length === 0
             ? <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No recent requests.</p>
             : <div className="activity-grid-2">
-                {requests.recent.map(r => (
+                {recentReqs.map(r => (
                   <div key={r._id} className="activity-card-compact">
                     <div className="activity-card-top">
                       <div className="activity-card-left">
                         <span className={`activity-dot ${r.urgency === 'critical' ? 'critical' : r.urgency === 'urgent' ? 'urgent' : 'routine'}`} />
-                        <span className="badge badge-red" style={{ fontWeight: 800, padding: '1px 5px', fontSize: '0.72rem' }}>{r.bloodGroup}</span>
+                        <span className="badge badge-red" style={{ fontWeight: 800, padding: '1px 5px', fontSize: '0.72rem' }}>{r.patientBloodGroup || r.bloodGroup || 'Blood'}</span>
                       </div>
                       <span className={`badge badge-${r.status === 'pending_review' ? 'amber' : r.status === 'approved' ? 'blue' : r.status === 'fulfilled' ? 'green' : 'red'}`} style={{ fontSize: '0.65rem' }}>
                         {r.status === 'pending_review' ? 'Pending' : r.status}
                       </span>
                     </div>
-                    <div className="activity-patient-name">{r.patientName}</div>
-                    <div className="activity-hospital-name">{r.hospital}</div>
+                    <div className="activity-patient-name">{r.seeker?.name || r.patientName || 'Patient'}</div>
+                    <div className="activity-hospital-name">{r.hospitalName || r.hospital || 'Hospital'}</div>
                     <div className="activity-date-str">{new Date(r.createdAt).toLocaleDateString()}</div>
                   </div>
                 ))}
