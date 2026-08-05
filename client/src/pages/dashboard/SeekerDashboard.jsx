@@ -39,7 +39,7 @@ export default function SeekerDashboard() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const activeTab                      = searchParams.get('tab') || 'search';
 
-  const { requests, loading: reqLoading, error: reqError, total, refetch } = useMyRequests();
+  const { requests, loading: reqLoading, error: reqError, total, refetch } = useSeekerRequests();
   const navigate                      = useNavigate();
   const notifs                        = useNotifications();
 
