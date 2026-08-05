@@ -37,13 +37,18 @@ async function sendMail({ to, subject, html }) {
   });
 }
 
+const getBaseClientUrl = () => {
+  const raw = (clientUrl && clientUrl !== '*') ? clientUrl : 'https://blood-link-20.vercel.app';
+  return raw.replace(/\/+$/, '');
+};
+
 /**
  * Sends the account email-verification link.
  *
  * @param {{ name: string, email: string, token: string }} recipient
  */
 async function sendVerificationEmail({ name, email, token }) {
-  const verifyUrl = `${clientUrl}/verify-email?token=${token}`;
+  const verifyUrl = `${getBaseClientUrl()}/verify-email?token=${token}`;
 
   const html = `
     <!DOCTYPE html>
@@ -102,7 +107,7 @@ async function sendVerificationEmail({ name, email, token }) {
  * @param {{ name: string, email: string, role: string }} recipient
  */
 async function sendWelcomeEmail({ name, email, role }) {
-  const dashboardUrl = `${clientUrl}/dashboard`;
+  const dashboardUrl = `${getBaseClientUrl()}/dashboard`;
 
   const html = `
     <!DOCTYPE html>
