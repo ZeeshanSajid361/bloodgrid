@@ -27,27 +27,24 @@ const qrRouter            = require('./routes/qr');
 
 const app = express();
 
-// ── Security headers ──────────────────────────────────────────────────────────
-app.use(helmet());
+// ── CORS must come BEFORE helmet and all other middleware ─────────────────────
+// This ensures Access-Control-Allow-Origin is present on every response,
+// including preflight OPTIONS requests from the Vercel serverless function.
+const corsOptions = {
+  origin: '*',
+  credentials: false, // must be false when origin is '*'
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200, // some browsers (IE11) choke on 204
+};
 
-// ── CORS ──────────────────────────────────────────────────────────────────────
-// Whitelist only the configured frontend origin. Credentials (cookies) are not
-// used in this project — tokens are sent via the Authorization header instead.
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      const allowed = (clientUrl || '*').split(',').map((s) => s.trim());
-      if (allowed.includes('*') || allowed.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(null, true);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+// Handle preflight for ALL routes — must be before everything else.
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
+
+// ── Security headers ──────────────────────────────────────────────────────────
+// Disable crossOriginResourcePolicy so Vercel serverless assets are accessible.
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 // ── Body parsers ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
@@ -77,7 +74,11 @@ const authLimiter = rateLimit({
   message: { success: false, message: 'Too many authentication attempts. Please wait and try again.' },
 });
 
-app.use(globalLimiter);
+// Skip rate limiting for OPTIONS preflight requests.
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') return next();
+  return globalLimiter(req, res, next);
+});
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
@@ -85,7 +86,11 @@ app.get('/health', (_req, res) => {
 });
 
 // ── API routes ────────────────────────────────────────────────────────────────
-app.use('/api/auth',           authLimiter, authRouter);
+// Skip auth rate limiter for OPTIONS preflight on auth routes.
+app.use('/api/auth', (req, res, next) => {
+  if (req.method === 'OPTIONS') return next();
+  return authLimiter(req, res, next);
+}, authRouter);
 app.use('/api/donors',         donorRouter);
 app.use('/api/seekers',        seekerRouter);
 app.use('/api/hospitals',      hospitalRouter);
