@@ -40,8 +40,15 @@ async function sendMail({ to, subject, html }) {
   });
 }
 
+const PRODUCTION_CLIENT_URL = 'https://blood-link-20.vercel.app';
+
 const getBaseClientUrl = () => {
-  const raw = (clientUrl && clientUrl !== '*') ? clientUrl : 'https://blood-link-20.vercel.app';
+  const raw = clientUrl || '';
+  // If the configured URL is localhost or not a real public URL, use the production URL.
+  // This happens when CLIENT_URL env var on Vercel is still set to localhost:5173.
+  if (!raw || raw.includes('localhost') || raw.includes('127.0.0.1') || raw === '*') {
+    return PRODUCTION_CLIENT_URL;
+  }
   return raw.replace(/\/+$/, '');
 };
 
