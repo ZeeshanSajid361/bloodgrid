@@ -35,7 +35,15 @@ app.use(helmet());
 // used in this project — tokens are sent via the Authorization header instead.
 app.use(
   cors({
-    origin: clientUrl,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const allowed = (clientUrl || '*').split(',').map((s) => s.trim());
+      if (allowed.includes('*') || allowed.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
