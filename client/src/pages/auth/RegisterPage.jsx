@@ -141,7 +141,7 @@ export default function RegisterPage() {
         <div className="auth-form-card">
           <div className="auth-form-header">
             <h1>Create account</h1>
-            <p>Join BloodLink and make a difference.</p>
+            <p>Join BloodSync and make a difference.</p>
           </div>
 
           {/* Role selector */}
@@ -429,7 +429,7 @@ function BrandPanel() {
     <aside className="auth-brand" aria-hidden="true">
       <div className="brand-logo-wrap">
         <div className="brand-icon">🩸</div>
-        <div className="brand-wordmark">BloodLink</div>
+        <div className="brand-wordmark">BloodSync</div>
         <p className="brand-tagline">Connecting donors, seekers, and hospitals across Pakistan.</p>
       </div>
 

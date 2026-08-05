@@ -65,7 +65,7 @@ export default function SeekerDashboard() {
       <aside className="sidebar">
         <a href="/" className="sidebar-logo">
           <div className="sidebar-logo-icon">🩸</div>
-          <span className="sidebar-logo-text">Blood<span>Link</span></span>
+          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
 
         <div className="sidebar-user">
@@ -107,7 +107,7 @@ export default function SeekerDashboard() {
         <header className="mobile-header">
           <div className="mobile-header-logo">
             <div className="mobile-header-logo-icon">🩸</div>
-            <div className="mobile-header-title">Blood<span>Link</span></div>
+            <div className="mobile-header-title">Blood<span>Sync</span></div>
           </div>
           
           {/* User Avatar Pill with Dropdown */}

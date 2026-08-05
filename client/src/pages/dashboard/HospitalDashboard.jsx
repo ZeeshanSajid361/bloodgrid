@@ -649,7 +649,7 @@ export default function HospitalDashboard() {
           <div className="hospital-sidebar-brand">
             <div className="brand-icon"><Building2 size={20} /></div>
             <div>
-              <div className="brand-name">BloodLink</div>
+              <div className="brand-name">BloodSync</div>
               <div className="brand-role">Hospital Portal</div>
             </div>
           </div>

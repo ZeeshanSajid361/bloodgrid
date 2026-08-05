@@ -560,7 +560,7 @@ export default function AdminDashboard() {
         <div className="admin-brand">
           <div className="brand-icon"><ShieldCheck size={18} /></div>
           <div>
-            <div className="brand-name">BloodLink Admin</div>
+            <div className="brand-name">BloodSync Admin</div>
             <div className="brand-role">Control Panel</div>
           </div>
         </div>

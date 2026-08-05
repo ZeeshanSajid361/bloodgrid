@@ -60,27 +60,33 @@ export default function useNotifications() {
   /* ── Mutations ───────────────────────────────────────────────────────── */
 
   const markRead = useCallback(async (id) => {
+    setNotifications(prev =>
+      prev.map(n => n._id === id ? { ...n, isRead: true } : n)
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
     try {
       await api.patch(`/notifications/${id}/read`);
-      setNotifications(prev =>
-        prev.map(n => n._id === id ? { ...n, isRead: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch { /* ignore */ }
   }, []);
 
   const markAllRead = useCallback(async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    setUnreadCount(0);
     try {
       await api.patch('/notifications/read-all');
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      setUnreadCount(0);
     } catch { /* ignore */ }
   }, []);
 
   const dismiss = useCallback(async (id) => {
+    setNotifications(prev => {
+      const target = prev.find(n => n._id === id);
+      if (target && !target.isRead) {
+        setUnreadCount(uc => Math.max(0, uc - 1));
+      }
+      return prev.filter(n => n._id !== id);
+    });
     try {
       await api.delete(`/notifications/${id}`);
-      setNotifications(prev => prev.filter(n => n._id !== id));
     } catch { /* ignore */ }
   }, []);
 

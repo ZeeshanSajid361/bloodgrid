@@ -1,4 +1,4 @@
-# BloodLink 2.0
+# BloodSync 2.0
 
 A full-stack MERN platform connecting blood donors, seekers, hospitals, and administrators — built with document-based request verification and real-time notifications.
 

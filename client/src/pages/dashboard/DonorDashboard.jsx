@@ -64,7 +64,7 @@ export default function DonorDashboard() {
       <aside className="sidebar">
         <a href="/" className="sidebar-logo">
           <div className="sidebar-logo-icon">🩸</div>
-          <span className="sidebar-logo-text">Blood<span>Link</span></span>
+          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
 
         <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
@@ -106,7 +106,7 @@ export default function DonorDashboard() {
         <header className="mobile-header">
           <div className="mobile-header-logo">
             <div className="mobile-header-logo-icon">🩸</div>
-            <div className="mobile-header-title">Blood<span>Link</span></div>
+            <div className="mobile-header-title">Blood<span>Sync</span></div>
           </div>
           
           {/* User Avatar Pill */}
@@ -262,7 +262,7 @@ function OverviewTab({ donor, refetch }) {
         <StatCard
           label="Member Since"
           value={formatDate(donor.memberSince)}
-          sub={`${daysSince(donor.memberSince)} days on BloodLink`}
+          sub={`${daysSince(donor.memberSince)} days on BloodSync`}
           icon="📅"
           iconBg="rgba(124,58,237,0.15)"
         />

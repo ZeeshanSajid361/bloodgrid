@@ -67,7 +67,7 @@ export default function VerifyEmailPage() {
             <div style={{ fontSize: '3.5rem', marginBottom: 'var(--space-5)' }}>✅</div>
             <h2 style={{ color: 'var(--color-success)' }}>Email verified!</h2>
             <p className="mt-4">
-              Your account is now active. You can sign in and start using BloodLink.
+              Your account is now active. You can sign in and start using BloodSync.
             </p>
             <Link to="/login" className="btn btn-primary btn-full mt-8">
               Go to Login

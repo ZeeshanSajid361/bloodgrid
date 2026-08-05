@@ -44,7 +44,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, bloo
     const pngUrl = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = pngUrl;
-    a.download = `bloodlink-qr-${requestId}.png`;
+    a.download = `bloodsync-qr-${requestId}.png`;
     a.click();
   }
 

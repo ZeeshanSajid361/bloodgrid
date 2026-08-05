@@ -101,7 +101,7 @@ export default function LandingPage() {
     setContactSubmitted(true);
 
     // Open user's email client directly targeting zeeshansajid361@gmail.com
-    const subject = encodeURIComponent(`BloodLink Support Inquiry from ${contactName}`);
+    const subject = encodeURIComponent(`BloodSync Support Inquiry from ${contactName}`);
     const body = encodeURIComponent(`Sender Name: ${contactName}\nSender Email: ${contactEmail}\n\nMessage:\n${contactMsg}`);
     window.location.href = `mailto:zeeshansajid361@gmail.com?subject=${subject}&body=${body}`;
 
@@ -119,7 +119,7 @@ export default function LandingPage() {
       <header className="landing-nav">
         <Link to="/" className="landing-logo">
           <div className="landing-logo-icon">🩸</div>
-          <span className="landing-logo-text">Blood<span>Link</span></span>
+          <span className="landing-logo-text">Blood<span>Sync</span></span>
         </Link>
 
         {/* Desktop Nav Links */}
@@ -184,7 +184,7 @@ export default function LandingPage() {
             Every Drop Counts. <span>Save Lives</span> in Real-Time.
           </h1>
           <p className="hero-subtitle">
-            BloodLink connects voluntary blood donors directly with critical patients and emergency hospital wards across your city within minutes.
+            BloodSync connects voluntary blood donors directly with critical patients and emergency hospital wards across your city within minutes.
           </p>
 
           <div className="hero-ctas">
@@ -202,7 +202,7 @@ export default function LandingPage() {
           <div className="hero-card-glass">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>BloodLink Impact</h3>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>BloodSync Impact</h3>
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Verified real-time network activity</p>
               </div>
               <span className="badge badge-green">LIVE SYSTEM</span>
@@ -315,7 +315,7 @@ export default function LandingPage() {
 
                 <div style={{ padding: 'var(--space-4)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)', marginBottom: 'var(--space-5)' }}>
                   <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
-                    🔒 <strong>Privacy & Safety Protocol:</strong> BloodLink notifies nearby voluntary donors automatically when an official request is submitted. Direct personal phone numbers of donors are protected and never displayed publicly.
+                    🔒 <strong>Privacy & Safety Protocol:</strong> BloodSync notifies nearby voluntary donors automatically when an official request is submitted. Direct personal phone numbers of donors are protected and never displayed publicly.
                   </p>
                 </div>
 
@@ -374,7 +374,7 @@ export default function LandingPage() {
       <section id="how-it-works" className="section-wrapper">
         <div className="section-title-wrap">
           <div className="section-tag">Simple & Fast</div>
-          <h2 className="section-main-title">How BloodLink Works</h2>
+          <h2 className="section-main-title">How BloodSync Works</h2>
           <p className="section-desc">Connecting life-savers with patients in 3 streamlined steps.</p>
         </div>
 
@@ -539,7 +539,7 @@ export default function LandingPage() {
 
             <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
               <a 
-                href="mailto:zeeshansajid361@gmail.com?subject=BloodLink%20Direct%20Inquiry" 
+                href="mailto:zeeshansajid361@gmail.com?subject=BloodSync%20Direct%20Inquiry" 
                 style={{ fontSize: '0.825rem', color: 'var(--red-400)', fontWeight: 700, textDecoration: 'none' }}
               >
                 ✉️ Direct Mail: zeeshansajid361@gmail.com
@@ -555,7 +555,7 @@ export default function LandingPage() {
           <div className="footer-brand">
             <Link to="/" className="landing-logo">
               <div className="landing-logo-icon">🩸</div>
-              <span className="landing-logo-text">Blood<span>Link</span></span>
+              <span className="landing-logo-text">Blood<span>Sync</span></span>
             </Link>
             <p>
               A modern, community-driven emergency blood donor connection platform committed to saving lives.
@@ -591,7 +591,7 @@ export default function LandingPage() {
         </div>
 
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} BloodLink 2.0. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} BloodSync 2.0. All rights reserved.</p>
           <p>Built with ❤️ to save lives.</p>
         </div>
       </footer>

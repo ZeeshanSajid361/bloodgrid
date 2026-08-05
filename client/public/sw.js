@@ -1,5 +1,5 @@
 /**
- * Service Worker — BloodLink Web Push
+ * Service Worker — BloodSync Web Push
  *
  * Handles incoming push events and displays system notifications.
  * Place this file in /public so it is served at the root scope.
@@ -10,7 +10,7 @@
 
 /* eslint-disable no-undef */
 
-const CACHE_NAME = 'bloodlink-v1';
+const CACHE_NAME = 'bloodsync-v1';
 
 /* ── Install & Activate ─────────────────────────────────────────────────── */
 
@@ -20,7 +20,7 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 /* ── Push event ─────────────────────────────────────────────────────────── */
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'BloodLink', message: 'You have a new notification.', link: '/' };
+  let data = { title: 'BloodSync', message: 'You have a new notification.', link: '/' };
 
   if (event.data) {
     try {
@@ -36,7 +36,7 @@ self.addEventListener('push', (event) => {
     badge:   '/badge-72.png',   // small monochrome badge icon
     data:    { link: data.link || '/' },
     vibrate: [200, 100, 200],
-    tag:     'bloodlink-notification', // replaces older notifications instead of stacking
+    tag:     'bloodsync-notification', // replaces older notifications instead of stacking
     renotify: true,
     actions: [
       { action: 'open',    title: 'Open App' },

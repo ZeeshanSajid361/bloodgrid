@@ -93,13 +93,8 @@ export default function NotificationBell({
               )}
             </div>
             <div className="notif-panel-actions">
-              {unreadCount > 0 && (
-                <button className="notif-action-btn" onClick={markAllRead} title="Clear all to history">
-                  <CheckCheck size={15} /> Clear All
-                </button>
-              )}
               <button className="notif-action-btn" onClick={togglePanel} title="Close">
-                <X size={15} />
+                <X size={16} />
               </button>
             </div>
           </div>
