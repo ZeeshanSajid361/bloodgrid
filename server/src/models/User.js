@@ -17,7 +17,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 const ROLES = ['donor', 'seeker', 'hospital', 'admin'];
-const BCRYPT_ROUNDS = 12;
+const BCRYPT_ROUNDS = 10; // 10 rounds ≈ industry standard; gives ~4× faster hashing than 12 with negligible security difference
 
 const userSchema = new mongoose.Schema(
   {

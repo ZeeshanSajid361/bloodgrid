@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import useAdminData from '../../hooks/useAdminData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
+import { getViewableDocUrl, isPdfUrl } from '../../lib/docUrl';
 import '../../styles/admin.css';
 
 /* ── shared note modal ───────────────────────────────────────────────────── */
@@ -248,14 +249,14 @@ function HospitalsTab({ admin }) {
                           {org.verificationDocumentUrls && org.verificationDocumentUrls.length > 0
                             ? <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 {org.verificationDocumentUrls.map((url, i) => (
-                                  <a key={i} className="doc-link" href={url} target="_blank" rel="noreferrer">
-                                    <ExternalLink size={13} /> View Doc {org.verificationDocumentUrls.length > 1 ? i+1 : ''}
+                                  <a key={i} className="doc-link" href={getViewableDocUrl(url)} target="_blank" rel="noreferrer">
+                                    <ExternalLink size={13} /> {isPdfUrl(url) ? '📄 PDF' : '🖼 Doc'} {org.verificationDocumentUrls.length > 1 ? i+1 : ''}
                                   </a>
                                 ))}
                               </div>
                             : (org.verificationDocumentUrl 
-                                ? <a className="doc-link" href={org.verificationDocumentUrl} target="_blank" rel="noreferrer">
-                                    <ExternalLink size={13} /> View Doc
+                                ? <a className="doc-link" href={getViewableDocUrl(org.verificationDocumentUrl)} target="_blank" rel="noreferrer">
+                                    <ExternalLink size={13} /> {isPdfUrl(org.verificationDocumentUrl) ? '📄 View PDF' : '🖼 View Doc'}
                                   </a>
                                 : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>)
                           }
@@ -373,14 +374,14 @@ function RequestsTab({ admin }) {
                           {r.documentUrls && r.documentUrls.length > 0
                             ? <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 {r.documentUrls.map((url, i) => (
-                                  <a key={i} className="doc-link" href={url} target="_blank" rel="noreferrer">
-                                    <ExternalLink size={13} /> View Slip {r.documentUrls.length > 1 ? i+1 : ''}
+                                  <a key={i} className="doc-link" href={getViewableDocUrl(url)} target="_blank" rel="noreferrer">
+                                    <ExternalLink size={13} /> {isPdfUrl(url) ? '📄 PDF' : '🖼 Slip'} {r.documentUrls.length > 1 ? i+1 : ''}
                                   </a>
                                 ))}
                               </div>
                             : (r.documentUrl 
-                                ? <a className="doc-link" href={r.documentUrl} target="_blank" rel="noreferrer">
-                                    <ExternalLink size={13} /> View Slip
+                                ? <a className="doc-link" href={getViewableDocUrl(r.documentUrl)} target="_blank" rel="noreferrer">
+                                    <ExternalLink size={13} /> {isPdfUrl(r.documentUrl) ? '📄 View PDF' : '🖼 View Slip'}
                                   </a> 
                                 : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>)
                           }

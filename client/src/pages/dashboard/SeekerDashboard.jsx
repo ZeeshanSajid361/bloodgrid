@@ -21,6 +21,7 @@ import { useSeekerRequests, useDonorSearch } from '../../hooks/useSeekerData';
 import useNotifications                     from '../../hooks/useNotifications';
 import NotificationBell                     from '../../components/NotificationBell';
 import api                                  from '../../lib/api';
+import { getViewableDocUrl, isPdfUrl }      from '../../lib/docUrl';
 import '../../styles/dashboard.css';
 import '../../styles/seeker.css';
 
@@ -739,13 +740,13 @@ function RequestCard({ request, onCancel }) {
               <a
                 key={i}
                 className="doc-link"
-                href={url}
+                href={getViewableDocUrl(url)}
                 target="_blank"
                 rel="noreferrer"
                 style={{ display: 'inline-flex' }}
               >
                 <FileText size={13} />
-                View document {request.documentUrls.length > 1 ? i + 1 : ''}
+                {isPdfUrl(url) ? '📄 PDF' : '🖼 Doc'} {request.documentUrls.length > 1 ? i + 1 : ''}
                 <ExternalLink size={12} />
               </a>
             ))
@@ -753,13 +754,13 @@ function RequestCard({ request, onCancel }) {
             request.documentUrl && (
               <a
                 className="doc-link"
-                href={request.documentUrl}
+                href={getViewableDocUrl(request.documentUrl)}
                 target="_blank"
                 rel="noreferrer"
                 style={{ display: 'inline-flex' }}
               >
                 <FileText size={13} />
-                View uploaded document
+                {isPdfUrl(request.documentUrl) ? '📄 View PDF' : '🖼 View Document'}
                 <ExternalLink size={12} />
               </a>
             )
