@@ -29,11 +29,14 @@ const REQUIRED = [
 const missing = REQUIRED.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
-  console.error(
-    `[config] Missing required environment variables: ${missing.join(', ')}\n` +
-      'Copy server/.env.example to server/.env and fill in the values.'
-  );
-  process.exit(1);
+  const msg = `[config] Missing required environment variables: ${missing.join(', ')}\n` +
+    'Copy server/.env.example to server/.env and fill in the values.';
+  console.error(msg);
+  // In serverless environments (Vercel) we warn but don't exit,
+  // so OPTIONS preflight requests can still return 200.
+  if (process.env.VERCEL !== '1') {
+    process.exit(1);
+  }
 }
 
 module.exports = {
