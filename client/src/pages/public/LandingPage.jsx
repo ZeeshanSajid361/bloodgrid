@@ -457,7 +457,7 @@ export default function LandingPage() {
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Building2 size={20} color="var(--red-400)" /> Hospital Helplines (Demo)
               </h3>
-              <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>24/7 HELPLINES</span>
+              <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>TEST DATA</span>
             </div>
 
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
@@ -585,7 +585,7 @@ export default function LandingPage() {
             <h4>Emergency Help</h4>
             <ul>
               <li style={{ color: 'var(--red-300)', fontWeight: 700 }}>24/7 Rescue Line: 1122</li>
-              <li>Email: zeeshansajid361@gmail.com</li>
+              <li>Email: support@bloodsync.app</li>
             </ul>
           </div>
         </div>
