@@ -1,7 +1,7 @@
 services:
   # Backend Node.js API
   - type: web
-    name: bloodlink-api
+    name: bloodsync-api
     env: node
     region: singapore
     buildCommand: npm install
@@ -39,7 +39,7 @@ services:
 
   # Frontend React SPA
   - type: web
-    name: bloodlink-client
+    name: bloodsync-client
     env: static
     region: singapore
     buildCommand: npm install && npm run build

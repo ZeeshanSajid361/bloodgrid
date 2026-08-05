@@ -66,7 +66,7 @@ async function sendVerificationEmail({ name, email, token }) {
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Verify your BloodLink email</title>
+      <title>Verify your BloodSync email</title>
       <style>
         body { margin: 0; padding: 0; background: #0d0d0f; font-family: 'Segoe UI', Arial, sans-serif; }
         .wrapper { max-width: 560px; margin: 40px auto; background: #141418; border-radius: 16px; overflow: hidden; }
@@ -86,29 +86,29 @@ async function sendVerificationEmail({ name, email, token }) {
     <body>
       <div class="wrapper">
         <div class="header">
-          <h1>🩸 BloodLink 2.0</h1>
+          <h1>🩸 BloodSync 2.0</h1>
           <p>Connecting donors, seekers & hospitals</p>
         </div>
         <div class="body">
           <p>Hi <strong>${name}</strong>,</p>
           <p>
-            Thank you for joining BloodLink. Before your account goes live,
+            Thank you for joining BloodSync. Before your account goes live,
             please confirm your email address by clicking the button below.
             This link expires in <strong>24 hours</strong>.
           </p>
           <div class="btn-wrap">
             <a href="${verifyUrl}" class="btn">Verify Email Address</a>
           </div>
-          <p>If you did not create a BloodLink account, you can safely ignore this email.</p>
+          <p>If you did not create a BloodSync account, you can safely ignore this email.</p>
           <p class="url">Or paste this link in your browser:<br />${verifyUrl}</p>
         </div>
-        <div class="footer">© ${new Date().getFullYear()} BloodLink — A university project</div>
+        <div class="footer">© ${new Date().getFullYear()} BloodSync — A university project</div>
       </div>
     </body>
     </html>
   `;
 
-  await sendMail({ to: email, subject: 'Verify your BloodLink email address', html });
+  await sendMail({ to: email, subject: 'Verify your BloodSync email address', html });
 }
 
 /**
@@ -124,7 +124,7 @@ async function sendWelcomeEmail({ name, email, role }) {
     <html lang="en">
     <head>
       <meta charset="UTF-8" />
-      <title>Welcome to BloodLink</title>
+      <title>Welcome to BloodSync</title>
       <style>
         body { margin: 0; padding: 0; background: #0d0d0f; font-family: 'Segoe UI', Arial, sans-serif; }
         .wrapper { max-width: 560px; margin: 40px auto; background: #141418; border-radius: 16px; overflow: hidden; }
@@ -142,7 +142,7 @@ async function sendWelcomeEmail({ name, email, role }) {
     <body>
       <div class="wrapper">
         <div class="header">
-          <h1>🩸 Welcome to BloodLink</h1>
+          <h1>🩸 Welcome to BloodSync</h1>
         </div>
         <div class="body">
           <p>Hi <strong>${name}</strong>,</p>
@@ -155,13 +155,13 @@ async function sendWelcomeEmail({ name, email, role }) {
           </div>
           <p>Every donation saves lives. Thank you for being part of the network.</p>
         </div>
-        <div class="footer">© ${new Date().getFullYear()} BloodLink — A university project</div>
+        <div class="footer">© ${new Date().getFullYear()} BloodSync — A university project</div>
       </div>
     </body>
     </html>
   `;
 
-  await sendMail({ to: email, subject: 'You are verified — Welcome to BloodLink!', html });
+  await sendMail({ to: email, subject: 'You are verified — Welcome to BloodSync!', html });
 }
 
 module.exports = { sendVerificationEmail, sendWelcomeEmail };

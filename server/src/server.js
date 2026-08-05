@@ -18,7 +18,7 @@ async function start() {
   await connectDB();
 
   server = app.listen(port, () => {
-    console.log(`[server] BloodLink API listening on port ${port}`);
+    console.log(`[server] BloodSync API listening on port ${port}`);
   });
 }
 

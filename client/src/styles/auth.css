@@ -18,8 +18,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-12);
+  padding: var(--space-6);
   overflow: hidden;
+}
+
+@media (min-width: 901px) {
+  .auth-brand {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+  }
 }
 
 /* Ambient glow blobs */
@@ -51,7 +60,7 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-4);
 }
 
 /* Animated pulse ring around the drop icon */
@@ -61,15 +70,15 @@
 }
 
 .brand-icon {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   background: linear-gradient(135deg, var(--red-600), var(--red-800));
-  border-radius: 24px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto var(--space-5);
-  font-size: 2.25rem;
+  margin: 0 auto var(--space-3);
+  font-size: 2rem;
   box-shadow: var(--shadow-red), var(--shadow-md);
   position: relative;
 }
@@ -78,7 +87,7 @@
   content: '';
   position: absolute;
   inset: -4px;
-  border-radius: 28px;
+  border-radius: 24px;
   background: linear-gradient(135deg, var(--red-500), var(--red-700));
   opacity: 0.4;
   animation: pulseRing 2.2s ease-out infinite;
@@ -96,11 +105,11 @@
 
 .brand-tagline {
   color: var(--text-secondary);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   margin-top: var(--space-2);
   text-align: center;
   max-width: 280px;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* Stats row */
@@ -108,8 +117,8 @@
   position: relative;
   z-index: 1;
   display: flex;
-  gap: var(--space-8);
-  margin-top: var(--space-10);
+  gap: var(--space-6);
+  margin-top: var(--space-5);
 }
 
 .brand-stat {
@@ -117,7 +126,7 @@
 }
 
 .brand-stat-value {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--red-400);
   letter-spacing: -0.04em;
@@ -136,8 +145,8 @@
 .brand-quote {
   position: relative;
   z-index: 1;
-  margin-top: var(--space-10);
-  padding: var(--space-5) var(--space-6);
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--space-5);
   background: rgba(255, 255, 255, 0.04);
   border-left: 3px solid var(--red-600);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;

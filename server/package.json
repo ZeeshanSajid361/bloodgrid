@@ -1,7 +1,7 @@
 {
-  "name": "bloodlink-server",
+  "name": "bloodsync-server",
   "version": "1.0.0",
-  "description": "BloodLink 2.0 REST API — MERN blood donation platform",
+  "description": "BloodSync 2.0 REST API — MERN blood donation platform",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",

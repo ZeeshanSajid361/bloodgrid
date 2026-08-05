@@ -82,7 +82,7 @@ app.use((req, res, next) => {
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
-  res.status(200).json({ success: true, message: 'BloodLink API is running.' });
+  res.status(200).json({ success: true, message: 'BloodSync API is running.' });
 });
 
 // ── API routes ────────────────────────────────────────────────────────────────
