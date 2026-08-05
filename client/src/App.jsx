@@ -6,7 +6,8 @@
  * globally without additional setup in individual components.
  */
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
@@ -24,10 +25,19 @@ import QRVerifyPage      from './pages/qr/QRVerifyPage';
 
 import LandingPage   from './pages/public/LandingPage';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Public routes */}
           <Route path="/"             element={<LandingPage />} />

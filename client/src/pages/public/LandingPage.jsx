@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, Search, Shield, Zap, Award, UserPlus, 
-  MapPin, CheckCircle, ArrowRight, Activity, Users, PhoneCall 
+  MapPin, CheckCircle, ArrowRight, Activity, Users, PhoneCall, Menu, X, AlertTriangle 
 } from 'lucide-react';
 import './LandingPage.css';
 
@@ -17,7 +17,15 @@ const COMPATIBILITY_MAP = {
   'O-':  ['O-'],
 };
 
-// Realistic dummy emergency requests for public landing board
+const MOCK_PUBLIC_DONORS = [
+  { id: 'd1', name: 'Zeeshan S.', bloodGroup: 'O-', city: 'Islamabad', area: 'F-8 / G-9', isAvailable: true, level: 'Spark Donor' },
+  { id: 'd2', name: 'Ali Raza', bloodGroup: 'O-', city: 'Islamabad', area: 'Blue Area', isAvailable: true, level: 'Pulse Donor' },
+  { id: 'd3', name: 'Hamza Tariq', bloodGroup: 'A+', city: 'Rawalpindi', area: 'Saddar', isAvailable: true, level: 'Life Saver' },
+  { id: 'd4', name: 'Usman Malik', bloodGroup: 'B+', city: 'Lahore', area: 'Gulberg', isAvailable: true, level: 'Guardian' },
+  { id: 'd5', name: 'Bilal Ahmed', bloodGroup: 'AB-', city: 'Karachi', area: 'Clifton', isAvailable: true, level: 'Anchor' },
+  { id: 'd6', name: 'Sara Khan', bloodGroup: 'O+', city: 'Islamabad', area: 'E-11', isAvailable: true, level: 'Spark Donor' },
+];
+
 const DEMO_EMERGENCIES = [
   {
     id: 'req-1',
@@ -55,8 +63,28 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [selectedGroup, setSelectedGroup] = useState('O-');
   const [selectedCity, setSelectedCity]   = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [connectDonorModal, setConnectDonorModal] = useState(null);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
 
   const compatibleDonors = COMPATIBILITY_MAP[selectedGroup] || [selectedGroup];
+
+  function handleSearch(e) {
+    e.preventDefault();
+    setHasSearched(true);
+
+    const filtered = MOCK_PUBLIC_DONORS.filter((d) => {
+      const isCompatGroup = compatibleDonors.includes(d.bloodGroup);
+      const isCityMatch = selectedCity
+        ? d.city.toLowerCase().includes(selectedCity.trim().toLowerCase())
+        : true;
+      return isCompatGroup && isCityMatch;
+    });
+
+    setSearchResults(filtered);
+  }
 
   return (
     <div className="landing-page">
@@ -67,6 +95,7 @@ export default function LandingPage() {
           <span className="landing-logo-text">Blood<span>Link</span></span>
         </Link>
 
+        {/* Desktop Nav Links */}
         <ul className="landing-nav-links">
           <li><a href="#how-it-works">How It Works</a></li>
           <li><a href="#checker">Donor Checker</a></li>
@@ -74,6 +103,7 @@ export default function LandingPage() {
           <li><a href="#tiers">Recognition</a></li>
         </ul>
 
+        {/* Desktop Action Buttons */}
         <div className="landing-nav-actions">
           <Link to="/login" className="btn btn-ghost btn-sm">
             Sign In
@@ -82,6 +112,37 @@ export default function LandingPage() {
             Register
           </Link>
         </div>
+
+        {/* Mobile Hamburger Toggle (≡ 3 parallel lines button) */}
+        <button 
+          className="mobile-nav-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+        </button>
+
+        {/* Mobile Dropdown Slide Menu */}
+        {mobileMenuOpen && (
+          <div className="landing-mobile-menu">
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>📍 How It Works</a>
+            <a href="#checker" onClick={() => setMobileMenuOpen(false)}>🩸 Donor Compatibility Checker</a>
+            <a href="#emergencies" onClick={() => setMobileMenuOpen(false)}>⚡ Live Emergency Board</a>
+            <a href="#tiers" onClick={() => setMobileMenuOpen(false)}>🏆 Donor Recognition Tiers</a>
+            <a href="#emergency-contact" onClick={() => { setMobileMenuOpen(false); setShowEmergencyModal(true); }}>
+              🚑 24/7 Emergency Helpline
+            </a>
+
+            <div className="landing-mobile-actions">
+              <Link to="/login" className="btn btn-ghost btn-full" onClick={() => setMobileMenuOpen(false)}>
+                Sign In
+              </Link>
+              <Link to="/register" className="btn btn-primary btn-full" onClick={() => setMobileMenuOpen(false)}>
+                Register
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ── Hero Section ── */}
@@ -140,7 +201,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Instant Donor Compatibility Checker ── */}
+      {/* ── Instant Donor Compatibility Checker Section ── */}
       <section id="checker" className="section-wrapper">
         <div className="section-title-wrap">
           <div className="section-tag">Smart Matching</div>
@@ -149,7 +210,7 @@ export default function LandingPage() {
         </div>
 
         <div className="search-widget-card">
-          <div className="widget-grid">
+          <form className="widget-grid" onSubmit={handleSearch}>
             <div className="input-group">
               <label className="input-label">Patient Blood Group</label>
               <select 
@@ -174,13 +235,10 @@ export default function LandingPage() {
               />
             </div>
 
-            <button 
-              className="btn btn-primary" 
-              onClick={() => navigate(`/login`)}
-            >
+            <button type="submit" className="btn btn-primary">
               <Search size={18} /> Search Active Donors
             </button>
-          </div>
+          </form>
 
           <div className="compatibility-matrix">
             <div className="compat-card">
@@ -200,6 +258,64 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+
+          {/* Real Live Search Results Rendered directly on Landing Page */}
+          {hasSearched && (
+            <div className="public-search-results">
+              <div className="results-header">
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Available Compatible Donors</h3>
+                  <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+                    Found {searchResults.length} verified donor(s) compatible with {selectedGroup}
+                  </p>
+                </div>
+                <span className="badge badge-green">REAL-TIME</span>
+              </div>
+
+              {searchResults.length === 0 ? (
+                <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No exact match found in this city right now. Try expanding your search or registering a request.
+                </div>
+              ) : (
+                <div className="results-grid">
+                  {searchResults.map((d) => (
+                    <div key={d.id} className="donor-public-card">
+                      <div className="donor-public-top">
+                        <div className="donor-public-avatar">{d.name[0]}</div>
+                        <div>
+                          <h4 style={{ fontSize: '1rem', fontWeight: 800 }}>{d.name}</h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{d.level}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Group:</span>
+                        <span className="blood-group-badge" style={{ padding: '0.2rem 0.6rem', fontSize: '0.85rem' }}>{d.bloodGroup}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Location:</span>
+                        <span style={{ fontWeight: 600 }}>{d.city} ({d.area})</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Status:</span>
+                        <span className="badge badge-green">✓ Active Now</span>
+                      </div>
+
+                      <button 
+                        className="btn btn-ghost btn-sm btn-full"
+                        style={{ marginTop: 'var(--space-2)' }}
+                        onClick={() => setConnectDonorModal(d)}
+                      >
+                        Request / Contact Donor <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -289,27 +405,27 @@ export default function LandingPage() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
-          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+          <div className="compat-card" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
             <span style={{ fontSize: '2rem' }}>🌱</span>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Spark</h4>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>1 Confirmed Donation</p>
           </div>
-          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+          <div className="compat-card" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
             <span style={{ fontSize: '2rem' }}>⚡</span>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Pulse</h4>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>3 Confirmed Donations</p>
           </div>
-          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+          <div className="compat-card" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
             <span style={{ fontSize: '2rem' }}>❤️</span>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Life Saver</h4>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>5 Confirmed Donations</p>
           </div>
-          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+          <div className="compat-card" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
             <span style={{ fontSize: '2rem' }}>🛡️</span>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Guardian</h4>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>10 Confirmed Donations</p>
           </div>
-          <div className="compat-card" style={{ textCenter: 'center', textAlign: 'center', padding: 'var(--space-6)' }}>
+          <div className="compat-card" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
             <span style={{ fontSize: '2rem' }}>⚓</span>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginTop: 'var(--space-2)' }}>Anchor</h4>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>25+ Confirmed Donations</p>
@@ -349,9 +465,9 @@ export default function LandingPage() {
           </div>
 
           <div className="footer-col">
-            <h4>Emergency</h4>
+            <h4>Emergency Help</h4>
             <ul>
-              <li style={{ color: 'var(--red-300)', fontWeight: 700 }}>Helpline: 1122</li>
+              <li style={{ color: 'var(--red-300)', fontWeight: 700 }}>24/7 Helpline: 1122</li>
               <li>Support: help@bloodlink.org</li>
             </ul>
           </div>
@@ -362,6 +478,92 @@ export default function LandingPage() {
           <p>Built with ❤️ to save lives.</p>
         </div>
       </footer>
+
+      {/* ── Floating 24/7 Emergency Help Button ── */}
+      <button 
+        className="emergency-float-btn"
+        onClick={() => setShowEmergencyModal(true)}
+      >
+        <PhoneCall size={18} /> 24/7 Emergency Helpline
+      </button>
+
+      {/* ── Contact / Connect Donor Modal ── */}
+      {connectDonorModal && (
+        <div className="profile-modal-overlay" onClick={() => setConnectDonorModal(null)}>
+          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <button className="profile-modal-close" onClick={() => setConnectDonorModal(null)}>
+                <X size={18} />
+              </button>
+              <div className="profile-avatar-large">{connectDonorModal.name[0]}</div>
+              <div className="profile-modal-name">{connectDonorModal.name}</div>
+              <div className="profile-modal-role">Available Donor ({connectDonorModal.bloodGroup})</div>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-info-row">
+                <span className="profile-info-label">City / Region</span>
+                <span className="profile-info-val">{connectDonorModal.city} ({connectDonorModal.area})</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Donor Tier</span>
+                <span className="badge badge-blue">{connectDonorModal.level}</span>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textCenter: 'center', marginTop: 'var(--space-2)' }}>
+                To contact this voluntary donor or submit an official emergency request, please sign in to your seeker account.
+              </p>
+            </div>
+
+            <div className="profile-modal-actions">
+              <Link to="/login" className="btn btn-primary btn-full">
+                Sign In as Seeker to Connect
+              </Link>
+              <Link to="/register" className="btn btn-ghost btn-full">
+                Create Free Seeker Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Emergency Help Modal ── */}
+      {showEmergencyModal && (
+        <div className="profile-modal-overlay" onClick={() => setShowEmergencyModal(false)}>
+          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header" style={{ background: 'linear-gradient(135deg, rgba(192,57,43,0.3), rgba(15,21,32,0.95))' }}>
+              <button className="profile-modal-close" onClick={() => setShowEmergencyModal(false)}>
+                <X size={18} />
+              </button>
+              <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-2)' }}>🚑</div>
+              <div className="profile-modal-name">24/7 Emergency Blood Helpline</div>
+              <div className="profile-modal-role">Immediate Assistance</div>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-info-row" style={{ background: 'rgba(192, 57, 43, 0.1)', borderColor: 'rgba(192,57,43,0.3)' }}>
+                <span className="profile-info-label" style={{ color: 'var(--red-300)', fontWeight: 700 }}>National Emergency</span>
+                <a href="tel:1122" style={{ color: '#fff', fontWeight: 800, fontSize: '1.1rem', textDecoration: 'none' }}>📞 1122</a>
+              </div>
+
+              <div className="profile-info-row">
+                <span className="profile-info-label">BloodLink Rescue Line</span>
+                <a href="tel:+925111125663" style={{ color: 'var(--text-primary)', fontWeight: 700, textDecoration: 'none' }}>+92 51 111 25663</a>
+              </div>
+
+              <div className="profile-info-row">
+                <span className="profile-info-label">Official Support Email</span>
+                <span className="profile-info-val">help@bloodlink.org</span>
+              </div>
+            </div>
+
+            <div className="profile-modal-actions">
+              <Link to="/login" className="btn btn-primary btn-full" onClick={() => setShowEmergencyModal(false)}>
+                Post Urgent Emergency Request
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

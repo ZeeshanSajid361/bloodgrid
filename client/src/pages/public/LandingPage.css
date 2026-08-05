@@ -419,6 +419,146 @@
   color: var(--text-muted);
 }
 
+/* ── Mobile Hamburger Toggle & Menu ──────────────────────────────────────── */
+.mobile-nav-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+.mobile-nav-toggle:hover {
+  background: var(--surface-float);
+}
+
+.landing-mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(12, 17, 26, 0.96);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-bottom: 1px solid var(--surface-border-hover);
+  padding: var(--space-6) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-xl);
+  animation: fadeUp 0.25s var(--transition-spring);
+}
+
+.landing-mobile-menu a {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: var(--space-2) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.landing-mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* ── Public Search Results Grid ─────────────────────────────────────────── */
+.public-search-results {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--surface-border);
+  animation: fadeIn 0.3s ease;
+}
+
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.donor-public-card {
+  background: var(--surface-float);
+  border: 1px solid var(--surface-border-hover);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: transform var(--transition-fast);
+}
+
+.donor-public-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(192, 57, 43, 0.4);
+}
+
+.donor-public-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.donor-public-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--red-600), var(--red-900));
+  color: var(--red-100);
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Floating Emergency Button & Modal ───────────────────────────────────── */
+.emergency-float-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: var(--z-toast);
+  background: linear-gradient(135deg, var(--red-600), var(--red-800));
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-full);
+  padding: var(--space-3) var(--space-5);
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-shadow: 0 4px 20px rgba(192, 57, 43, 0.6);
+  cursor: pointer;
+  transition: transform var(--transition-spring), box-shadow var(--transition-fast);
+  animation: pulseGlow 2s infinite;
+}
+
+.emergency-float-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 28px rgba(192, 57, 43, 0.8);
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); }
+  70% { box-shadow: 0 0 0 15px rgba(192, 57, 43, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1023px) {
   .landing-hero { grid-template-columns: 1fr; gap: var(--space-8); text-align: center; }
@@ -429,10 +569,12 @@
   .footer-inner { grid-template-columns: 1fr 1fr; }
 }
 
-@media (max-width: 639px) {
-  .landing-nav-links { display: none; }
+@media (max-width: 767px) {
+  .landing-nav-links, .landing-nav-actions { display: none; }
+  .mobile-nav-toggle { display: flex; align-items: center; justify-content: center; }
   .landing-nav { padding: var(--space-4); }
   .landing-hero { padding: var(--space-8) var(--space-4); }
   .widget-grid { grid-template-columns: 1fr; }
   .footer-inner { grid-template-columns: 1fr; }
+  .emergency-float-btn { bottom: 16px; right: 16px; padding: var(--space-3) var(--space-4); font-size: 0.825rem; }
 }
