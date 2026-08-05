@@ -1,55 +1,45 @@
 /**
- * docUrl.js — Cloudinary document URL transformer
+ * docUrl.js — Cloudinary document URL helper
  *
- * Problem: Cloudinary serves PDFs with Content-Disposition: attachment by
- * default, causing the browser to DOWNLOAD the file instead of opening it.
+ * Strategy:
+ *   - Legacy files were uploaded as resource_type: 'raw' → no transformations
+ *     possible. Return the URL as-is. The browser will handle it (usually
+ *     opens PDFs inline in modern browsers, or prompts download).
  *
- * Solution strategy:
+ *   - New files are uploaded as resource_type: 'image' (see cloudinaryUpload.js).
+ *     For these we can safely add fl_inline so PDFs open in-browser instead
+ *     of downloading.
  *
- *   NEW uploads  → Uploaded as resource_type: 'image' on the server.
- *                  URL looks like: .../image/upload/v.../folder/file.pdf
- *                  We inject `fl_inline` → renders PDF in browser tab. ✅
- *
- *   LEGACY uploads → Were uploaded as resource_type: 'raw'.
- *                    URL looks like: .../raw/upload/v.../folder/file.pdf
- *                    raw type does NOT support transformations.
- *                    We rewrite raw → image in the URL so fl_inline works. ✅
- *                    (Cloudinary allows this cross-resource-type URL rewrite
- *                    for PDFs because it actually stores the content either way.)
- *
- * For non-Cloudinary URLs the original URL is returned unchanged.
+ * IMPORTANT: Do NOT rewrite raw/upload → image/upload in the URL.
+ * Cloudinary validates the resource type server-side. The rewrite causes HTTP 400.
  */
 
 /**
- * Returns a URL that opens as a viewable PDF/document in a new browser tab
- * instead of triggering a file download.
+ * Returns a URL that opens a document in the browser (inline) when possible.
  *
  * @param {string} url - Raw document URL from the database.
- * @returns {string}   - Transformed URL with fl_inline for PDFs.
+ * @returns {string}   - URL safe to use in a target="_blank" anchor.
  */
 export function getViewableDocUrl(url) {
   if (!url) return '';
 
-  // Only transform Cloudinary delivery URLs
+  // Non-Cloudinary URLs: return as-is
   if (!url.includes('res.cloudinary.com')) return url;
 
-  let transformed = url;
-
-  // STEP 1: Rewrite legacy raw/upload → image/upload
-  // raw resource type doesn't support transformations. Rewriting to image
-  // makes fl_inline work and Cloudinary will still serve the file correctly.
-  if (transformed.includes('/raw/upload/')) {
-    transformed = transformed.replace('/raw/upload/', '/image/upload/');
+  // Legacy raw/upload URLs: return as-is — DO NOT rewrite to image/upload.
+  // Cloudinary enforces resource types server-side; the rewrite causes 400.
+  // Modern browsers will still attempt to open PDFs inline from raw URLs.
+  if (url.includes('/raw/upload/')) {
+    return url;
   }
 
-  // STEP 2: Inject fl_inline if not already present
-  // fl_inline sets Content-Disposition: inline so the browser renders the
-  // file natively instead of downloading it.
-  if (!transformed.includes('fl_inline')) {
-    transformed = transformed.replace('/image/upload/', '/image/upload/fl_inline/');
+  // image/upload URLs (new uploads via updated server): safely add fl_inline
+  // so Content-Disposition is set to inline instead of attachment.
+  if (url.includes('/image/upload/') && !url.includes('fl_inline')) {
+    return url.replace('/image/upload/', '/image/upload/fl_inline/');
   }
 
-  return transformed;
+  return url;
 }
 
 /**
@@ -60,6 +50,5 @@ export function getViewableDocUrl(url) {
  */
 export function isPdfUrl(url) {
   if (!url) return false;
-  const lower = url.toLowerCase().split('?')[0]; // strip query params
-  return lower.endsWith('.pdf') || lower.includes('.pdf');
+  return url.toLowerCase().split('?')[0].endsWith('.pdf');
 }
