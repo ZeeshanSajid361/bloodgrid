@@ -60,7 +60,7 @@ export default function DonorDashboard() {
 
   return (
     <div className="dashboard-shell">
-      {/* ── Sidebar ── */}
+      {/* ── Desktop Collapsible Sidebar ── */}
       <aside className="sidebar">
         <a href="/" className="sidebar-logo">
           <div className="sidebar-logo-icon">🩸</div>
@@ -87,41 +87,73 @@ export default function DonorDashboard() {
               onClick={() => setActiveTab(id)}
             >
               <Icon size={18} />
-              {label}
+              <span>{label}</span>
             </button>
           ))}
         </nav>
 
         <div className="sidebar-footer">
-          <div style={{ padding: 'var(--space-2) var(--space-4)', marginBottom: 'var(--space-2)' }}>
-            <NotificationBell {...notifs} />
-          </div>
           <button id="donor-logout" className="sidebar-nav-link" onClick={handleLogout}>
             <LogOut size={18} />
-            Sign out
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
 
-      {/* ── Main content ── */}
-      <main className="dashboard-main">
-        {loading && <DashboardSkeleton />}
-        {error   && <ErrorBanner message={error} onRetry={refetch} />}
+      {/* ── Main content wrapper ── */}
+      <div className="dashboard-main-wrapper">
+        {/* Mobile top header */}
+        <header className="mobile-header">
+          <div className="mobile-header-logo">
+            <div className="mobile-header-logo-icon">🩸</div>
+            <div className="mobile-header-title">Blood<span>Link</span></div>
+          </div>
+          <div className="mobile-header-user">
+            <div className="mobile-user-avatar">{initials}</div>
+          </div>
+        </header>
 
-        {!loading && !error && donor && (
-          <>
-            {activeTab === 'overview' && (
-              <OverviewTab donor={donor} refetch={refetch} />
-            )}
-            {activeTab === 'edit' && (
-              <EditProfileTab donor={donor} refetch={refetch} onSaved={() => setActiveTab('overview')} />
-            )}
-            {activeTab === 'history' && (
-              <HistoryTab donor={donor} />
-            )}
-          </>
-        )}
-      </main>
+        {/* Main content */}
+        <main className="dashboard-main">
+          {loading && <DashboardSkeleton />}
+          {error   && <ErrorBanner message={error} onRetry={refetch} />}
+
+          {!loading && !error && donor && (
+            <>
+              {activeTab === 'overview' && (
+                <OverviewTab donor={donor} refetch={refetch} />
+              )}
+              {activeTab === 'edit' && (
+                <EditProfileTab donor={donor} refetch={refetch} onSaved={() => setActiveTab('overview')} />
+              )}
+              {activeTab === 'history' && (
+                <HistoryTab donor={donor} />
+              )}
+            </>
+          )}
+        </main>
+
+        {/* Mobile bottom nav */}
+        <nav className="mobile-bottom-nav">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              className={`mobile-nav-item${activeTab === id ? ' active' : ''}`}
+              onClick={() => setActiveTab(id)}
+            >
+              <Icon size={22} />
+              <span>{label}</span>
+            </button>
+          ))}
+          <button className="mobile-nav-item" onClick={handleLogout}>
+            <LogOut size={22} />
+            <span>Sign out</span>
+          </button>
+        </nav>
+      </div>
+
+      {/* Notification Bell — always on top via z-index: var(--z-notif) */}
+      <NotificationBell {...notifs} />
     </div>
   );
 }

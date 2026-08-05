@@ -53,7 +53,7 @@ export default function NotificationBell({
     <div className="notif-bell-wrap" ref={panelRef}>
       {/* Bell button */}
       <button
-        className="notif-bell-btn"
+        className={`notif-bell-btn${unreadCount > 0 ? ' has-unread' : ''}`}
         onClick={togglePanel}
         aria-label={`Notifications${unreadCount ? ` — ${unreadCount} unread` : ''}`}
       >
