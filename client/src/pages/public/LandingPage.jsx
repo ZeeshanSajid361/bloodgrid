@@ -100,10 +100,10 @@ export default function LandingPage() {
     e.preventDefault();
     setContactSubmitted(true);
 
-    // Open user's email client directly targeting zeeshansajid361@gmail.com
+    // Open user's email client targeting support@bloodsync.app
     const subject = encodeURIComponent(`BloodSync Support Inquiry from ${contactName}`);
     const body = encodeURIComponent(`Sender Name: ${contactName}\nSender Email: ${contactEmail}\n\nMessage:\n${contactMsg}`);
-    window.location.href = `mailto:zeeshansajid361@gmail.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:support@bloodsync.app?subject=${subject}&body=${body}`;
 
     setTimeout(() => setContactSubmitted(false), 5000);
   }
@@ -457,7 +457,7 @@ export default function LandingPage() {
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Building2 size={20} color="var(--red-400)" /> Hospital Helplines (Demo)
               </h3>
-              <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>TEST DATA</span>
+              <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>24/7 HELPLINES</span>
             </div>
 
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
@@ -502,7 +502,7 @@ export default function LandingPage() {
                   <input 
                     type="text" 
                     className="input" 
-                    placeholder="e.g. Zeeshan Sajid" 
+                    placeholder="e.g. Full Name" 
                     value={contactName} 
                     onChange={(e) => setContactName(e.target.value)} 
                     required 
@@ -539,10 +539,10 @@ export default function LandingPage() {
 
             <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
               <a 
-                href="mailto:zeeshansajid361@gmail.com?subject=BloodSync%20Support%20Inquiry" 
+                href="mailto:support@bloodsync.app?subject=BloodSync%20Support%20Inquiry" 
                 style={{ fontSize: '0.825rem', color: 'var(--red-400)', fontWeight: 700, textDecoration: 'none' }}
               >
-                ✉️ Contact Support Team
+                ✉️ Direct Mail: support@bloodsync.app
               </a>
             </div>
           </div>
