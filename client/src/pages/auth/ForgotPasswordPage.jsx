@@ -2,7 +2,7 @@
  * ForgotPasswordPage — step 1 of the password reset flow.
  *
  * POST /api/auth/forgot-password   { email }
- * Features a 10-minute token expiration and a 60-second resend cooldown timer.
+ * Features a 10-minute token expiration and a persistent 60-second resend cooldown timer.
  */
 
 import { useState, useEffect } from 'react';
@@ -12,6 +12,10 @@ import api from '../../lib/api';
 import { BrandPanel } from './RegisterPage';
 import '../../styles/auth.css';
 
+const COOLDOWN_SECONDS = 60;
+const STORAGE_KEY_TS    = 'bloodsync_reset_ts';
+const STORAGE_KEY_EMAIL = 'bloodsync_reset_email';
+
 export default function ForgotPasswordPage() {
   const [email,       setEmail]       = useState('');
   const [loading,     setLoading]     = useState(false);
@@ -19,24 +23,57 @@ export default function ForgotPasswordPage() {
   const [apiError,    setApiError]    = useState('');
   const [cooldown,    setCooldown]    = useState(0);
 
+  // Restore cooldown state from localStorage on page refresh
+  useEffect(() => {
+    const storedTs    = localStorage.getItem(STORAGE_KEY_TS);
+    const storedEmail = localStorage.getItem(STORAGE_KEY_EMAIL);
+
+    if (storedTs && storedEmail) {
+      const elapsed = Math.floor((Date.now() - parseInt(storedTs, 10)) / 1000);
+      if (elapsed < COOLDOWN_SECONDS) {
+        setCooldown(COOLDOWN_SECONDS - elapsed);
+        setEmail(storedEmail);
+        setSent(true);
+      } else {
+        localStorage.removeItem(STORAGE_KEY_TS);
+      }
+    }
+  }, []);
+
+  // Cooldown countdown tick
   useEffect(() => {
     let timer;
     if (cooldown > 0) {
-      timer = setInterval(() => setCooldown(c => c - 1), 1000);
+      timer = setInterval(() => {
+        setCooldown(prev => {
+          if (prev <= 1) {
+            localStorage.removeItem(STORAGE_KEY_TS);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
     return () => clearInterval(timer);
   }, [cooldown]);
 
   async function handleSend(e) {
     if (e) e.preventDefault();
-    if (!email.trim()) { setApiError('Please enter your email address.'); return; }
+    const cleanEmail = email.trim();
+    if (!cleanEmail) { setApiError('Please enter your email address.'); return; }
     
     setLoading(true);
     setApiError('');
     try {
-      await api.post('/auth/forgot-password', { email: email.trim() });
+      await api.post('/auth/forgot-password', { email: cleanEmail });
+      
+      // Save timestamp and email to localStorage so browser refresh doesn't bypass cooldown
+      const now = Date.now();
+      localStorage.setItem(STORAGE_KEY_TS, now.toString());
+      localStorage.setItem(STORAGE_KEY_EMAIL, cleanEmail);
+
       setSent(true);
-      setCooldown(60); // 60 seconds resend cooldown
+      setCooldown(COOLDOWN_SECONDS);
     } catch (err) {
       setApiError(err.response?.data?.message || 'Failed to send reset link. Please check your email and try again.');
     } finally {
