@@ -272,10 +272,10 @@ router.delete(
         return res.status(404).json({ success: false, message: 'Request not found.' });
       }
 
-      if (request.status !== 'pending_review') {
+      if (!['pending_review', 'approved'].includes(request.status)) {
         return res.status(400).json({
           success: false,
-          message: `This request is already ${request.status} and cannot be cancelled.`,
+          message: `This request is ${request.status} and cannot be cancelled.`,
         });
       }
 

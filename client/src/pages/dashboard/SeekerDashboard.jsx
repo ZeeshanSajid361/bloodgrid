@@ -709,7 +709,7 @@ function RequestCard({ request, onCancel }) {
   const meta = STATUS_LABELS[request.status] || {};
   const isRejected   = request.status === 'rejected';
   const isCancelled  = request.status === 'cancelled';
-  const isCancellable = request.status === 'pending_review';
+  const isCancellable = ['pending_review', 'approved'].includes(request.status);
 
   // Compute timeline step states
   function stepState(stepKey) {
@@ -719,11 +719,29 @@ function RequestCard({ request, onCancel }) {
     const stepIdx    = order.indexOf(stepKey);
     if (stepIdx <  currentIdx) return 'done';
     if (stepIdx === currentIdx) return 'active';
-    return 'locked';
+    return 'pending';
   }
 
   return (
-    <div className="request-item">
+    <div className="request-card-item">
+      <div className="request-item-top">
+        <div>
+          <span className="request-id">Request #{request._id.slice(-6)}</span>
+          <span className="request-blood-pill">{request.patientBloodGroup}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <span className={`badge ${meta.badge || ''}`}>{meta.text}</span>
+          {isCancellable && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => onCancel(request._id)}
+              style={{ color: 'var(--red-400)', border: '1px solid rgba(239, 68, 68, 0.25)', background: 'rgba(239, 68, 68, 0.05)' }}
+            >
+              <X size={13} /> {request.status === 'approved' ? 'Close Request (No Longer Needed)' : 'Cancel'}
+            </button>
+          )}
+        </div>
+      </div>
       <div className="request-item-header">
         <div>
           <div className="request-item-title">

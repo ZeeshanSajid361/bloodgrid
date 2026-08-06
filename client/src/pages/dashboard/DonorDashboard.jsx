@@ -819,10 +819,23 @@ class HistoryTabErrorBoundary extends Component {
 function HistoryTabInner({ donor }) {
   const { requests, loading } = useDonorRequests();
 
-  const approved  = requests.filter(r => r.status === 'approved');
-  const fulfilled = requests.filter(r => r.status === 'fulfilled');
-  const other     = requests.filter(r => !['approved','fulfilled'].includes(r.status));
-  const grouped   = [...approved, ...fulfilled, ...other];
+  const URGENCY_RANK = { critical: 1, urgent: 2, routine: 3, standard: 3, regular: 3 };
+  const getUrgencyRank = (u) => URGENCY_RANK[(u || '').toLowerCase()] ?? 4;
+
+  const grouped = [...requests].sort((a, b) => {
+    // 1. Approved/Active requests come first
+    const activeA = a.status === 'approved' ? 0 : 1;
+    const activeB = b.status === 'approved' ? 0 : 1;
+    if (activeA !== activeB) return activeA - activeB;
+
+    // 2. Sort by Urgency priority (Critical -> Urgent -> Routine)
+    const rankA = getUrgencyRank(a.urgency);
+    const rankB = getUrgencyRank(b.urgency);
+    if (rankA !== rankB) return rankA - rankB;
+
+    // 3. Sort by Recency tie-breaker (Latest notification / request time first)
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
 
   return (
     <>

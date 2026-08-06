@@ -315,13 +315,23 @@ router.get('/requests', async (req, res, next) => {
       fulfilledBy: { $exists: false },
     }).sort({ createdAt: -1 }).limit(20).lean();
 
-    // Merge, deduplicate, and sort newest first
+    const URGENCY_RANK = { critical: 1, urgent: 2, routine: 3, standard: 3, regular: 3 };
+    const getUrgencyRank = (u) => URGENCY_RANK[(u || '').toLowerCase()] ?? 4;
+
+    // Merge, deduplicate, and sort by urgency (Critical -> Urgent -> Routine), then newest first
     const seen = new Set();
     const merged = [...asFullfiller, ...compatible].filter(r => {
       if (seen.has(String(r._id))) return false;
       seen.add(String(r._id));
       return true;
-    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }).sort((a, b) => {
+      const rankA = getUrgencyRank(a.urgency);
+      const rankB = getUrgencyRank(b.urgency);
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
     res.json({ success: true, data: merged });
   } catch (err) {
