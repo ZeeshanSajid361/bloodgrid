@@ -77,14 +77,16 @@ async function requireOrg(req, res, next) {
  */
 async function requireApiKey(req, res, next) {
   try {
-    const header = req.headers.authorization || '';
-    if (!header.startsWith('ApiKey ')) {
+    const header = (req.headers.authorization || '').trim();
+    if (!header) {
       return res.status(401).json({ success: false, message: 'API key required.' });
     }
-    const rawKey = header.slice(7).trim();
+
+    // Support both "ApiKey bl_xxx" and "bl_xxx"
+    const rawKey = header.startsWith('ApiKey ') ? header.slice(7).trim() : header;
 
     // The hospital is identified by the key prefix lookup — we find the org
-    // whose hashed key matches.  bcrypt.compare is used; it's safe to loop
+    // whose hashed key matches. bcrypt.compare is used; it's safe to loop
     // through approved hospitals because the set is small and we exit on first match.
     const hospitals = await Organization.find(
       { type: 'hospital', status: 'approved' },
@@ -93,7 +95,7 @@ async function requireApiKey(req, res, next) {
 
     let matchedOrg = null;
     for (const hosp of hospitals) {
-      if (await verifyApiKey(rawKey, hosp.apiKeyHash)) {
+      if (hosp.apiKeyHash && await verifyApiKey(rawKey, hosp.apiKeyHash)) {
         matchedOrg = hosp;
         break;
       }
@@ -109,6 +111,59 @@ async function requireApiKey(req, res, next) {
     next(err);
   }
 }
+
+/**
+ * POST /api/hospitals/inventory/sync
+ *
+ * Automated machine-to-machine inventory sync endpoint for Enterprise Hospitals.
+ * Header: Authorization: ApiKey bl_xxx (or Authorization: bl_xxx)
+ * Body: { "updates": [ { "bloodGroup": "O+", "units": 45 }, { "bloodGroup": "A-", "units": 8 } ] }
+ */
+router.post('/inventory/sync', requireApiKey, async (req, res, next) => {
+  try {
+    const { updates } = req.body;
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payload: updates must be a non-empty array of { bloodGroup, units }',
+      });
+    }
+
+    const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    const results = [];
+
+    for (const item of updates) {
+      const { bloodGroup, units } = item;
+
+      if (!validBloodGroups.includes(bloodGroup) || typeof units !== 'number' || units < 0) {
+        results.push({ bloodGroup, units, status: 'failed', error: 'Invalid blood group or units count' });
+        continue;
+      }
+
+      const inv = await Inventory.findOneAndUpdate(
+        { hospital: req.apiHospitalId, bloodGroup },
+        {
+          hospital:      req.apiHospitalId,
+          bloodGroup,
+          units,
+          lastUpdatedBy: 'api',
+          updatedAt:     new Date(),
+        },
+        { upsert: true, new: true }
+      );
+
+      results.push({ bloodGroup: inv.bloodGroup, units: inv.units, status: 'synced' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Sync complete.',
+      data: { results },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /* ─── Registration ──────────────────────────────────────────────────────────── */
 
