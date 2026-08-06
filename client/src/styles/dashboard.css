@@ -34,7 +34,7 @@
   box-shadow: 12px 0 40px rgba(0,0,0,0.6);
 }
 
-/* Main Content pushes dynamically when sidebar expands */
+/* Main Content stays stable and balanced */
 .dashboard-main-wrapper {
   flex: 1;
   margin-left: 72px;
@@ -42,15 +42,7 @@
   display: flex;
   flex-direction: column;
   width: calc(100% - 72px);
-  max-width: 100%;
-  transition: margin-left 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Dynamically adjust content layout when sidebar is hovered so nothing is ever hidden behind it */
-.sidebar:hover ~ .dashboard-main-wrapper,
-.dashboard-shell:has(.sidebar:hover) .dashboard-main-wrapper {
-  margin-left: 250px;
-  width: calc(100% - 250px);
+  max-width: calc(100% - 72px);
 }
 
 /* ── Sidebar Items — Centered in 72px Rail, Expand on Hover ──────────────── */
@@ -275,10 +267,10 @@
 /* ── Main Dashboard Area ─────────────────────────────────────────────────── */
 .dashboard-main {
   flex: 1;
-  padding: var(--space-8) var(--space-8);
-  max-width: 1200px;
+  padding: var(--space-8);
+  max-width: 1400px;
   width: 100%;
-  padding-left: var(--space-10); /* Extra left padding so title text stays clear of expanded sidebar */
+  margin: 0 auto;
 }
 
 .dashboard-topbar {
