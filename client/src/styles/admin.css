@@ -118,6 +118,31 @@
 .admin-section-header h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: var(--space-1); }
 .admin-section-header p  { font-size: 0.875rem; color: var(--text-muted); }
 
+/* ── Overview two-col grid ────────────────────────────────────────── */
+.admin-overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+/* ── Recent requests mini-card grid ───────────────────────────────── */
+.admin-recent-requests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-3);
+}
+
+.admin-recent-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  transition: border-color var(--transition-fast);
+}
+
+.admin-recent-card:hover { border-color: var(--red-700); }
+
+
 /* ── Stat cards ──────────────────────────────────────────────────────────── */
 .admin-stats {
   display: grid;
@@ -373,4 +398,13 @@
 
   /* Low stock list */
   .low-stock-row { flex-wrap: wrap; }
+
+  /* Overview grid: stack Low Stock above Recent Requests on mobile */
+  .admin-overview-grid { grid-template-columns: 1fr; }
+
+  /* Recent request cards: 2 side-by-side on mobile */
+  .admin-recent-requests-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
+

@@ -4,7 +4,9 @@ import {
   Heart, Search, Shield, Zap, Award, UserPlus, 
   MapPin, CheckCircle, ArrowRight, Activity, Users, PhoneCall, Menu, X, AlertTriangle, Building2, Mail, Send
 } from 'lucide-react';
+import api from '../../lib/api';
 import './LandingPage.css';
+
 
 const COMPATIBILITY_MAP = {
   'A+':  ['A+', 'A-', 'O+', 'O-'],
@@ -87,7 +89,9 @@ export default function LandingPage() {
   const [contactName, setContactName]   = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactMsg, setContactMsg]     = useState('');
-  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  const [contactSubmitted, setContactSubmitted]   = useState(false);
+  const [contactError, setContactError]         = useState('');
 
   const compatibleDonors = COMPATIBILITY_MAP[selectedGroup] || [selectedGroup];
 
@@ -96,17 +100,31 @@ export default function LandingPage() {
     setHasSearched(true);
   }
 
-  function handleContactSubmit(e) {
+  async function handleContactSubmit(e) {
     e.preventDefault();
-    setContactSubmitted(true);
+    if (!contactName.trim() || !contactEmail.trim() || !contactMsg.trim()) return;
 
-    // Open user's email client targeting support@bloodsync.app
-    const subject = encodeURIComponent(`BloodSync Support Inquiry from ${contactName}`);
-    const body = encodeURIComponent(`Sender Name: ${contactName}\nSender Email: ${contactEmail}\n\nMessage:\n${contactMsg}`);
-    window.location.href = `mailto:support@bloodsync.app?subject=${subject}&body=${body}`;
+    setContactSubmitting(true);
+    setContactError('');
 
-    setTimeout(() => setContactSubmitted(false), 5000);
+    try {
+      await api.post('/auth/contact', {
+        name: contactName,
+        email: contactEmail,
+        message: contactMsg,
+      });
+      setContactSubmitted(true);
+      setContactName('');
+      setContactEmail('');
+      setContactMsg('');
+      setTimeout(() => setContactSubmitted(false), 6000);
+    } catch (err) {
+      setContactError(err.response?.data?.message || 'Failed to send message. Please try direct email.');
+    } finally {
+      setContactSubmitting(false);
+    }
   }
+
 
   return (
     <div className="landing-page">
@@ -493,7 +511,7 @@ export default function LandingPage() {
 
             {contactSubmitted ? (
               <div className="badge badge-green" style={{ padding: 'var(--space-4)', fontSize: '0.875rem', width: '100%', justifyContent: 'center', textAlign: 'center', lineHeight: 1.5 }}>
-                ✓ Mail application opened! Preparing your message for the BloodSync Support Team.
+                ✓ Message Sent! Your message was delivered directly to our support inbox (zeeshansajid361@gmail.com).
               </div>
             ) : (
               <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -531,23 +549,27 @@ export default function LandingPage() {
                     style={{ resize: 'vertical' }} 
                   />
                 </div>
-                <button type="submit" className="btn btn-primary">
-                  <Send size={16} /> Send Email to Support Team
+                {contactError && (
+                  <div style={{ color: 'var(--red-400)', fontSize: '0.8rem' }}>{contactError}</div>
+                )}
+                <button type="submit" className="btn btn-primary" disabled={contactSubmitting}>
+                  {contactSubmitting ? <span className="spinner" /> : <><Send size={16} /> Send Message to Support</>}
                 </button>
               </form>
             )}
 
             <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
               <a 
-                href="mailto:support@bloodsync.app?subject=BloodSync%20Support%20Inquiry" 
+                href="mailto:zeeshansajid361@gmail.com?subject=BloodSync%20Support%20Inquiry" 
                 style={{ fontSize: '0.825rem', color: 'var(--red-400)', fontWeight: 700, textDecoration: 'none' }}
               >
-                ✉️ Direct Mail: support@bloodsync.app
+                ✉️ Direct Mail: zeeshansajid361@gmail.com
               </a>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* ── Footer ── */}
       <footer className="landing-footer">
@@ -585,8 +607,9 @@ export default function LandingPage() {
             <h4>Emergency Help</h4>
             <ul>
               <li style={{ color: 'var(--red-300)', fontWeight: 700 }}>24/7 Rescue Line: 1122</li>
-              <li>Email: support@bloodsync.app</li>
+              <li>Email: zeeshansajid361@gmail.com</li>
             </ul>
+
           </div>
         </div>
 

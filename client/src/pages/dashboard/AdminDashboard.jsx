@@ -122,7 +122,7 @@ function OverviewTab({ admin }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
+      <div className="admin-overview-grid">
         {/* Low stock */}
         <div>
           <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, marginBottom: 'var(--space-4)', color: 'var(--red-400)' }}>
@@ -149,19 +149,17 @@ function OverviewTab({ admin }) {
             <TrendingUp size={16} style={{ display: 'inline', marginRight: 6 }} />
             Recent Requests
           </h3>
-          <div className="activity-feed">
+          <div className="admin-recent-requests-grid">
             {recentRequests?.map(r => (
-              <div className="activity-item" key={r._id}>
-                <span className={`activity-dot ${r.urgency}`} />
-                <div>
-                  <span style={{ fontWeight: 600 }}>{r.patientBloodGroup}</span>
-                  <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>— {r.hospitalName}</span>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    <span className={`badge badge-${r.status === 'pending_review' ? 'amber' : r.status === 'approved' ? 'green' : 'gray'}`} style={{ fontSize: '0.68rem', padding: '1px 6px' }}>
-                      {r.status.replace('_', ' ')}
-                    </span>
-                    &nbsp;· {new Date(r.createdAt).toLocaleDateString()}
-                  </div>
+              <div className="admin-recent-card" key={r._id}>
+                <span className={`activity-dot ${r.urgency}`} style={{ display: 'block', width: 8, height: 8, borderRadius: '50%', marginBottom: 'var(--space-2)', flexShrink: 0 }} />
+                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{r.patientBloodGroup}</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 2, marginBottom: 'var(--space-2)' }}>{r.hospitalName}</div>
+                <span className={`badge badge-${r.status === 'pending_review' ? 'amber' : r.status === 'approved' ? 'green' : 'gray'}`} style={{ fontSize: '0.65rem', padding: '1px 5px' }}>
+                  {r.status.replace('_', ' ')}
+                </span>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                  · {new Date(r.createdAt).toLocaleDateString()}
                 </div>
               </div>
             ))}

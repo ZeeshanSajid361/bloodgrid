@@ -164,4 +164,100 @@ async function sendWelcomeEmail({ name, email, role }) {
   await sendMail({ to: email, subject: 'You are verified — Welcome to BloodSync!', html });
 }
 
-module.exports = { sendVerificationEmail, sendWelcomeEmail };
+/**
+ * Sends a password reset email.
+ *
+ * @param {{ name: string, email: string, token: string }} recipient
+ */
+async function sendPasswordResetEmail({ name, email, token }) {
+  const resetUrl = `${getBaseClientUrl()}/reset-password?token=${token}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Reset your BloodSync password</title>
+      <style>
+        body { margin: 0; padding: 0; background: #0d0d0f; font-family: 'Segoe UI', Arial, sans-serif; }
+        .wrapper { max-width: 560px; margin: 40px auto; background: #141418; border-radius: 16px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #c0392b, #96281b); padding: 36px 40px; text-align: center; }
+        .header h1 { margin: 0; color: #fff; font-size: 24px; }
+        .body { padding: 36px 40px; color: #ccc; font-size: 15px; line-height: 1.7; }
+        .body strong { color: #fff; }
+        .btn-wrap { text-align: center; margin: 32px 0; }
+        .btn { display: inline-block; padding: 14px 36px; background: #c0392b;
+               color: #fff; text-decoration: none; border-radius: 8px;
+               font-size: 15px; font-weight: 600; }
+        .footer { padding: 20px 40px; border-top: 1px solid #222; color: #555; font-size: 12px; text-align: center; }
+        .url { word-break: break-all; color: #888; font-size: 12px; margin-top: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="header">
+          <h1>🩸 Reset Password</h1>
+        </div>
+        <div class="body">
+          <p>Hi <strong>${name}</strong>,</p>
+          <p>
+            We received a request to reset your password for your BloodSync account.
+            Click the button below to set a new password. This link is valid for <strong>1 hour</strong>.
+          </p>
+          <div class="btn-wrap">
+            <a href="${resetUrl}" class="btn">Reset Password</a>
+          </div>
+          <p>If you did not request a password reset, you can safely ignore this email.</p>
+          <p class="url">Or paste this link in your browser:<br />${resetUrl}</p>
+        </div>
+        <div class="footer">© ${new Date().getFullYear()} BloodSync</div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await sendMail({ to: email, subject: 'Reset your BloodSync password', html });
+}
+
+/**
+ * Sends a contact support message to zeeshansajid361@gmail.com.
+ *
+ * @param {{ name: string, email: string, message: string }} details
+ */
+async function sendContactSupportEmail({ name, email, message }) {
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Support Inquiry</title>
+      <style>
+        body { margin: 0; padding: 0; background: #0d0d0f; font-family: 'Segoe UI', Arial, sans-serif; }
+        .wrapper { max-width: 560px; margin: 40px auto; background: #141418; border-radius: 16px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #c0392b, #96281b); padding: 24px 32px; color: #fff; }
+        .body { padding: 24px 32px; color: #ccc; font-size: 15px; line-height: 1.6; }
+        .body strong { color: #fff; }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="header">
+          <h2 style="margin:0;">🩸 New Support Inquiry</h2>
+        </div>
+        <div class="body">
+          <p><strong>Sender Name:</strong> ${name}</p>
+          <p><strong>Sender Email:</strong> ${email}</p>
+          <p><strong>Message:</strong></p>
+          <div style="background: #1c1c22; padding: 16px; border-radius: 8px; color: #eee; white-space: pre-wrap;">${message}</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await sendMail({ to: 'zeeshansajid361@gmail.com', subject: `[BloodSync Contact] Message from ${name}`, html });
+}
+
+module.exports = { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendContactSupportEmail };
+
+

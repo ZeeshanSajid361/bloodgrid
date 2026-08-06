@@ -13,15 +13,17 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 
-import RegisterPage    from './pages/auth/RegisterPage';
-import LoginPage       from './pages/auth/LoginPage';
-import VerifyEmailPage from './pages/auth/VerifyEmailPage';
-import DashboardPage   from './pages/dashboard/DashboardPage';
-import DonorDashboard    from './pages/dashboard/DonorDashboard';
-import SeekerDashboard   from './pages/dashboard/SeekerDashboard';
-import HospitalDashboard from './pages/dashboard/HospitalDashboard';
-import AdminDashboard    from './pages/dashboard/AdminDashboard';
-import QRVerifyPage      from './pages/qr/QRVerifyPage';
+import RegisterPage       from './pages/auth/RegisterPage';
+import LoginPage          from './pages/auth/LoginPage';
+import VerifyEmailPage    from './pages/auth/VerifyEmailPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage  from './pages/auth/ResetPasswordPage';
+import DashboardPage      from './pages/dashboard/DashboardPage';
+import DonorDashboard     from './pages/dashboard/DonorDashboard';
+import SeekerDashboard    from './pages/dashboard/SeekerDashboard';
+import HospitalDashboard  from './pages/dashboard/HospitalDashboard';
+import AdminDashboard     from './pages/dashboard/AdminDashboard';
+import QRVerifyPage       from './pages/qr/QRVerifyPage';
 
 import LandingPage   from './pages/public/LandingPage';
 
@@ -40,10 +42,12 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           {/* Public routes */}
-          <Route path="/"             element={<LandingPage />} />
-          <Route path="/register"     element={<RegisterPage />} />
-          <Route path="/login"        element={<LoginPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/"                element={<LandingPage />} />
+          <Route path="/register"        element={<RegisterPage />} />
+          <Route path="/login"           element={<LoginPage />} />
+          <Route path="/verify-email"    element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password"  element={<ResetPasswordPage />} />
 
           {/* QR donation verify — public so hospitals can scan without logging in */}
           <Route path="/qr/verify/:token" element={<QRVerifyPage />} />

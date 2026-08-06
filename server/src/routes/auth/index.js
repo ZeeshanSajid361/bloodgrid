@@ -14,9 +14,10 @@ const mongoose = require('mongoose');
 const { User, ROLES }         = require('../../models/User');
 const { DonorProfile }        = require('../../models/DonorProfile');
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../../utils/token');
-const { sendVerificationEmail, sendWelcomeEmail } = require('../../utils/email');
+const { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendContactSupportEmail } = require('../../utils/email');
 
 const router = express.Router();
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/auth/register
@@ -394,4 +395,123 @@ router.post('/resend-verification', async (req, res, next) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/forgot-password
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Generates a time-limited password-reset token and emails it.
+ * Always returns 200 so attackers cannot enumerate registered emails.
+ *
+ * Body: { email }
+ */
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const GENERIC_MSG = 'If that email is registered, a reset link has been sent.';
+
+    if (!email) {
+      return res.status(200).json({ success: true, message: GENERIC_MSG });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() })
+      .select('+passwordResetToken +passwordResetExpires');
+
+    if (!user || !user.isEmailVerified) {
+      return res.status(200).json({ success: true, message: GENERIC_MSG });
+    }
+
+    // Generate a secure random token, store its hash
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashed   = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    user.passwordResetToken   = hashed;
+    user.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    await user.save();
+
+    sendPasswordResetEmail({ name: user.name, email: user.email, token: rawToken }).catch(err =>
+      console.error('[email] Password reset send failed:', err.message)
+    );
+
+    return res.status(200).json({ success: true, message: GENERIC_MSG });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/reset-password
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Validates the reset token and sets the new password.
+ *
+ * Body: { token, password }
+ */
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ success: false, message: 'Token and new password are required.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+    }
+
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken:   hashed,
+      passwordResetExpires: { $gt: Date.now() },
+    }).select('+password +passwordResetToken +passwordResetExpires +refreshTokenHash');
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reset link is invalid or has expired. Please request a new one.',
+      });
+    }
+
+    user.password             = password;
+    user.passwordResetToken   = undefined;
+    user.passwordResetExpires = undefined;
+    user.refreshTokenHash     = undefined; // invalidate existing sessions
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password updated successfully. You can now log in.',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/contact
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Accepts contact/support inquiries from the landing page and sends them via email.
+ *
+ * Body: { name, email, message }
+ */
+router.post('/contact', async (req, res, next) => {
+  try {
+    const { name, email, message } = req.body;
+
+    if (!name || !email || !message) {
+      return res.status(400).json({ success: false, message: 'Name, email, and message are required.' });
+    }
+
+    await sendContactSupportEmail({ name, email, message });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Your message has been sent to the BloodSync Support Team.',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
+

@@ -76,6 +76,16 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // ── Password reset ───────────────────────────────────────────────────────
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
+
     // ── Account state ─────────────────────────────────────────────────────────
     isBlocked: {
       type: Boolean,
@@ -97,6 +107,8 @@ const userSchema = new mongoose.Schema(
         delete ret.password;
         delete ret.emailVerificationToken;
         delete ret.emailVerificationExpires;
+        delete ret.passwordResetToken;
+        delete ret.passwordResetExpires;
         delete ret.refreshTokenHash;
         delete ret.__v;
         return ret;
@@ -104,6 +116,7 @@ const userSchema = new mongoose.Schema(
     },
   }
 );
+
 
 // ── Indexes ───────────────────────────────────────────────────────────────────
 // email is already indexed via unique:true; add a partial index for token
