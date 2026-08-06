@@ -31,23 +31,74 @@ function formatExpiry(dateStr) {
   return `${mins}m remaining`;
 }
 
-export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, bloodGroup, commitments = [] }) {
+function getEtaConfig(urgency = 'routine') {
+  const norm = (urgency || '').toLowerCase();
+  if (norm === 'critical') {
+    return {
+      title: '🚨 Critical Emergency (Fast Response)',
+      presets: [
+        { label: '⚡ 15 Mins', mins: 15 },
+        { label: '⏱️ 30 Mins', mins: 30 },
+        { label: '🚗 45 Mins', mins: 45 },
+        { label: '🚨 2 Hours', mins: 120 },
+      ],
+      maxMins: 120,
+      maxLabel: '2 Hours Max (Critical Emergency)',
+    };
+  }
+  if (norm === 'urgent') {
+    return {
+      title: '⚠️ Urgent Need (Same-day Transfusion)',
+      presets: [
+        { label: '⏱️ 30 Mins', mins: 30 },
+        { label: '🚗 1 Hour', mins: 60 },
+        { label: '🕒 2 Hours', mins: 120 },
+        { label: '⚠️ 4 Hours', mins: 240 },
+      ],
+      maxMins: 240,
+      maxLabel: '4 Hours Max (Urgent Case)',
+    };
+  }
+  return {
+    title: '🟢 Routine Need (Scheduled Procedure)',
+    presets: [
+      { label: '🚗 1 Hour', mins: 60 },
+      { label: '🕒 2 Hours', mins: 120 },
+      { label: '📅 6 Hours', mins: 360 },
+      { label: '🗓️ 24 Hours', mins: 1440 },
+    ],
+    maxMins: 1440,
+    maxLabel: '24 Hours Max (Routine Schedule)',
+  };
+}
+
+export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, bloodGroup, commitments = [], urgency = 'routine' }) {
   const { qrData, generating, cancelling, error, generate, cancel } = useQR(requestId, requestStatus);
   const [expanded, setExpanded] = useState(false);
   const [showEtaModal, setShowEtaModal] = useState(false);
+  const [customVal, setCustomVal] = useState('');
+  const [customUnit, setCustomUnit] = useState('mins'); // 'mins' or 'hours'
   const [committing, setCommitting] = useState(false);
-  const [commitSuccess, setCommitSuccess] = useState(false);
   const [commitError, setCommitError] = useState(null);
+
+  const etaConfig = getEtaConfig(urgency);
 
   // Only show for approved requests
   if (requestStatus !== 'approved') return null;
 
   async function handlePledge(etaMinutes) {
+    const mins = parseInt(etaMinutes, 10);
+    if (isNaN(mins) || mins <= 0) {
+      return setCommitError('Please enter a valid time duration.');
+    }
+    if (mins > etaConfig.maxMins) {
+      return setCommitError(`Maximum allowed lock duration for ${urgency.toUpperCase()} requests is ${etaConfig.maxLabel}.`);
+    }
+
     setCommitting(true);
     setCommitError(null);
     try {
-      await api.post(`/donors/requests/${requestId}/commit`, { etaMinutes });
-      setCommitSuccess(true);
+      await api.post(`/donors/requests/${requestId}/commit`, { etaMinutes: mins });
       setShowEtaModal(false);
       generate(); // Auto-generate QR code upon commitment
     } catch (err) {
@@ -55,6 +106,14 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
     } finally {
       setCommitting(false);
     }
+  }
+
+  function handleCustomPledge(e) {
+    e.preventDefault();
+    const val = parseFloat(customVal);
+    if (!val || val <= 0) return setCommitError('Please enter a valid duration.');
+    const mins = customUnit === 'hours' ? Math.round(val * 60) : Math.round(val);
+    handlePledge(mins);
   }
 
   function handleDownload() {
@@ -87,43 +146,152 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
           <Car size={14} /> I&apos;m On My Way to Donate
         </button>
 
-        {/* ETA Selection Modal */}
+        {/* High-Contrast Clean ETA Selection Modal */}
         {showEtaModal && (
           <div style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9999, padding: 'var(--space-4)'
+            zIndex: 10000, padding: '16px'
           }}>
-            <div className="card animate-scale-up" style={{ maxWidth: 420, width: '100%', padding: 'var(--space-6)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Car size={18} color="#10b981" /> Reserve Slot & En Route ETA
+            <div style={{
+              background: '#151926',
+              border: '1px solid #2d374e',
+              borderRadius: '16px',
+              maxWidth: 460,
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+              color: '#f8fafc',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Car size={20} color="#10b981" /> Reserve Slot & ETA
                 </h3>
-                <button className="btn btn-ghost btn-sm" onClick={() => setShowEtaModal(false)}><X size={16} /></button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setShowEtaModal(false)}
+                  style={{ color: '#94a3b8', padding: '4px' }}
+                >
+                  <X size={18} />
+                </button>
               </div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
-                Select your estimated travel time to <strong>{hospitalName}</strong>. This temporarily locks 1 blood unit slot for you so no other donor travels at the same time.
+
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '0.8rem',
+                color: '#34d399',
+                marginBottom: '16px',
+                fontWeight: 600,
+              }}>
+                {etaConfig.title}
+              </div>
+
+              <p style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '16px', lineHeight: 1.4 }}>
+                Select your estimated arrival time at <strong>{hospitalName}</strong>. This temporarily locks 1 blood unit slot for you.
               </p>
 
-              {commitError && <div style={{ color: 'var(--red-400)', fontSize: '0.85rem', marginBottom: 'var(--space-3)' }}>{commitError}</div>}
+              {commitError && (
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#fca5a5',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  fontSize: '0.825rem',
+                  marginBottom: '14px'
+                }}>
+                  ⚠️ {commitError}
+                </div>
+              )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
-                {[15, 30, 45, 60].map(mins => (
+              {/* Presets */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+                {etaConfig.presets.map(p => (
                   <button
-                    key={mins}
-                    className="btn btn-secondary"
+                    key={p.mins}
                     disabled={committing}
-                    onClick={() => handlePledge(mins)}
-                    style={{ padding: 'var(--space-3)', flexDirection: 'column', gap: '2px', textAlign: 'center' }}
+                    onClick={() => handlePledge(p.mins)}
+                    style={{
+                      background: '#1e2638',
+                      border: '1px solid #334155',
+                      borderRadius: '10px',
+                      padding: '12px 10px',
+                      color: '#ffffff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = '#10b981'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = '#334155'}
                   >
-                    <span style={{ fontWeight: 700, fontSize: '1.05rem', color: '#10b981' }}>⏱️ {mins} Mins</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Slot locked for {mins}m</span>
+                    <span style={{ fontWeight: 700, fontSize: '1rem', color: '#34d399' }}>{p.label}</span>
+                    <span style={{ fontSize: '0.725rem', color: '#94a3b8' }}>Slot locked for {p.mins >= 60 ? `${p.mins / 60}h` : `${p.mins}m`}</span>
                   </button>
                 ))}
               </div>
 
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                💡 If your travel timer expires without scanning at the hospital counter, the slot will auto-unlock for other donors.
+              {/* Custom ETA Entry */}
+              <form onSubmit={handleCustomPledge} style={{ borderTop: '1px solid #2d374e', paddingTop: '16px', marginBottom: '16px' }}>
+                <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                  ✏️ Enter Custom Travel Time
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 45"
+                    value={customVal}
+                    onChange={e => setCustomVal(e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: '#0f172a',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      padding: '8px 12px',
+                      fontSize: '0.875rem',
+                    }}
+                  />
+                  <select
+                    value={customUnit}
+                    onChange={e => setCustomUnit(e.target.value)}
+                    style={{
+                      background: '#0f172a',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      padding: '8px',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <option value="mins">Minutes</option>
+                    <option value="hours">Hours</option>
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={committing || !customVal}
+                    className="btn btn-primary btn-sm"
+                    style={{ background: '#10b981', border: 'none', whiteSpace: 'nowrap' }}
+                  >
+                    {committing ? <Loader2 size={14} className="spin" /> : 'Set ETA'}
+                  </button>
+                </div>
+                <span style={{ fontSize: '0.725rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                  Max limit: {etaConfig.maxLabel}
+                </span>
+              </form>
+
+              <div style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'center', borderTop: '1px dashed #2d374e', paddingTop: '12px' }}>
+                💡 Timer auto-releases if QR is not scanned at hospital counter before expiration.
               </div>
             </div>
           </div>

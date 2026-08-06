@@ -930,6 +930,7 @@ function HistoryTabInner({ donor }) {
                   hospitalCity={req.hospitalCity}
                   bloodGroup={req.patientBloodGroup}
                   commitments={req.commitments}
+                  urgency={req.urgency}
                 />
               </div>
             );
