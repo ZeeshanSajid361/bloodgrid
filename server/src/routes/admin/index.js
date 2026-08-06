@@ -111,6 +111,16 @@ router.patch('/hospitals/:id/approve', async (req, res, next) => {
 
     await org.save();
 
+    if (org.owner) {
+      await notifyUser({
+        userId:  org.owner,
+        type:    'system',
+        title:   'Hospital Account Approved! 🎉',
+        message: `Your registration for "${org.name}" has been approved by BloodSync Admin. You can now manage inventory and broadcast Code Red alerts.`,
+        link:    '/dashboard/hospital',
+      }).catch(e => console.error('[admin] Approval notification error:', e));
+    }
+
     res.json({
       success: true,
       message: 'Organisation approved and API key issued.',
@@ -142,7 +152,18 @@ router.patch('/hospitals/:id/reject', async (req, res, next) => {
 
     await org.save();
 
+    if (org.owner) {
+      await notifyUser({
+        userId:  org.owner,
+        type:    'system',
+        title:   'Hospital Registration Update',
+        message: `Your registration for "${org.name}" was not approved. Note: ${org.adminNote}`,
+        link:    '/dashboard/hospital',
+      }).catch(e => console.error('[admin] Rejection notification error:', e));
+    }
+
     res.json({ success: true, message: 'Organisation rejected.', data: { org } });
+
   } catch (err) {
     next(err);
   }

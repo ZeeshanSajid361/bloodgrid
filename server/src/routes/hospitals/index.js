@@ -56,7 +56,8 @@ function isCodeRedActive(inv) {
  */
 async function requireOrg(req, res, next) {
   try {
-    const org = await Organization.findOne({ owner: req.user._id });
+    const userId = req.user.id || req.user._id;
+    const org = await Organization.findOne({ owner: userId });
     if (!org) {
       return res.status(404).json({
         success: false,
