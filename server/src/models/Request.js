@@ -120,6 +120,18 @@ const requestSchema = new mongoose.Schema(
     reviewedAt: Date,
     fulfilledAt: Date,
     cancelledAt: Date,
+
+    // Active donor commitments ("I'm On My Way") to prevent race conditions
+    commitments: [
+      {
+        donor:      { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        reservedAt: { type: Date, default: Date.now },
+        expiresAt:  { type: Date, required: true },
+        etaMinutes: { type: Number, default: 45 },
+        status:     { type: String, enum: ['en_route', 'completed', 'cancelled', 'expired'], default: 'en_route' },
+      }
+    ],
+    fulfilledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   {
     timestamps: true,

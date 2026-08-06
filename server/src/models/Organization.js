@@ -15,7 +15,7 @@
 
 const mongoose = require('mongoose');
 
-const ORG_TYPES = ['hospital', 'partner'];
+const ORG_TYPES = ['hospital', 'web_hospital', 'api_hospital', 'partner'];
 const ORG_STATUS = ['pending', 'approved', 'rejected'];
 
 const organizationSchema = new mongoose.Schema(
@@ -35,7 +35,7 @@ const organizationSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: { values: ORG_TYPES, message: 'Type must be hospital or partner' },
+      enum: { values: ORG_TYPES, message: 'Type must be web_hospital, api_hospital, hospital, or partner' },
       required: true,
     },
 
