@@ -307,12 +307,14 @@ router.get('/requests', async (req, res, next) => {
       fulfilledBy: req.user.id,
     }).sort({ createdAt: -1 }).limit(50).lean();
 
-    // Also fetch any approved requests compatible with this donor's blood group
-    // in their city (so they can generate QRs for requests they haven't fulfilled yet)
+    // Fetch approved requests compatible with this donor's blood group and city
+    const cityQuery = user.city ? { hospitalCity: { $regex: new RegExp(`^${user.city.trim()}$`, 'i') } } : {};
+
     const compatible = await Request.find({
-      status:     'approved',
+      status:            'approved',
       patientBloodGroup: { $in: getCompatibleGroups(profile.bloodGroup) },
-      fulfilledBy: { $exists: false },
+      fulfilledBy:       { $exists: false },
+      ...cityQuery,
     }).sort({ createdAt: -1 }).limit(20).lean();
 
     const URGENCY_RANK = { critical: 1, urgent: 2, routine: 3, standard: 3, regular: 3 };
