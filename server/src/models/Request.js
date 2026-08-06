@@ -94,6 +94,7 @@ const requestSchema = new mongoose.Schema(
       type:     [String],
       validate: {
         validator: function(v) {
+          if (['approved', 'fulfilled', 'cancelled'].includes(this.status)) return true;
           return (v && v.length > 0) || Boolean(this.documentUrl);
         },
         message: 'At least one hospital blood request slip is required for verification'

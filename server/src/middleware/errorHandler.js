@@ -21,7 +21,8 @@ function errorHandler(err, req, res, _next) {
   // ── Mongoose validation error ─────────────────────────────────────────────
   if (err.name === 'ValidationError') {
     statusCode = 422;
-    message = 'Validation failed.';
+    const errList = Object.values(err.errors).map((e) => e.message);
+    message = errList.length > 0 ? errList.join(' ') : 'Validation failed.';
     errors = Object.values(err.errors).map((e) => ({
       field: e.path,
       message: e.message,
