@@ -431,8 +431,9 @@ router.post('/forgot-password', async (req, res, next) => {
     const hashed   = crypto.createHash('sha256').update(rawToken).digest('hex');
 
     user.passwordResetToken   = hashed;
-    user.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes (industry standard)
     await user.save();
+
 
     try {
       await sendPasswordResetEmail({ name: user.name, email: user.email, token: rawToken });

@@ -2,37 +2,47 @@
  * ForgotPasswordPage — step 1 of the password reset flow.
  *
  * POST /api/auth/forgot-password   { email }
- * The server sends a reset link to the email (always returns 200 to avoid enumeration).
+ * Features a 10-minute token expiration and a 60-second resend cooldown timer.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Mail, AlertCircle, CheckCircle2, RotateCw } from 'lucide-react';
 import api from '../../lib/api';
 import { BrandPanel } from './RegisterPage';
 import '../../styles/auth.css';
 
 export default function ForgotPasswordPage() {
-  const [email,     setEmail]     = useState('');
-  const [loading,   setLoading]   = useState(false);
-  const [sent,      setSent]      = useState(false);
-  const [apiError,  setApiError]  = useState('');
+  const [email,       setEmail]       = useState('');
+  const [loading,     setLoading]     = useState(false);
+  const [sent,        setSent]        = useState(false);
+  const [apiError,    setApiError]    = useState('');
+  const [cooldown,    setCooldown]    = useState(0);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  useEffect(() => {
+    let timer;
+    if (cooldown > 0) {
+      timer = setInterval(() => setCooldown(c => c - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  async function handleSend(e) {
+    if (e) e.preventDefault();
     if (!email.trim()) { setApiError('Please enter your email address.'); return; }
+    
     setLoading(true);
     setApiError('');
     try {
       await api.post('/auth/forgot-password', { email: email.trim() });
       setSent(true);
+      setCooldown(60); // 60 seconds resend cooldown
     } catch (err) {
       setApiError(err.response?.data?.message || 'Failed to send reset link. Please check your email and try again.');
     } finally {
       setLoading(false);
     }
   }
-
 
   return (
     <div className="auth-layout">
@@ -42,21 +52,49 @@ export default function ForgotPasswordPage() {
         <div className="auth-form-card">
           <div className="auth-form-header">
             <h1>Reset Password</h1>
-            <p>Enter your account email and we'll send you a reset link.</p>
+            <p>Enter your account email to receive a 10-minute reset link.</p>
           </div>
 
           {sent ? (
-            <div style={{ textAlign: 'center', padding: 'var(--space-6) 0' }}>
+            <div style={{ textAlign: 'center', padding: 'var(--space-4) 0' }}>
               <CheckCircle2 size={48} style={{ color: 'var(--color-success)', marginBottom: 'var(--space-4)' }} />
-              <h2 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-3)' }}>Check your inbox</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 'var(--space-6)' }}>
-                If <strong>{email}</strong> is registered, a reset link has been sent.
-                Check your spam folder if you don't see it within a minute.
+              <h2 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-3)' }}>Reset link dispatched!</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 'var(--space-4)' }}>
+                A secure password reset link has been sent to <strong>{email}</strong>.
+                <br />
+                <span style={{ fontSize: '0.8rem', color: 'var(--red-300)', fontWeight: 600, display: 'inline-block', marginTop: '6px' }}>
+                  ⏱️ Link is valid for 10 minutes. Any new request invalidates previous links.
+                </span>
               </p>
-              <Link to="/login" className="btn btn-primary btn-full">Back to Sign In</Link>
+
+              {apiError && (
+                <div style={{ color: 'var(--red-400)', fontSize: '0.85rem', marginBottom: 'var(--space-4)' }}>
+                  <AlertCircle size={14} style={{ display: 'inline', marginRight: 4 }} />
+                  {apiError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-full"
+                  onClick={() => handleSend()}
+                  disabled={loading || cooldown > 0}
+                >
+                  {loading ? (
+                    <span className="spinner" />
+                  ) : cooldown > 0 ? (
+                    <>Resend reset link in {cooldown}s</>
+                  ) : (
+                    <><RotateCw size={16} /> Resend reset link</>
+                  )}
+                </button>
+
+                <Link to="/login" className="btn btn-ghost btn-full">Back to Sign In</Link>
+              </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} noValidate>
+            <form onSubmit={handleSend} noValidate>
               <div className="input-group">
                 <label className="input-label" htmlFor="fp-email">
                   Email address <span className="required">*</span>
@@ -83,7 +121,7 @@ export default function ForgotPasswordPage() {
                 className="btn btn-primary btn-full mt-6"
                 disabled={loading}
               >
-                {loading ? <span className="spinner" /> : 'Send reset link'}
+                {loading ? <span className="spinner" /> : 'Send 10-Min Reset Link'}
               </button>
 
               <div className="auth-form-footer" style={{ marginTop: 'var(--space-5)' }}>

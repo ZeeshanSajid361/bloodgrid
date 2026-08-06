@@ -202,7 +202,8 @@ async function sendPasswordResetEmail({ name, email, token }) {
           <p>Hi <strong>${name}</strong>,</p>
           <p>
             We received a request to reset your password for your BloodSync account.
-            Click the button below to set a new password. This link is valid for <strong>1 hour</strong>.
+            Click the button below to set a new password. This link is valid for <strong>10 minutes</strong>. Any newer request automatically invalidates older links.
+
           </p>
           <div class="btn-wrap">
             <a href="${resetUrl}" class="btn">Reset Password</a>
