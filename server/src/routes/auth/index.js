@@ -385,11 +385,14 @@ router.post('/resend-verification', async (req, res, next) => {
     const rawToken = user.generateEmailVerificationToken();
     await user.save();
 
-    sendVerificationEmail({ name: user.name, email: user.email, token: rawToken }).catch((err) =>
-      console.error('[email] Resend verification failed:', err.message)
-    );
+    try {
+      await sendVerificationEmail({ name: user.name, email: user.email, token: rawToken });
+    } catch (err) {
+      console.error('[email] Resend verification failed:', err.message);
+    }
 
     return res.status(200).json({ success: true, message: GENERIC_MSG });
+
   } catch (err) {
     next(err);
   }
@@ -416,7 +419,7 @@ router.post('/forgot-password', async (req, res, next) => {
     const user = await User.findOne({ email: email.toLowerCase().trim() })
       .select('+passwordResetToken +passwordResetExpires');
 
-    if (!user || !user.isEmailVerified) {
+    if (!user) {
       return res.status(200).json({ success: true, message: GENERIC_MSG });
     }
 
@@ -428,11 +431,14 @@ router.post('/forgot-password', async (req, res, next) => {
     user.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
     await user.save();
 
-    sendPasswordResetEmail({ name: user.name, email: user.email, token: rawToken }).catch(err =>
-      console.error('[email] Password reset send failed:', err.message)
-    );
+    try {
+      await sendPasswordResetEmail({ name: user.name, email: user.email, token: rawToken });
+    } catch (err) {
+      console.error('[email] Password reset send failed:', err.message);
+    }
 
     return res.status(200).json({ success: true, message: GENERIC_MSG });
+
   } catch (err) {
     next(err);
   }

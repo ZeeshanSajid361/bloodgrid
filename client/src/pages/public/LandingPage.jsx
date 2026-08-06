@@ -511,7 +511,7 @@ export default function LandingPage() {
 
             {contactSubmitted ? (
               <div className="badge badge-green" style={{ padding: 'var(--space-4)', fontSize: '0.875rem', width: '100%', justifyContent: 'center', textAlign: 'center', lineHeight: 1.5 }}>
-                ✓ Message Sent! Your message was delivered directly to our support inbox (zeeshansajid361@gmail.com).
+                ✓ Message Sent! Your inquiry has been sent directly to the BloodSync Support Team.
               </div>
             ) : (
               <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -560,10 +560,10 @@ export default function LandingPage() {
 
             <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
               <a 
-                href="mailto:zeeshansajid361@gmail.com?subject=BloodSync%20Support%20Inquiry" 
+                href="mailto:support@bloodsync.app?subject=BloodSync%20Support%20Inquiry" 
                 style={{ fontSize: '0.825rem', color: 'var(--red-400)', fontWeight: 700, textDecoration: 'none' }}
               >
-                ✉️ Direct Mail: zeeshansajid361@gmail.com
+                ✉️ Direct Mail: support@bloodsync.app
               </a>
             </div>
           </div>
@@ -607,10 +607,10 @@ export default function LandingPage() {
             <h4>Emergency Help</h4>
             <ul>
               <li style={{ color: 'var(--red-300)', fontWeight: 700 }}>24/7 Rescue Line: 1122</li>
-              <li>Email: zeeshansajid361@gmail.com</li>
+              <li>Email: support@bloodsync.app</li>
             </ul>
-
           </div>
+
         </div>
 
         <div className="footer-bottom">
