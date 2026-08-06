@@ -43,6 +43,15 @@
   flex-direction: column;
   width: calc(100% - 72px);
   max-width: calc(100% - 72px);
+  transition: margin-left 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Dynamically adjust content layout when sidebar is hovered so nothing is ever hidden behind it */
+.sidebar:hover ~ .dashboard-main-wrapper,
+.dashboard-shell:has(.sidebar:hover) .dashboard-main-wrapper {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+  max-width: calc(100% - 250px);
 }
 
 /* ── Sidebar Items — Centered in 72px Rail, Expand on Hover ──────────────── */
