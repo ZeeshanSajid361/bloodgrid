@@ -413,6 +413,19 @@ router.post('/requests/:id/commit', async (req, res, next) => {
     }
 
     await request.save();
+
+    // Create Notification for the Seeker
+    if (request.seeker) {
+      const { Notification } = require('../../models/Notification');
+      await Notification.create({
+        recipient: request.seeker,
+        type:      'donor_en_route',
+        title:     '🚗 Donor En Route!',
+        message:   `A matching donor has pledged "I'm On My Way" to donate ${request.patientBloodGroup} blood at ${request.hospitalName} (Estimated Travel Time: ~${etaMinutes} mins).`,
+        link:      '/dashboard/seeker',
+      }).catch(err => console.error('[commit] Notification create failed:', err.message));
+    }
+
     res.json({ success: true, message: 'Slot reserved! You are marked as en route.', data: request });
   } catch (err) {
     next(err);

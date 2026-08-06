@@ -760,6 +760,39 @@ function RequestCard({ request, onCancel }) {
         {request.patientName && <span>👤 {request.patientName}</span>}
       </div>
 
+      {/* Active En-Route Donor Alert for Seeker */}
+      {(() => {
+        const enRouteCommit = (request.commitments || []).find(
+          c => c.status === 'en_route' && new Date(c.expiresAt) > new Date()
+        );
+        if (!enRouteCommit) return null;
+
+        return (
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.4)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            marginTop: '12px',
+            marginBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            color: '#34d399',
+          }}>
+            <span style={{ fontSize: '1.4rem' }}>🚗</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
+                Good news! A donor is on their way to {request.hospitalName}!
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                Estimated travel time: ~{enRouteCommit.etaMinutes || 30} mins. Please make sure to be at the hospital counter to receive the donor.
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Admin note if rejected */}
       {request.adminNote && (
         <div style={{

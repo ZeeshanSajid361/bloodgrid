@@ -12,11 +12,12 @@
  *   - Token expired        → prompt to regenerate
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Loader2, QrCode, RefreshCw, Download, CheckCircle2, X, Clock, Navigation, Car } from 'lucide-react';
 import useQR from '../hooks/useQR';
+import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
 import './QRCheckIn.css';
 
@@ -74,15 +75,37 @@ function getEtaConfig(urgency = 'routine') {
 }
 
 export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, bloodGroup, commitments = [], urgency = 'routine' }) {
+  const { user } = useAuth();
   const { qrData, generating, cancelling, error, generate, cancel } = useQR(requestId, requestStatus);
   const [expanded, setExpanded] = useState(false);
   const [showEtaModal, setShowEtaModal] = useState(false);
   const [customVal, setCustomVal] = useState('');
   const [customUnit, setCustomUnit] = useState('mins'); // 'mins' or 'hours'
   const [committing, setCommitting] = useState(false);
+  const [cancellingPledge, setCancellingPledge] = useState(false);
   const [commitError, setCommitError] = useState(null);
+  const [localCommitment, setLocalCommitment] = useState(null);
 
   const etaConfig = getEtaConfig(urgency);
+
+  // Active commitment for current donor
+  const activeCommitment = localCommitment || (commitments || []).find(c => {
+    const dId = String(c.donor?._id || c.donor || '');
+    const uId = String(user?._id || user?.id || '');
+    return dId && uId && dId === uId && c.status === 'en_route' && new Date(c.expiresAt) > new Date();
+  });
+
+  // Active commitment for another donor
+  const otherCommitment = !activeCommitment && (commitments || []).find(c => {
+    return c.status === 'en_route' && new Date(c.expiresAt) > new Date();
+  });
+
+  useEffect(() => {
+    if (activeCommitment) {
+      setExpanded(true);
+      if (!qrData) generate();
+    }
+  }, [activeCommitment?._id, activeCommitment?.expiresAt]);
 
   // Only show for approved requests
   if (requestStatus !== 'approved') return null;
@@ -99,13 +122,36 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
     setCommitting(true);
     setCommitError(null);
     try {
-      await api.post(`/donors/requests/${requestId}/commit`, { etaMinutes: mins });
+      const res = await api.post(`/donors/requests/${requestId}/commit`, { etaMinutes: mins });
+      const updatedReq = res.data?.data;
+      if (updatedReq?.commitments) {
+        const myComm = updatedReq.commitments.find(c => String(c.donor?._id || c.donor) === String(user?._id || user?.id) && c.status === 'en_route');
+        if (myComm) setLocalCommitment(myComm);
+      } else {
+        setLocalCommitment({
+          expiresAt: new Date(Date.now() + mins * 60000),
+          status: 'en_route'
+        });
+      }
       setShowEtaModal(false);
+      setExpanded(true);
       generate(); // Auto-generate QR code upon commitment
     } catch (err) {
-      setCommitError(err.response?.data?.message || 'Failed to reserve slot.');
+      setCommitError(err.response?.data?.message || err.message || 'Failed to reserve slot.');
     } finally {
       setCommitting(false);
+    }
+  }
+
+  async function handleCancelPledge() {
+    setCancellingPledge(true);
+    try {
+      await api.delete(`/donors/requests/${requestId}/commit`);
+      setLocalCommitment(null);
+    } catch (err) {
+      console.error('Failed to cancel pledge:', err);
+    } finally {
+      setCancellingPledge(false);
     }
   }
 
@@ -139,13 +185,52 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
           {qrData?.isUsed ? 'Donation Verified ✓' : 'Show Donation QR & Navigation'}
         </button>
 
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={() => setShowEtaModal(true)}
-          style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', gap: '6px' }}
-        >
-          <Car size={14} /> I&apos;m On My Way to Donate
-        </button>
+        {activeCommitment ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid #10b981',
+              borderRadius: '20px',
+              padding: '6px 14px',
+              fontSize: '0.825rem',
+              color: '#34d399',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <Car size={15} /> ⏱️ En Route ({formatExpiry(activeCommitment.expiresAt)})
+            </div>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={handleCancelPledge}
+              disabled={cancellingPledge}
+              style={{ color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.3)', padding: '4px 10px', fontSize: '0.75rem' }}
+            >
+              {cancellingPledge ? <Loader2 size={12} className="spin" /> : 'Cancel Pledge'}
+            </button>
+          </div>
+        ) : otherCommitment ? (
+          <div style={{
+            background: 'rgba(234, 179, 8, 0.1)',
+            border: '1px solid rgba(234, 179, 8, 0.3)',
+            borderRadius: '20px',
+            padding: '6px 14px',
+            fontSize: '0.825rem',
+            color: '#facc15',
+            fontWeight: 600
+          }}>
+            🔒 1 Donor En Route (Locked)
+          </div>
+        ) : (
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => setShowEtaModal(true)}
+            style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', gap: '6px' }}
+          >
+            <Car size={14} /> I&apos;m On My Way to Donate
+          </button>
+        )}
 
         {/* High-Contrast Clean ETA Selection Modal via React Portal */}
         {showEtaModal && createPortal(

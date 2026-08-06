@@ -18,6 +18,7 @@ const NOTIFICATION_TYPES = [
   'request_approved',   // seeker's request was approved
   'request_rejected',   // seeker's request was rejected
   'request_fulfilled',  // seeker's request is fulfilled
+  'donor_en_route',     // donor pledged I'm On My Way
   'code_red',           // hospital issued a Code Red for a compatible blood group
   'donor_needed',       // compatible donor alert (Phase 6 push)
   'system',             // generic platform message
