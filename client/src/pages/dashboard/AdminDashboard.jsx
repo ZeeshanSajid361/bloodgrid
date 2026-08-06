@@ -7,8 +7,9 @@ import { useState, useEffect } from 'react';
 import {
   ShieldCheck, Building2, FileText, Users, LogOut,
   CheckCircle, XCircle, Key, Lock, Unlock, ExternalLink,
-  Loader2, AlertTriangle, TrendingUp, Menu, X,
+  Loader2, AlertTriangle, TrendingUp, Menu, X, Trash2,
 } from 'lucide-react';
+
 import { useAuth } from '../../context/AuthContext';
 import useAdminData from '../../hooks/useAdminData';
 import useNotifications from '../../hooks/useNotifications';
@@ -435,7 +436,7 @@ function RequestsTab({ admin }) {
 
 /* ══ USERS TAB ═══════════════════════════════════════════════════════════ */
 function UsersTab({ admin }) {
-  const { fetchUsers, users, toggleBlock, loading } = admin;
+  const { fetchUsers, users, toggleBlock, deleteUser, loading } = admin;
   const [roleFilter, setRoleFilter] = useState('');
   const [search,     setSearch]     = useState('');
   const [acting,     setActing]     = useState('');
@@ -449,6 +450,19 @@ function UsersTab({ admin }) {
       fetchUsers(roleFilter, search);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
+    } finally { setActing(''); }
+  }
+
+  async function handleDelete(user) {
+    if (!window.confirm(`Are you sure you want to permanently delete user "${user.name}" (${user.email})? This action cannot be undone.`)) {
+      return;
+    }
+    setActing(user._id);
+    try {
+      await deleteUser(user._id);
+      fetchUsers(roleFilter, search);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Delete failed.');
     } finally { setActing(''); }
   }
 
@@ -482,7 +496,7 @@ function UsersTab({ admin }) {
       {loading
         ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
         : <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City</th><th>Verified</th><th>Status</th><th>Action</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City</th><th>Verified</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               {users.users.length === 0
                 ? <tr><td colSpan={7} className="admin-empty">No users found.</td></tr>
@@ -504,19 +518,30 @@ function UsersTab({ admin }) {
                       </td>
                       <td>
                         {u.role !== 'admin' && (
-                          <button
-                            className={`btn btn-sm ${u.isBlocked ? 'btn-secondary' : 'btn-danger'}`}
-                            style={{ padding: '4px 10px' }}
-                            disabled={acting === u._id}
-                            onClick={() => handleBlock(u)}
-                          >
-                            {acting === u._id
-                              ? <Loader2 size={13} className="spin" />
-                              : u.isBlocked
-                                ? <><Unlock size={13} /> Unblock</>
-                                : <><Lock size={13} /> Block</>
-                            }
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button
+                              className={`btn btn-sm ${u.isBlocked ? 'btn-secondary' : 'btn-ghost'}`}
+                              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                              disabled={acting === u._id}
+                              onClick={() => handleBlock(u)}
+                            >
+                              {acting === u._id
+                                ? <Loader2 size={13} className="spin" />
+                                : u.isBlocked
+                                  ? <><Unlock size={13} /> Unblock</>
+                                  : <><Lock size={13} /> Block</>
+                              }
+                            </button>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                              disabled={acting === u._id}
+                              onClick={() => handleDelete(u)}
+                              title="Permanently delete user"
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -528,6 +553,7 @@ function UsersTab({ admin }) {
     </div>
   );
 }
+
 
 /* ══ MAIN DASHBOARD ══════════════════════════════════════════════════════ */
 const TABS = [

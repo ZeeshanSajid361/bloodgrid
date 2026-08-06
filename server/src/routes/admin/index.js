@@ -399,6 +399,39 @@ router.patch('/users/:id/block', async (req, res, next) => {
   }
 });
 
+/**
+ * DELETE /api/admin/users/:id
+ *
+ * Permanently deletes a user account and cleans up associated profiles/requests.
+ */
+router.delete('/users/:id', async (req, res, next) => {
+  try {
+    if (!validateId(req, res)) return;
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+    if (user.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin accounts cannot be deleted.' });
+    }
+
+    // Clean up associated records
+    const { DonorProfile } = require('../../models/DonorProfile');
+    await DonorProfile.deleteMany({ user: user._id });
+    await Organization.deleteMany({ owner: user._id });
+    await Request.deleteMany({ requester: user._id });
+    await User.deleteOne({ _id: user._id });
+
+    res.json({
+      success: true,
+      message: 'User account permanently deleted.',
+      data: { userId: user._id },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 /* ══════════════════════════════════════════════════════════════════════════
    ANALYTICS
 ══════════════════════════════════════════════════════════════════════════ */

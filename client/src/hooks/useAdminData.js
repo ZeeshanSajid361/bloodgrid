@@ -115,12 +115,18 @@ export default function useAdminData() {
     return data;
   }
 
+  async function deleteUser(id) {
+    const { data } = await api.delete(`/admin/users/${id}`);
+    return data;
+  }
+
   return {
     analytics, hospitals, requests, users,
     loading, error,
     fetchAnalytics, fetchHospitals, fetchRequests, fetchUsers,
     approveHospital, rejectHospital, revokeApiKey,
     approveRequest, rejectRequest, fulfillRequest,
-    toggleBlock,
+    toggleBlock, deleteUser,
   };
 }
+
