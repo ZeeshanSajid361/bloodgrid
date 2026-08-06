@@ -447,6 +447,18 @@ router.delete('/requests/:id/commit', async (req, res, next) => {
     if (comm) {
       comm.status = 'cancelled';
       await request.save();
+
+      // Notify Seeker that donor cancelled pledge
+      if (request.seeker) {
+        const { Notification } = require('../../models/Notification');
+        await Notification.create({
+          recipient: request.seeker,
+          type:      'donor_cancelled_pledge',
+          title:     '⚠️ Donor Travel Cancelled',
+          message:   `A donor had to cancel their travel pledge for your request at ${request.hospitalName}. The blood unit slot has been re-opened for other matching donors.`,
+          link:      '/dashboard/seeker',
+        }).catch(err => console.error('[cancel-commit] Notification create failed:', err.message));
+      }
     }
 
     res.json({ success: true, message: 'Commitment cancelled. Slot freed.' });
