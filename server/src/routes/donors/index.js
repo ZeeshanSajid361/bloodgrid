@@ -307,15 +307,23 @@ router.get('/requests', async (req, res, next) => {
       fulfilledBy: req.user.id,
     }).sort({ createdAt: -1 }).limit(50).lean();
 
-    // Fetch approved requests compatible with this donor's blood group and city
-    const cityQuery = user.city ? { hospitalCity: { $regex: new RegExp(`^${user.city.trim()}$`, 'i') } } : {};
-
-    const compatible = await Request.find({
+    // Fetch approved requests compatible with this donor's blood group:
+    // 1. Same-city requests for routine needs
+    // 2. Automatic Span Expansion: Critical & Urgent emergency requests broaden to nearby/regional donors
+    const compatibleQuery = {
       status:            'approved',
       patientBloodGroup: { $in: getCompatibleGroups(profile.bloodGroup) },
       fulfilledBy:       { $exists: false },
-      ...cityQuery,
-    }).sort({ createdAt: -1 }).limit(20).lean();
+    };
+
+    if (user.city) {
+      compatibleQuery.$or = [
+        { hospitalCity: { $regex: new RegExp(`^${user.city.trim()}$`, 'i') } },
+        { urgency:      { $in: ['critical', 'urgent'] } },
+      ];
+    }
+
+    const compatible = await Request.find(compatibleQuery).sort({ createdAt: -1 }).limit(30).lean();
 
     const URGENCY_RANK = { critical: 1, urgent: 2, routine: 3, standard: 3, regular: 3 };
     const getUrgencyRank = (u) => URGENCY_RANK[(u || '').toLowerCase()] ?? 4;
