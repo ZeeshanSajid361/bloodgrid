@@ -12,7 +12,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, FilePlus, ClipboardList, LogOut,
   MapPin, AlertCircle, CheckCircle2, FileText,
-  Loader2, X, ExternalLink,
+  Loader2, X, ExternalLink, Edit3,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -37,7 +37,7 @@ const NAV_ITEMS = [
 export default function SeekerDashboard() {
   const { user, logout }              = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const activeTab                      = searchParams.get('tab') || 'search';
 
   const { requests, loading: reqLoading, error: reqError, total, refetch } = useSeekerRequests();
@@ -62,14 +62,14 @@ export default function SeekerDashboard() {
 
   return (
     <div className="dashboard-shell">
-      {/* ── Desktop Fixed Sidebar (250px) ── */}
+      {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
       <aside className="sidebar">
         <a href="/" className="sidebar-logo">
           <div className="sidebar-logo-icon">🩸</div>
           <span className="sidebar-logo-text">Blood<span>Sync</span></span>
         </a>
 
-        <div className="sidebar-user">
+        <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
           <div className="sidebar-user-card">
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
@@ -110,32 +110,15 @@ export default function SeekerDashboard() {
             <div className="mobile-header-logo-icon">🩸</div>
             <div className="mobile-header-title">Blood<span>Sync</span></div>
           </div>
-          
-          {/* User Avatar Pill with Dropdown */}
-          <div style={{ position: 'relative' }}>
-            <button 
-              className="user-avatar-pill" 
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              aria-label="User menu"
-            >
-              {initials}
-            </button>
 
-            {showUserMenu && (
-              <div className="user-menu-dropdown">
-                <div className="user-menu-header">
-                  <div className="user-menu-name">{user?.name}</div>
-                  <div className="user-menu-email">{user?.email}</div>
-                </div>
-                <button 
-                  className="user-menu-item logout"
-                  onClick={handleLogout}
-                >
-                  <LogOut size={16} /> Sign out
-                </button>
-              </div>
-            )}
-          </div>
+          {/* User Avatar Pill — opens profile modal */}
+          <button
+            className="user-avatar-pill"
+            onClick={() => setShowProfileModal(true)}
+            aria-label="View profile details"
+          >
+            {initials}
+          </button>
         </header>
 
         {/* Main Content Area */}
@@ -172,6 +155,59 @@ export default function SeekerDashboard() {
           ))}
         </nav>
       </div>
+
+      {/* ── Full Profile View Modal ── */}
+      {showProfileModal && (
+        <div className="profile-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <button
+                className="profile-modal-close"
+                onClick={() => setShowProfileModal(false)}
+              >
+                <X size={18} />
+              </button>
+              <div className="profile-avatar-large">{initials}</div>
+              <div className="profile-modal-name">{user?.name}</div>
+              <div className="profile-modal-role">Blood Seeker</div>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-info-row">
+                <span className="profile-info-label">Email</span>
+                <span className="profile-info-val">{user?.email}</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Role</span>
+                <span className="profile-info-val">Seeker</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Requests</span>
+                <span className="profile-info-val">{total || 0} submitted</span>
+              </div>
+            </div>
+
+            <div className="profile-modal-actions">
+              <button
+                className="btn btn-primary btn-full"
+                onClick={() => {
+                  setTab('request');
+                  setShowProfileModal(false);
+                }}
+              >
+                <FilePlus size={18} /> New Blood Request
+              </button>
+              <button
+                className="btn btn-ghost btn-full"
+                style={{ color: 'var(--red-400)' }}
+                onClick={handleLogout}
+              >
+                <LogOut size={18} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Notification Bell */}
       <NotificationBell {...notifs} />

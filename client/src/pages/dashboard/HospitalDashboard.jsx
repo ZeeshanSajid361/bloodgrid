@@ -18,6 +18,7 @@ import useHospitalData from '../../hooks/useHospitalData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import PhoneInput from '../../components/PhoneInput';
+import '../../styles/dashboard.css';
 import '../../styles/hospital.css';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -628,43 +629,27 @@ const TABS = [
 export default function HospitalDashboard() {
   const { user, logout } = useAuth();
   const [tab, setTab]   = useState('overview');
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const hookData = useHospitalData();
   const { profile, loading, error } = hookData;
   const notifs = useNotifications();
 
+  const initials = user?.name
+    ?.split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || '?';
+
+  async function handleLogout() {
+    await logout();
+  }
+
   if (loading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', minHeight: '100dvh' }}>
         <Loader2 size={32} className="spin" style={{ color: 'var(--blue-400)' }} />
-      </div>
-    );
-  }
-
-  // No org registered yet
-  if (!profile) {
-    return (
-      <div className="hospital-layout">
-        <aside className="hospital-sidebar">
-          <div className="hospital-sidebar-brand">
-            <div className="brand-icon"><Building2 size={20} /></div>
-            <div>
-              <div className="brand-name">BloodSync</div>
-              <div className="brand-role">Hospital Portal</div>
-            </div>
-          </div>
-          <div className="hospital-sidebar-footer">
-            <div style={{ padding: 'var(--space-2) var(--space-4)', marginBottom: 'var(--space-2)' }}>
-              <NotificationBell {...notifs} />
-            </div>
-            <button className="hospital-nav-item" onClick={logout} style={{ color: 'var(--red-400)' }}>
-              <LogOut size={18} /> Sign out
-            </button>
-          </div>
-        </aside>
-        <main className="hospital-main animate-fade-up">
-          <RegisterOrgForm onSave={hookData.saveProfile} />
-        </main>
       </div>
     );
   }
@@ -678,88 +663,163 @@ export default function HospitalDashboard() {
   }
 
   return (
-    <div className="hospital-layout">
-      {/* Mobile Top Header */}
-      <header className="hospital-mobile-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <div className="brand-icon" style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))', display: 'grid', placeItems: 'center', color: '#fff' }}>
-            <Building2 size={18} />
+    <div className="dashboard-shell">
+      {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
+      <aside className="sidebar">
+        <a href="/" className="sidebar-logo">
+          <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
+            <Building2 size={18} color="#fff" />
           </div>
-          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-            {profile?.org?.name || 'BloodSync Hospital'}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <NotificationBell {...notifs} />
-          <button className="btn btn-ghost btn-sm" onClick={logout} style={{ color: 'var(--red-400)', padding: '4px 8px' }}>
-            <LogOut size={16} />
-          </button>
-        </div>
-      </header>
+          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
+        </a>
 
-      {/* Mobile Nav Tabs Bar */}
-      <div className="hospital-mobile-tabs">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            className={`hospital-mobile-tab${tab === id ? ' active' : ''}`}
-            onClick={() => setTab(id)}
-          >
-            <Icon size={16} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Sidebar (Desktop) */}
-      <aside className="hospital-sidebar">
-        <div className="hospital-sidebar-brand">
-          <div className="brand-icon"><Building2 size={20} /></div>
-          <div>
-            <div className="brand-name">{profile.org.name}</div>
-            <div className="brand-role">{profile.org.type === 'partner' ? 'Partner Org' : 'Hospital'}</div>
+        <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
+          <div className="sidebar-user-card">
+            <div className="sidebar-avatar" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}>{initials}</div>
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-name">{profile?.org?.name || user?.name}</div>
+              <div className="sidebar-user-role">Hospital Portal</div>
+            </div>
           </div>
         </div>
 
-        <nav className="hospital-nav">
+        <nav className="sidebar-nav">
+          <div className="sidebar-nav-label">Navigation</div>
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              className={`hospital-nav-item${tab === id ? ' active' : ''}`}
+              className={`sidebar-nav-link${tab === id ? ' active' : ''}`}
+              style={tab === id ? { background: 'rgba(21, 101, 192, 0.15)', color: 'var(--blue-300)' } : {}}
               onClick={() => setTab(id)}
             >
-              <Icon size={18} />{label}
+              <Icon size={20} />
+              <span>{label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="hospital-sidebar-footer">
-          <div style={{ padding: 'var(--space-2) var(--space-4)', marginBottom: 'var(--space-2)' }}>
-            <NotificationBell {...notifs} />
-          </div>
-          <div style={{ padding: 'var(--space-3) var(--space-4)', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 'var(--space-2)' }}>
-            {user?.name}
-          </div>
-          <button className="hospital-nav-item" onClick={logout} style={{ color: 'var(--red-400)' }}>
-            <LogOut size={18} /> Sign out
+        <div className="sidebar-footer">
+          <button className="sidebar-nav-link" onClick={handleLogout} style={{ color: 'var(--red-400)' }}>
+            <LogOut size={20} />
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="hospital-main animate-fade-up">
-        <div className="hospital-section-header">
-          <h2>
-            {tab === 'overview'  && 'Dashboard Overview'}
-            {tab === 'inventory' && 'Blood Inventory'}
-            {tab === 'profile'   && 'Organisation Profile'}
-          </h2>
-        </div>
+      {/* ── Main Content Wrapper ── */}
+      <div className="dashboard-main-wrapper">
+        {/* Mobile Sticky Top Header */}
+        <header className="mobile-header">
+          <div className="mobile-header-logo">
+            <div className="mobile-header-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
+              <Building2 size={16} color="#fff" />
+            </div>
+            <div className="mobile-header-title">{profile?.org?.name || 'Hospital'}</div>
+          </div>
 
-        {tab === 'overview'  && <OverviewTab  profile={profile} />}
-        {tab === 'inventory' && <InventoryTab profile={profile} hooks={hookData} />}
-        {tab === 'profile'   && <ProfileTab   profile={profile} hooks={hookData} />}
-      </main>
+          {/* User Avatar Pill */}
+          <button
+            className="user-avatar-pill"
+            style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}
+            onClick={() => setShowProfileModal(true)}
+            aria-label="View profile details"
+          >
+            {initials}
+          </button>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="dashboard-main">
+          {!profile ? (
+            <RegisterOrgForm onSave={hookData.saveProfile} />
+          ) : (
+            <>
+              <div className="dashboard-topbar animate-fade-up">
+                <div>
+                  <h1 className="dashboard-page-title">
+                    {tab === 'overview'  && 'Dashboard Overview'}
+                    {tab === 'inventory' && 'Blood Inventory'}
+                    {tab === 'profile'   && 'Organisation Profile'}
+                  </h1>
+                </div>
+              </div>
+              {tab === 'overview'  && <OverviewTab  profile={profile} />}
+              {tab === 'inventory' && <InventoryTab profile={profile} hooks={hookData} />}
+              {tab === 'profile'   && <ProfileTab   profile={profile} hooks={hookData} />}
+            </>
+          )}
+        </main>
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="mobile-bottom-nav">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              className={`mobile-nav-item${tab === id ? ' active' : ''}`}
+              style={tab === id ? { color: 'var(--blue-400)' } : {}}
+              onClick={() => setTab(id)}
+            >
+              <Icon size={22} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* ── Full Profile View Modal ── */}
+      {showProfileModal && (
+        <div className="profile-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header" style={{ background: 'linear-gradient(135deg, rgba(21, 101, 192, 0.25), rgba(15, 21, 32, 0.9))' }}>
+              <button className="profile-modal-close" onClick={() => setShowProfileModal(false)}>
+                <X size={18} />
+              </button>
+              <div className="profile-avatar-large" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}>
+                {initials}
+              </div>
+              <div className="profile-modal-name">{profile?.org?.name || user?.name}</div>
+              <div className="profile-modal-role">{profile?.org?.type === 'partner' ? 'Partner Organisation' : 'Hospital'}</div>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-info-row">
+                <span className="profile-info-label">Status</span>
+                <span className={`badge badge-${profile?.org?.status === 'approved' ? 'green' : profile?.org?.status === 'pending' ? 'amber' : 'red'}`}>
+                  {profile?.org?.status || 'pending'}
+                </span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">City</span>
+                <span className="profile-info-val">{profile?.org?.address?.city || '—'}</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Contact</span>
+                <span className="profile-info-val">{user?.name}</span>
+              </div>
+            </div>
+
+            <div className="profile-modal-actions">
+              <button
+                className="btn btn-primary btn-full"
+                style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}
+                onClick={() => { setTab('profile'); setShowProfileModal(false); }}
+              >
+                <Settings size={18} /> Edit Organisation Profile
+              </button>
+              <button
+                className="btn btn-ghost btn-full"
+                style={{ color: 'var(--red-400)' }}
+                onClick={handleLogout}
+              >
+                <LogOut size={18} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Notification Bell */}
+      <NotificationBell {...notifs} />
     </div>
   );
 }

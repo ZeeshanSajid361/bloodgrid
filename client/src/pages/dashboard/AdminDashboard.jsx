@@ -7,13 +7,14 @@ import { useState, useEffect } from 'react';
 import {
   ShieldCheck, Building2, FileText, Users, LogOut,
   CheckCircle, XCircle, Key, Lock, Unlock, ExternalLink,
-  Loader2, AlertTriangle, TrendingUp,
+  Loader2, AlertTriangle, TrendingUp, Menu, X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useAdminData from '../../hooks/useAdminData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import { getViewableDocUrl, isPdfUrl } from '../../lib/docUrl';
+import '../../styles/dashboard.css';
 import '../../styles/admin.css';
 
 /* ── shared note modal ───────────────────────────────────────────────────── */
@@ -541,8 +542,16 @@ const TABS = [
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [tab, setTab]   = useState('overview');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const admin           = useAdminData();
   const notifs          = useNotifications();
+
+  const initials = user?.name
+    ?.split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || '?';
 
   // Badge counts for sidebar
   const pendingHospitals = admin.hospitals.orgs.filter(o => o.status === 'pending').length;
@@ -555,61 +564,153 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="admin-layout">
-      {/* Sidebar */}
-      <aside className="admin-sidebar">
-        <div className="admin-brand">
-          <div className="brand-icon"><ShieldCheck size={18} /></div>
-          <div>
-            <div className="brand-name">BloodSync Admin</div>
-            <div className="brand-role">Control Panel</div>
+    <div className="dashboard-shell">
+      {/* ── Desktop Collapsible Sidebar (72px → 250px on hover) ── */}
+      <aside className="sidebar">
+        <a href="/" className="sidebar-logo">
+          <div className="sidebar-logo-icon">
+            <ShieldCheck size={18} />
+          </div>
+          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
+        </a>
+
+        <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
+          <div className="sidebar-user-card">
+            <div className="sidebar-avatar">{initials}</div>
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-name">{user?.name}</div>
+              <div className="sidebar-user-role">Admin Panel</div>
+            </div>
           </div>
         </div>
 
-        <nav className="admin-nav">
+        <nav className="sidebar-nav">
+          <div className="sidebar-nav-label">Navigation</div>
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              className={`admin-nav-item${tab === id ? ' active' : ''}`}
+              className={`sidebar-nav-link${tab === id ? ' active' : ''}`}
               onClick={() => setTab(id)}
             >
-              <Icon size={17} />
-              {label}
-              {id === 'hospitals' && pendingHospitals > 0 && <span className="admin-nav-badge">{pendingHospitals}</span>}
-              {id === 'requests'  && pendingRequests  > 0 && <span className="admin-nav-badge">{pendingRequests}</span>}
+              <Icon size={20} />
+              <span>
+                {label}
+                {id === 'hospitals' && pendingHospitals > 0 && <span className="admin-nav-badge">{pendingHospitals}</span>}
+                {id === 'requests'  && pendingRequests  > 0 && <span className="admin-nav-badge">{pendingRequests}</span>}
+              </span>
             </button>
           ))}
         </nav>
 
-        <div className="admin-sidebar-footer">
+        <div className="sidebar-footer">
           <div style={{ padding: 'var(--space-2) var(--space-3)', marginBottom: 'var(--space-2)' }}>
             <NotificationBell {...notifs} />
           </div>
-          <div style={{ padding: 'var(--space-3) var(--space-4)', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 'var(--space-2)' }}>
-            {user?.name}
-          </div>
-          <button className="admin-nav-item" onClick={logout} style={{ color: 'var(--red-400)' }}>
-            <LogOut size={17} /> Sign out
+          <button className="sidebar-nav-link" onClick={logout} style={{ color: 'var(--red-400)' }}>
+            <LogOut size={20} />
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="admin-main animate-fade-up">
-        <div className="admin-section-header">
-          <h2>
-            {tab === 'overview'  && 'Platform Overview'}
-            {tab === 'hospitals' && 'Hospital & Partner Verification'}
-            {tab === 'requests'  && 'Blood Request Review Queue'}
-            {tab === 'users'     && 'User Management'}
-          </h2>
-        </div>
+      {/* ── Main Content Wrapper ── */}
+      <div className="dashboard-main-wrapper">
+        {/* Mobile Sticky Top Header */}
+        <header className="mobile-header">
+          <div className="mobile-header-logo">
+            <div className="mobile-header-logo-icon">
+              <ShieldCheck size={16} color="#fff" />
+            </div>
+            <div className="mobile-header-title">Blood<span>Sync</span></div>
+          </div>
 
-        {tab === 'overview'  && <OverviewTab  admin={admin} />}
-        {tab === 'hospitals' && <HospitalsTab admin={admin} />}
-        {tab === 'requests'  && <RequestsTab  admin={admin} />}
-        {tab === 'users'     && <UsersTab     admin={admin} />}
-      </main>
+          {/* User Avatar Pill */}
+          <button
+            className="user-avatar-pill"
+            onClick={() => setShowProfileModal(true)}
+            aria-label="View admin profile"
+          >
+            {initials}
+          </button>
+        </header>
+
+        {/* Main Content */}
+        <main className="dashboard-main">
+          <div className="dashboard-topbar animate-fade-up">
+            <div>
+              <h1 className="dashboard-page-title">
+                {tab === 'overview'  && 'Platform Overview'}
+                {tab === 'hospitals' && 'Hospital & Partner Verification'}
+                {tab === 'requests'  && 'Blood Request Review Queue'}
+                {tab === 'users'     && 'User Management'}
+              </h1>
+            </div>
+          </div>
+
+          {tab === 'overview'  && <OverviewTab  admin={admin} />}
+          {tab === 'hospitals' && <HospitalsTab admin={admin} />}
+          {tab === 'requests'  && <RequestsTab  admin={admin} />}
+          {tab === 'users'     && <UsersTab     admin={admin} />}
+        </main>
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="mobile-bottom-nav">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              className={`mobile-nav-item${tab === id ? ' active' : ''}`}
+              onClick={() => setTab(id)}
+            >
+              <Icon size={22} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* ── Profile Modal ── */}
+      {showProfileModal && (
+        <div className="profile-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <button className="profile-modal-close" onClick={() => setShowProfileModal(false)}>
+                <X size={18} />
+              </button>
+              <div className="profile-avatar-large">{initials}</div>
+              <div className="profile-modal-name">{user?.name}</div>
+              <div className="profile-modal-role">System Administrator</div>
+            </div>
+
+            <div className="profile-modal-body">
+              <div className="profile-info-row">
+                <span className="profile-info-label">Email</span>
+                <span className="profile-info-val">{user?.email}</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Pending Hospitals</span>
+                <span className="profile-info-val">{pendingHospitals}</span>
+              </div>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Pending Requests</span>
+                <span className="profile-info-val">{pendingRequests}</span>
+              </div>
+            </div>
+
+            <div className="profile-modal-actions">
+              <button
+                className="btn btn-ghost btn-full"
+                style={{ color: 'var(--red-400)' }}
+                onClick={logout}
+              >
+                <LogOut size={18} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Notification Bell */}
+      <NotificationBell {...notifs} />
     </div>
   );
 }

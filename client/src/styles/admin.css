@@ -323,3 +323,54 @@
 .activity-dot.critical { background: var(--red-500); }
 .activity-dot.urgent   { background: var(--color-warning); }
 .activity-dot.routine  { background: var(--color-success); }
+
+/* ── Admin nav badge inside shared sidebar-nav-link span ─────────────────── */
+.sidebar-nav-link .admin-nav-badge {
+  margin-left: auto;
+  background: var(--red-600);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  min-width: 16px;
+  text-align: center;
+  display: inline-block;
+}
+
+/* ── Responsive: mobile overrides ────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Table cells — horizontal scroll container */
+  .admin-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-table { min-width: 600px; }
+
+  /* Stats cards — 2-col on mobile */
+  .admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  /* Table toolbar stacks on mobile */
+  .admin-table-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .admin-filter-group {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: var(--space-1);
+  }
+
+  .admin-filter-chip { flex-shrink: 0; }
+
+  /* Low stock list */
+  .low-stock-row { flex-wrap: wrap; }
+}
