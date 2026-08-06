@@ -11,7 +11,7 @@
  * in sync without needing a state management library.
  */
 
-import { useState, useEffect, Component } from 'react';
+import { useState, useEffect, useCallback, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, History, LogOut,
