@@ -13,6 +13,7 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Loader2, QrCode, RefreshCw, Download, CheckCircle2, X, Clock, Navigation, Car } from 'lucide-react';
 import useQR from '../hooks/useQR';
@@ -146,8 +147,8 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
           <Car size={14} /> I&apos;m On My Way to Donate
         </button>
 
-        {/* High-Contrast Clean ETA Selection Modal */}
-        {showEtaModal && (
+        {/* High-Contrast Clean ETA Selection Modal via React Portal */}
+        {showEtaModal && createPortal(
           <div style={{
             position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
             backdropFilter: 'blur(8px)',
@@ -294,7 +295,8 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
                 💡 Timer auto-releases if QR is not scanned at hospital counter before expiration.
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
