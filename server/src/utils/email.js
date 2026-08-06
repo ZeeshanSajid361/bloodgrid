@@ -94,7 +94,8 @@ async function sendVerificationEmail({ name, email, token }) {
           <p>
             Thank you for joining BloodSync. Before your account goes live,
             please confirm your email address by clicking the button below.
-            This link expires in <strong>24 hours</strong>.
+            This link expires in <strong>2 hours</strong>. Any new request automatically invalidates older links.
+
           </p>
           <div class="btn-wrap">
             <a href="${verifyUrl}" class="btn">Verify Email Address</a>

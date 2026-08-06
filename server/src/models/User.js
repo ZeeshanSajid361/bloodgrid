@@ -152,7 +152,7 @@ userSchema.methods.comparePassword = function (candidate) {
 userSchema.methods.generateEmailVerificationToken = function () {
   const rawToken = crypto.randomBytes(32).toString('hex');
   this.emailVerificationToken = crypto.createHash('sha256').update(rawToken).digest('hex');
-  this.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  this.emailVerificationExpires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
   return rawToken;
 };
 

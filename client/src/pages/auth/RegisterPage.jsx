@@ -5,9 +5,9 @@
  * to check their email before redirecting to login.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Phone, MapPin, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Phone, MapPin, AlertCircle, CheckCircle, Eye, EyeOff, RotateCw, Loader2 } from 'lucide-react';
 import PhoneInput from '../../components/PhoneInput';
 import api from '../../lib/api';
 import '../../styles/auth.css';
@@ -36,6 +36,56 @@ export default function RegisterPage() {
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendLoading,  setResendLoading]  = useState(false);
+  const [resendMessage,  setResendMessage]  = useState('');
+
+  // Restore cooldown state from localStorage
+  useEffect(() => {
+    const ts = localStorage.getItem('bloodsync_verif_resend_ts');
+    const em = localStorage.getItem('bloodsync_verif_resend_email');
+    if (ts && em && form.email && em.toLowerCase() === form.email.toLowerCase()) {
+      const elapsed = Math.floor((Date.now() - parseInt(ts, 10)) / 1000);
+      if (elapsed < 60) {
+        setResendCooldown(60 - elapsed);
+      }
+    }
+  }, [form.email]);
+
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown(prev => {
+          if (prev <= 1) {
+            localStorage.removeItem('bloodsync_verif_resend_ts');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  async function handleResendVerification() {
+    if (resendLoading || resendCooldown > 0) return;
+    setResendLoading(true);
+    setResendMessage('');
+    try {
+      const { data } = await api.post('/auth/resend-verification', { email: form.email });
+      localStorage.setItem('bloodsync_verif_resend_ts', Date.now().toString());
+      localStorage.setItem('bloodsync_verif_resend_email', form.email);
+      setResendCooldown(60);
+      setResendMessage(data.message || 'Verification link re-sent!');
+    } catch (err) {
+      setResendMessage(err.response?.data?.message || 'Failed to resend verification email.');
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -114,24 +164,40 @@ export default function RegisterPage() {
             <h1 style={{ fontSize: '1.75rem' }}>Check your inbox</h1>
             <p style={{ marginTop: 'var(--space-3)', maxWidth: 340, margin: 'var(--space-3) auto 0' }}>
               We sent a verification link to <strong style={{ color: 'var(--text-primary)' }}>{form.email}</strong>.
-              Click the link within 24 hours to activate your account.
+              <br />
+              <span style={{ fontSize: '0.8rem', color: 'var(--red-300)', fontWeight: 600, display: 'inline-block', marginTop: '6px' }}>
+                ⏱️ Link is valid for 2 hours. Any new request invalidates previous links.
+              </span>
             </p>
+
+            {resendMessage && (
+              <p style={{ marginTop: 'var(--space-3)', fontSize: '0.85rem', color: resendMessage.includes('Failed') ? 'var(--red-400)' : 'var(--color-success)' }}>
+                {resendMessage}
+              </p>
+            )}
+
             <button
-              className="btn btn-primary btn-full mt-8"
+              className="btn btn-primary btn-full mt-6"
               onClick={() => navigate('/login')}
             >
-              Back to Login
+              Back to Sign In
             </button>
+
             <div className="auth-form-footer" style={{ marginTop: 'var(--space-4)' }}>
               Didn&apos;t receive it?{' '}
               <button
                 className="btn btn-ghost btn-sm"
-                style={{ display: 'inline', padding: 0, border: 'none', color: 'var(--red-400)' }}
-                onClick={async () => {
-                  await api.post('/auth/resend-verification', { email: form.email }).catch(() => {});
-                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0 4px', border: 'none', color: 'var(--red-400)' }}
+                disabled={resendLoading || resendCooldown > 0}
+                onClick={handleResendVerification}
               >
-                Resend
+                {resendLoading ? (
+                  <Loader2 size={13} className="spin" />
+                ) : resendCooldown > 0 ? (
+                  `Resend in ${resendCooldown}s`
+                ) : (
+                  <><RotateCw size={13} /> Resend verification email</>
+                )}
               </button>
             </div>
           </div>
@@ -139,6 +205,7 @@ export default function RegisterPage() {
       </div>
     );
   }
+
 
   return (
     <div className="auth-layout">

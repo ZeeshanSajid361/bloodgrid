@@ -190,6 +190,56 @@ router.post('/verify-email', async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/resend-verification
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Resends a fresh email verification link with a 2-hour expiration.
+ * Invalidates any previous token.
+ *
+ * Body: { email }
+ */
+router.post('/resend-verification', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email address is required.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: `No account found with email "${cleanEmail}".` });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ success: false, message: 'This email is already verified. You can sign in.' });
+    }
+
+    const rawToken = user.generateEmailVerificationToken();
+    await user.save();
+
+    try {
+      await sendVerificationEmail({ name: user.name, email: user.email, token: rawToken });
+    } catch (err) {
+      console.error('[email] Resend verification failed:', err);
+      return res.status(500).json({
+        success: false,
+        message: `Failed to dispatch verification email: ${err.message || 'SMTP error'}.`,
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'A fresh 2-hour verification link has been sent to your email.',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/auth/login
 // ─────────────────────────────────────────────────────────────────────────────
 /**
