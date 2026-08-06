@@ -789,11 +789,11 @@ function useDonorRequests() {
 }
 
 const STATUS_LABELS = {
-  pending_review: { label: 'Pending Review', color: 'var(--color-warning)' },
-  approved:       { label: 'Approved',        color: 'var(--color-success)' },
-  fulfilled:      { label: 'Fulfilled',       color: 'var(--blue-400)'      },
-  rejected:       { label: 'Rejected',        color: 'var(--red-400)'       },
-  cancelled:      { label: 'Cancelled',       color: 'var(--text-muted)'    },
+  pending_review: { label: 'Pending Review', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.3)' },
+  approved:       { label: 'Approved',        color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.3)' },
+  fulfilled:      { label: 'Fulfilled',       color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)', border: 'rgba(59, 130, 246, 0.3)' },
+  rejected:       { label: 'Rejected',        color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.3)' },
+  cancelled:      { label: 'Cancelled',       color: '#9ca3af', bg: 'rgba(156, 163, 175, 0.12)', border: 'rgba(156, 163, 175, 0.3)' },
 };
 
 class HistoryTabErrorBoundary extends Component {
@@ -868,14 +868,14 @@ function HistoryTabInner({ donor }) {
       {!loading && grouped.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {grouped.map(req => {
-            const { label, color } = STATUS_LABELS[req.status] || { label: req.status, color: 'var(--text-muted)' };
+            const meta = STATUS_LABELS[req.status] || { label: req.status, color: '#9ca3af', bg: 'rgba(156, 163, 175, 0.12)', border: 'rgba(156, 163, 175, 0.3)' };
             return (
               <div
                 key={req._id}
                 className="card animate-fade-up"
                 style={{
                   padding: 'var(--space-5) var(--space-6)',
-                  borderLeft: `3px solid ${color}`,
+                  borderLeft: `4px solid ${meta.color}`,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
@@ -908,8 +908,17 @@ function HistoryTabInner({ donor }) {
                       Submitted {formatDate(req.createdAt)}
                     </div>
                   </div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color, padding: '3px 10px', borderRadius: 'var(--radius-full)', border: `1px solid ${color}40`, background: `${color}10`, whiteSpace: 'nowrap' }}>
-                    {label}
+                  <span style={{
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: meta.color,
+                    padding: '4px 12px',
+                    borderRadius: 'var(--radius-full)',
+                    border: `1px solid ${meta.border}`,
+                    background: meta.bg,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {meta.label.toUpperCase()}
                   </span>
                 </div>
 

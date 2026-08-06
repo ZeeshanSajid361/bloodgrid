@@ -751,18 +751,6 @@ function RequestCard({ request, onCancel }) {
             Submitted {formatDate(request.createdAt)}
           </div>
         </div>
-
-        <div className="flex gap-3 items-center">
-          <span className={`badge ${meta.badge}`}>{meta.text}</span>
-          {isCancellable && (
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => onCancel(request._id)}
-            >
-              <X size={13} /> Cancel
-            </button>
-          )}
-        </div>
       </div>
 
       <div className="request-item-meta">

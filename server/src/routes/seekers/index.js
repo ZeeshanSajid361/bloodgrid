@@ -281,7 +281,14 @@ router.delete(
 
       request.status      = 'cancelled';
       request.cancelledAt = new Date();
-      await request.save();
+      if (!request.documentUrls || request.documentUrls.length === 0) {
+        if (request.documentUrl) {
+          request.documentUrls = [request.documentUrl];
+        } else {
+          request.documentUrls = ['https://res.cloudinary.com/placeholder.png'];
+        }
+      }
+      await request.save({ validateModifiedOnly: true });
 
       return res.status(200).json({
         success: true,

@@ -139,7 +139,9 @@ export default function App() {
       {/* Toast notifications — position top-right, dark theme */}
       <Toaster
         position="top-right"
+        reverseOrder={false}
         toastOptions={{
+          duration: 3500,
           style: {
             background: 'var(--surface-float)',
             color: 'var(--text-primary)',
