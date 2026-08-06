@@ -513,7 +513,7 @@ function ProfileTab({ profile, hooks }) {
 /* ── Registration form (shown before org exists) ─────────────────────────── */
 
 function RegisterOrgForm({ onSave }) {
-  const [form, setForm]     = useState({ type: 'hospital', name: '', city: '', street: '', province: '', phone: '', email: '' });
+  const [form, setForm]     = useState({ type: 'web_hospital', name: '', city: '', street: '', province: '', phone: '', email: '' });
   const [files, setFiles]   = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
@@ -560,8 +560,9 @@ function RegisterOrgForm({ onSave }) {
             <div className="input-group" style={{ gridColumn: '1 / -1' }}>
               <label className="input-label">Organisation Type</label>
               <select className="input" value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}>
-                <option value="hospital">Hospital / Blood Bank</option>
-                <option value="partner">Partner Organisation (PRCS, University Society, etc.)</option>
+                <option value="web_hospital">🏥 Web Portal Hospital / Clinic (Manual Web Dashboard)</option>
+                <option value="api_hospital">⚡ Enterprise Medical Network (Automated API Key Integration)</option>
+                <option value="partner">🤝 Partner Organisation (PRCS, Edhi, University Society)</option>
               </select>
             </div>
             {[
