@@ -74,7 +74,7 @@ function getEtaConfig(urgency = 'routine') {
   };
 }
 
-export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, bloodGroup, commitments = [], urgency = 'routine' }) {
+export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, bloodGroup, commitments = [], urgency = 'routine', onCommitmentChange }) {
   const { user } = useAuth();
   const { qrData, generating, cancelling, error, generate, cancel } = useQR(requestId, requestStatus);
   const [expanded, setExpanded] = useState(false);
@@ -102,7 +102,6 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
 
   useEffect(() => {
     if (activeCommitment) {
-      setExpanded(true);
       if (!qrData) generate();
     }
   }, [activeCommitment?._id, activeCommitment?.expiresAt]);
@@ -136,6 +135,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
       setShowEtaModal(false);
       setExpanded(true);
       generate(); // Auto-generate QR code upon commitment
+      if (onCommitmentChange) onCommitmentChange();
     } catch (err) {
       setCommitError(err.response?.data?.message || err.message || 'Failed to reserve slot.');
     } finally {
@@ -148,6 +148,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
     try {
       await api.delete(`/donors/requests/${requestId}/commit`);
       setLocalCommitment(null);
+      if (onCommitmentChange) onCommitmentChange();
     } catch (err) {
       console.error('Failed to cancel pledge:', err);
     } finally {

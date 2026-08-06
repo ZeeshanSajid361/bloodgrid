@@ -778,14 +778,18 @@ function useDonorRequests() {
   const [requests, setRequests] = useState([]);
   const [loading,  setLoading]  = useState(true);
 
-  useEffect(() => {
+  const fetchRequests = useCallback(() => {
     api.get('/donors/requests')
       .then(r => setRequests(r.data.data || []))
       .catch(() => setRequests([]))
       .finally(() => setLoading(false));
   }, []);
 
-  return { requests, loading };
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  return { requests, loading, refetch: fetchRequests };
 }
 
 const STATUS_LABELS = {
@@ -817,7 +821,7 @@ class HistoryTabErrorBoundary extends Component {
 }
 
 function HistoryTabInner({ donor }) {
-  const { requests, loading } = useDonorRequests();
+  const { requests, loading, refetch } = useDonorRequests();
 
   const URGENCY_RANK = { critical: 1, urgent: 2, routine: 3, standard: 3, regular: 3 };
   const getUrgencyRank = (u) => URGENCY_RANK[(u || '').toLowerCase()] ?? 4;
@@ -931,6 +935,7 @@ function HistoryTabInner({ donor }) {
                   bloodGroup={req.patientBloodGroup}
                   commitments={req.commitments}
                   urgency={req.urgency}
+                  onCommitmentChange={refetch}
                 />
               </div>
             );

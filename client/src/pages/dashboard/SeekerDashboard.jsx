@@ -705,11 +705,27 @@ const STATUS_LABELS = {
   cancelled:      { text: 'Cancelled',      badge: ''            },
 };
 
+function formatExpiry(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = d - now;
+  if (diffMs <= 0) return 'Expired';
+  const hrs = Math.floor(diffMs / 3600000);
+  const mins = Math.floor((diffMs % 3600000) / 60000);
+  if (hrs > 0) return `${hrs}h ${mins}m remaining`;
+  return `${mins}m remaining`;
+}
+
 function RequestCard({ request, onCancel }) {
   const meta = STATUS_LABELS[request.status] || {};
   const isRejected   = request.status === 'rejected';
   const isCancelled  = request.status === 'cancelled';
   const isCancellable = ['pending_review', 'approved'].includes(request.status);
+
+  const enRouteCommit = (request.commitments || []).find(
+    c => c.status === 'en_route' && new Date(c.expiresAt) > new Date()
+  );
 
   // Compute timeline step states
   function stepState(stepKey) {
@@ -725,9 +741,25 @@ function RequestCard({ request, onCancel }) {
   return (
     <div className="request-card-item">
       <div className="request-item-top">
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span className="request-id">Request #{request._id.slice(-6)}</span>
           <span className="request-blood-pill">{request.patientBloodGroup}</span>
+          {enRouteCommit && (
+            <span style={{
+              background: 'linear-gradient(135deg, #059669, #10b981)',
+              color: '#ffffff',
+              padding: '3px 10px',
+              borderRadius: '20px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 0 10px rgba(16, 185, 129, 0.4)',
+            }}>
+              🚗 EN ROUTE ({formatExpiry(enRouteCommit.expiresAt)})
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
           <span className={`badge ${meta.badge || ''}`}>{meta.text}</span>
