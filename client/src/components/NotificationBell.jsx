@@ -54,17 +54,15 @@ export default function NotificationBell({
 
   function handleNotifClick(n) {
     setSelectedNotif(n);
-    if (!n.isRead) {
-      markRead(n._id);
-    }
+    markRead(n._id);
+    dismiss(n._id);
   }
 
   function handleDismissSingle(e, id) {
     e.stopPropagation();
+    markRead(id);
     dismiss(id);
   }
-
-  const notifList = notifications || [];
 
   return (
     <div className="notif-bell-wrap" ref={panelRef}>
@@ -86,7 +84,7 @@ export default function NotificationBell({
           {/* Header */}
           <div className="notif-panel-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="notif-panel-title">Notifications</span>
+              <span className="notif-panel-title">Unseen Notifications</span>
               {unreadCount > 0 && (
                 <span className="badge badge-red" style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>
                   {unreadCount} New
@@ -94,11 +92,6 @@ export default function NotificationBell({
               )}
             </div>
             <div className="notif-panel-actions">
-              {unreadCount > 0 && (
-                <button className="notif-action-btn" onClick={markAllRead} title="Mark all as read" style={{ width: 'auto', padding: '0 6px', fontSize: '0.75rem' }}>
-                  <CheckCheck size={14} /> Read All
-                </button>
-              )}
               <button className="notif-action-btn" onClick={togglePanel} title="Close">
                 <X size={16} />
               </button>
@@ -111,36 +104,29 @@ export default function NotificationBell({
               <div className="notif-loading">
                 <Loader2 size={20} className="spin" />
               </div>
-            ) : notifList.length === 0 ? (
+            ) : unseenNotifs.length === 0 ? (
               <div className="notif-empty">
                 <Bell size={28} style={{ opacity: 0.3 }} />
-                <p>No notifications</p>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>You&apos;re all caught up!</span>
+                <p>No unseen notifications</p>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>All notifications read & moved to history</span>
               </div>
             ) : (
-              notifList.map(n => (
+              unseenNotifs.map(n => (
                 <div
                   key={n._id}
-                  className={`notif-item${!n.isRead ? ' unread' : ''}`}
+                  className="notif-item unread"
                   onClick={() => handleNotifClick(n)}
                 >
                   <span className="notif-type-icon">{TYPE_ICON[n.type] || '🩸'}</span>
                   <div className="notif-content">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <p className="notif-title">{n.title}</p>
-                      {!n.isRead && (
-                        <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: '4px' }}>
-                          NEW
-                        </span>
-                      )}
-                    </div>
+                    <p className="notif-title">{n.title}</p>
                     <p className="notif-msg">{n.message}</p>
                     <span className="notif-time">{timeAgo(n.createdAt)} • Tap for details</span>
                   </div>
                   <button
                     className="notif-dismiss-btn"
                     onClick={e => handleDismissSingle(e, n._id)}
-                    title="Remove notification"
+                    title="Dismiss notification"
                   >
                     <X size={14} />
                   </button>
