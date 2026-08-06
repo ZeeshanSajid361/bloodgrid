@@ -922,12 +922,14 @@ function HistoryTabInner({ donor }) {
                   </span>
                 </div>
 
-                {/* QR Check-in — only shown for approved requests */}
+                {/* QR Check-in & Commitment — only shown for approved requests */}
                 <QRCheckIn
                   requestId={req._id}
                   requestStatus={req.status}
                   hospitalName={req.hospitalName}
+                  hospitalCity={req.hospitalCity}
                   bloodGroup={req.patientBloodGroup}
+                  commitments={req.commitments}
                 />
               </div>
             );

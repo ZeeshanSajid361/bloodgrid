@@ -325,6 +325,18 @@ router.get('/requests', async (req, res, next) => {
 
     const compatible = await Request.find(compatibleQuery).sort({ createdAt: -1 }).limit(30).lean();
 
+    // Clean up expired commitments on compatible requests before returning
+    const now = new Date();
+    compatible.forEach(r => {
+      if (r.commitments && r.commitments.length > 0) {
+        r.commitments.forEach(c => {
+          if (c.status === 'en_route' && new Date(c.expiresAt) < now) {
+            c.status = 'expired';
+          }
+        });
+      }
+    });
+
     const URGENCY_RANK = { critical: 1, urgent: 2, routine: 3, standard: 3, regular: 3 };
     const getUrgencyRank = (u) => URGENCY_RANK[(u || '').toLowerCase()] ?? 4;
 
@@ -344,6 +356,87 @@ router.get('/requests', async (req, res, next) => {
     });
 
     res.json({ success: true, data: merged });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/donors/requests/:id/commit
+ * Donor pledges "I'm On My Way" to donate with an ETA timer (15, 30, 45, 60 mins).
+ */
+router.post('/requests/:id/commit', async (req, res, next) => {
+  try {
+    const { etaMinutes = 45 } = req.body;
+    const request = await Request.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found.' });
+    }
+
+    if (request.status !== 'approved') {
+      return res.status(400).json({ success: false, message: 'Can only commit to active approved requests.' });
+    }
+
+    // Clean expired commitments
+    const now = new Date();
+    request.commitments.forEach(c => {
+      if (c.status === 'en_route' && new Date(c.expiresAt) < now) {
+        c.status = 'expired';
+      }
+    });
+
+    // Check active en-route commitments
+    const activeCommitments = request.commitments.filter(c => c.status === 'en_route');
+    const existingIndex = request.commitments.findIndex(c => String(c.donor) === req.user.id && c.status === 'en_route');
+
+    if (activeCommitments.length >= (request.unitsNeeded || 1) && existingIndex === -1) {
+      return res.status(400).json({
+        success: false,
+        message: 'This request currently has all needed donor slots reserved by en-route donors.',
+      });
+    }
+
+    const expiresAt = new Date(Date.now() + parseInt(etaMinutes, 10) * 60 * 1000);
+
+    if (existingIndex !== -1) {
+      request.commitments[existingIndex].expiresAt = expiresAt;
+      request.commitments[existingIndex].etaMinutes = etaMinutes;
+    } else {
+      request.commitments.push({
+        donor:      req.user.id,
+        reservedAt: now,
+        expiresAt,
+        etaMinutes: parseInt(etaMinutes, 10),
+        status:     'en_route',
+      });
+    }
+
+    await request.save();
+    res.json({ success: true, message: 'Slot reserved! You are marked as en route.', data: request });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/donors/requests/:id/commit
+ * Donor cancels their "I'm On My Way" pledge, freeing the slot for others.
+ */
+router.delete('/requests/:id/commit', async (req, res, next) => {
+  try {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found.' });
+    }
+
+    const comm = request.commitments.find(c => String(c.donor) === req.user.id && c.status === 'en_route');
+    if (comm) {
+      comm.status = 'cancelled';
+      await request.save();
+    }
+
+    res.json({ success: true, message: 'Commitment cancelled. Slot freed.' });
   } catch (err) {
     next(err);
   }
