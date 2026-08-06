@@ -111,12 +111,13 @@ router.patch('/hospitals/:id/approve', async (req, res, next) => {
 
     await org.save();
 
+    const noteMsg = req.body.note ? ` Note: "${req.body.note}"` : '';
     if (org.owner) {
       await notifyUser({
         userId:  org.owner,
         type:    'system',
-        title:   'Hospital Account Approved! 🎉',
-        message: `Your registration for "${org.name}" has been approved by BloodSync Admin. You can now manage inventory and broadcast Code Red alerts.`,
+        title:   'Hospital Approved 🎉',
+        message: `Hospital "${org.name}" approved.${noteMsg}`,
         link:    '/dashboard/hospital',
       }).catch(e => console.error('[admin] Approval notification error:', e));
     }
@@ -148,7 +149,7 @@ router.patch('/hospitals/:id/reject', async (req, res, next) => {
 
     org.status     = 'rejected';
     org.rejectedAt = new Date();
-    org.adminNote  = req.body.note || 'Your application did not meet the current criteria.';
+    org.adminNote  = req.body.note || 'Application did not meet requirements.';
 
     await org.save();
 
@@ -156,13 +157,14 @@ router.patch('/hospitals/:id/reject', async (req, res, next) => {
       await notifyUser({
         userId:  org.owner,
         type:    'system',
-        title:   'Hospital Registration Update',
-        message: `Your registration for "${org.name}" was not approved. Note: ${org.adminNote}`,
+        title:   'Registration Rejected ❌',
+        message: `Hospital "${org.name}" not approved. ${org.adminNote ? `Reason: "${org.adminNote}"` : ''}`,
         link:    '/dashboard/hospital',
       }).catch(e => console.error('[admin] Rejection notification error:', e));
     }
 
     res.json({ success: true, message: 'Organisation rejected.', data: { org } });
+
 
   } catch (err) {
     next(err);

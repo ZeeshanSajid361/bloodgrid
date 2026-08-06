@@ -207,14 +207,21 @@ router.get(
           const userId = req.user.id || req.user._id;
           const count = await Notification.countDocuments({ recipient: userId });
           if (count === 0) {
-            const noteText = req.org.adminNote ? ` Note from Admin: "${req.org.adminNote}"` : '';
+            const noteText = req.org.adminNote ? ` Note: "${req.org.adminNote}"` : '';
             await Notification.create({
               recipient: userId,
               type:      'system',
-              title:     'Hospital Account Approved! 🎉',
-              message:   `Your registration for "${req.org.name}" has been approved by BloodSync Admin.${noteText} You can now manage inventory and broadcast Code Red alerts.`,
+              title:     'Hospital Approved 🎉',
+              message:   `Hospital "${req.org.name}" approved.${noteText}`,
               link:      '/dashboard/hospital',
             });
+          } else {
+            // Update existing notification to keep message clean if present
+            const noteText = req.org.adminNote ? ` Note: "${req.org.adminNote}"` : '';
+            await Notification.updateMany(
+              { recipient: userId, type: 'system' },
+              { title: 'Hospital Approved 🎉', message: `Hospital "${req.org.name}" approved.${noteText}` }
+            );
           }
         } catch (notifErr) {
           console.error('[hospitals/me] Backfill notification error:', notifErr);
