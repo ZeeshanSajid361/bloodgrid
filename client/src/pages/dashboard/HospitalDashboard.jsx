@@ -107,7 +107,33 @@ function OverviewTab({ profile }) {
     <>
       {org.status === 'pending' && <PendingBanner />}
 
+      {org.status === 'approved' && (
+        <div className="pending-banner" style={{ background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.25)', marginBottom: 'var(--space-5)' }}>
+          <CheckCircle size={20} style={{ color: 'var(--color-success)' }} />
+          <div>
+            <h4 style={{ color: 'var(--color-success)' }}>Verified & Approved Organisation</h4>
+            <p>Your organisation <strong>{org.name}</strong> is verified and active on BloodSync.</p>
+            {org.adminNote && (
+              <div style={{ marginTop: 'var(--space-2)', fontSize: '0.85rem', color: 'var(--text-primary)', background: 'rgba(255,255,255,0.05)', padding: '6px 10px', borderRadius: '6px' }}>
+                💬 <strong>Admin Review Note:</strong> &ldquo;{org.adminNote}&rdquo;
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {org.status === 'rejected' && (
+        <div className="pending-banner" style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', marginBottom: 'var(--space-5)' }}>
+          <X size={20} style={{ color: 'var(--red-400)' }} />
+          <div>
+            <h4 style={{ color: 'var(--red-400)' }}>Registration Rejected</h4>
+            <p>{org.adminNote ? `Reason: "${org.adminNote}"` : 'Your application was not approved by the admin.'}</p>
+          </div>
+        </div>
+      )}
+
       <div className="hospital-stats">
+
         <div className="hospital-stat-card">
           <div className="stat-label">Total Units</div>
           <div className="stat-value">{totalUnits}</div>

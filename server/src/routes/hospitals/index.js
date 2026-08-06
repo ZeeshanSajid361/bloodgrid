@@ -200,6 +200,27 @@ router.get(
         }
       });
 
+      // Ensure approved hospital owner receives their approval notification in the bell
+      if (req.org.status === 'approved') {
+        try {
+          const { Notification } = require('../../models/Notification');
+          const userId = req.user.id || req.user._id;
+          const count = await Notification.countDocuments({ recipient: userId });
+          if (count === 0) {
+            const noteText = req.org.adminNote ? ` Note from Admin: "${req.org.adminNote}"` : '';
+            await Notification.create({
+              recipient: userId,
+              type:      'system',
+              title:     'Hospital Account Approved! 🎉',
+              message:   `Your registration for "${req.org.name}" has been approved by BloodSync Admin.${noteText} You can now manage inventory and broadcast Code Red alerts.`,
+              link:      '/dashboard/hospital',
+            });
+          }
+        } catch (notifErr) {
+          console.error('[hospitals/me] Backfill notification error:', notifErr);
+        }
+      }
+
       res.json({
         success: true,
         data: {
@@ -207,6 +228,7 @@ router.get(
           inventory,
         },
       });
+
     } catch (err) {
       next(err);
     }
