@@ -77,6 +77,28 @@ const donorProfileSchema = new mongoose.Schema(
       trim: true,
       maxlength: [300, 'Bio cannot exceed 300 characters'],
     },
+
+    // ── Anti-Abuse & Reliability Engine ──────────────────────────────────────
+    cancelledPledges: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    expiredPledges: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    recentPledgeCancelHistory: [
+      {
+        cancelledAt: { type: Date, default: Date.now },
+        reason: { type: String, default: 'manual_cancel' },
+      }
+    ],
+    pledgeSuspendedUntil: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

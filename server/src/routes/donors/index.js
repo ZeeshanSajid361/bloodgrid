@@ -368,6 +368,17 @@ router.get('/requests', async (req, res, next) => {
 router.post('/requests/:id/commit', async (req, res, next) => {
   try {
     const { etaMinutes = 45 } = req.body;
+
+    // Anti-Abuse Check: Check if donor is currently suspended from pledging
+    const donorProfile = await DonorProfile.findOne({ user: req.user.id });
+    if (donorProfile?.pledgeSuspendedUntil && new Date(donorProfile.pledgeSuspendedUntil) > new Date()) {
+      const hoursLeft = Math.ceil((new Date(donorProfile.pledgeSuspendedUntil) - new Date()) / 3600000);
+      return res.status(403).json({
+        success: false,
+        message: `Your travel pledge feature is temporarily suspended for ${hoursLeft} hour(s) due to multiple recent cancellations. Slot reservations require reliable commitment.`,
+      });
+    }
+
     const request = await Request.findById(req.params.id);
 
     if (!request) {
@@ -447,6 +458,34 @@ router.delete('/requests/:id/commit', async (req, res, next) => {
     if (comm) {
       comm.status = 'cancelled';
       await request.save();
+
+      // Anti-Abuse Tracking: Record cancellation in donor profile
+      const donorProfile = await DonorProfile.findOne({ user: req.user.id });
+      if (donorProfile) {
+        donorProfile.cancelledPledges = (donorProfile.cancelledPledges || 0) + 1;
+        donorProfile.recentPledgeCancelHistory = donorProfile.recentPledgeCancelHistory || [];
+        donorProfile.recentPledgeCancelHistory.push({ cancelledAt: new Date(), reason: 'manual_cancel' });
+
+        // Calculate cancellations in last 24h
+        const last24h = new Date(Date.now() - 24 * 3600 * 1000);
+        const recentCancels = donorProfile.recentPledgeCancelHistory.filter(h => new Date(h.cancelledAt) > last24h).length;
+
+        // Anti-Abuse Lockout: 3 cancellations within 24h triggers 24-hour pledge suspension
+        if (recentCancels >= 3) {
+          donorProfile.pledgeSuspendedUntil = new Date(Date.now() + 24 * 3600 * 1000);
+
+          const { Notification } = require('../../models/Notification');
+          await Notification.create({
+            recipient: req.user.id,
+            type:      'system',
+            title:     '⚠️ Travel Pledge Feature Suspended',
+            message:   'Your ability to reserve blood unit slots ("I\'m On My Way") is temporarily suspended for 24 hours due to 3 recent travel cancellations.',
+            link:      '/dashboard/donor',
+          }).catch(err => console.error('[anti-abuse] Notification create failed:', err.message));
+        }
+
+        await donorProfile.save();
+      }
 
       // Notify Seeker that donor cancelled pledge
       if (request.seeker) {
