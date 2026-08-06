@@ -410,17 +410,20 @@ router.post('/resend-verification', async (req, res, next) => {
 router.post('/forgot-password', async (req, res, next) => {
   try {
     const { email } = req.body;
-    const GENERIC_MSG = 'If that email is registered, a reset link has been sent.';
 
     if (!email) {
-      return res.status(200).json({ success: true, message: GENERIC_MSG });
+      return res.status(400).json({ success: false, message: 'Email address is required.' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() })
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail })
       .select('+passwordResetToken +passwordResetExpires');
 
     if (!user) {
-      return res.status(200).json({ success: true, message: GENERIC_MSG });
+      return res.status(404).json({
+        success: false,
+        message: `No account found with email "${cleanEmail}". Please check your email or register.`,
+      });
     }
 
     // Generate a secure random token, store its hash
@@ -434,15 +437,22 @@ router.post('/forgot-password', async (req, res, next) => {
     try {
       await sendPasswordResetEmail({ name: user.name, email: user.email, token: rawToken });
     } catch (err) {
-      console.error('[email] Password reset send failed:', err.message);
+      console.error('[email] Password reset send failed:', err);
+      return res.status(500).json({
+        success: false,
+        message: `Failed to dispatch reset email: ${err.message || 'SMTP service error'}. Please try again later.`,
+      });
     }
 
-    return res.status(200).json({ success: true, message: GENERIC_MSG });
-
+    return res.status(200).json({
+      success: true,
+      message: `Password reset link sent to ${cleanEmail}. Please check your inbox and spam folder.`,
+    });
   } catch (err) {
     next(err);
   }
 });
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/auth/reset-password

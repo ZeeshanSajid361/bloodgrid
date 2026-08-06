@@ -27,12 +27,12 @@ export default function ForgotPasswordPage() {
       await api.post('/auth/forgot-password', { email: email.trim() });
       setSent(true);
     } catch (err) {
-      // Always show generic success to prevent email enumeration
-      setSent(true);
+      setApiError(err.response?.data?.message || 'Failed to send reset link. Please check your email and try again.');
     } finally {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="auth-layout">
