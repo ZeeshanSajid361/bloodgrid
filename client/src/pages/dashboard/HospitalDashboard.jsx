@@ -221,16 +221,22 @@ function InventoryTab({ profile, hooks }) {
   const { org, inventory = [] } = profile;
   const { saveInventory, updateInventory, removeInventory, issueCodeRed, cancelCodeRed } = hooks;
 
-  const [form, setForm]           = useState({ bloodGroup: '', units: '', expiresAt: '', lowStockThreshold: 2 });
-  const [editId, setEditId]       = useState(null);
-  const [saving, setSaving]       = useState(false);
+  const [form, setForm]                   = useState({ bloodGroup: '', units: '', expiresAt: '', lowStockThreshold: 2 });
+  const [updateMode, setUpdateMode]       = useState('add'); // 'add' (additive) vs 'set' (overwrite)
+  const [editId, setEditId]               = useState(null);
+  const [saving, setSaving]               = useState(false);
   const [codeRedTarget, setCodeRedTarget] = useState(null);
   const [broadcasting, setBroadcasting]   = useState(false);
 
-  function resetForm() { setForm({ bloodGroup: '', units: '', expiresAt: '', lowStockThreshold: 2 }); setEditId(null); }
+  function resetForm() {
+    setForm({ bloodGroup: '', units: '', expiresAt: '', lowStockThreshold: 2 });
+    setEditId(null);
+    setUpdateMode('add');
+  }
 
   function startEdit(inv) {
     setEditId(inv._id);
+    setUpdateMode('set');
     setForm({
       bloodGroup:        inv.bloodGroup,
       units:             inv.units,
@@ -239,6 +245,9 @@ function InventoryTab({ profile, hooks }) {
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  // Check if selected blood group already exists in inventory
+  const existingItem = inventory.find(i => i.bloodGroup === form.bloodGroup);
 
   async function handleSave(e) {
     if (e) e.preventDefault();
@@ -250,20 +259,36 @@ function InventoryTab({ profile, hooks }) {
       toast.error('Please enter a valid number of units (0 or greater).');
       return;
     }
+
     setSaving(true);
     try {
+      const addedUnits = Number(form.units);
+      const isAdditive = !editId && existingItem && updateMode === 'add';
+      const finalUnits = isAdditive ? (existingItem.units + addedUnits) : addedUnits;
+
+      // Handle Expiry Date (FIFO principle)
+      let finalExpiry = form.expiresAt || undefined;
+      if (!finalExpiry && existingItem?.expiresAt) {
+        finalExpiry = existingItem.expiresAt.slice(0, 10);
+      }
+
       const payload = {
         bloodGroup:        form.bloodGroup,
-        units:             Number(form.units),
-        expiresAt:         form.expiresAt || undefined,
+        units:             finalUnits,
+        expiresAt:         finalExpiry,
         lowStockThreshold: Number(form.lowStockThreshold),
       };
+
       if (editId) {
         await updateInventory(editId, payload);
         toast.success(`Inventory for ${form.bloodGroup} updated successfully!`);
       } else {
         await saveInventory(payload);
-        toast.success(`Added ${payload.units} units of ${form.bloodGroup} to freezer stock!`);
+        if (isAdditive) {
+          toast.success(`Added +${addedUnits} units to ${form.bloodGroup}! Total stock is now ${finalUnits} units.`);
+        } else {
+          toast.success(`Set ${form.bloodGroup} freezer stock to ${finalUnits} units!`);
+        }
       }
       resetForm();
     } catch (err) {
@@ -326,6 +351,45 @@ function InventoryTab({ profile, hooks }) {
             </span>
           </div>
 
+          {/* Banner when selected blood group already exists */}
+          {existingItem && !editId && (
+            <div style={{
+              marginBottom: 'var(--space-4)',
+              padding: '12px 16px',
+              background: 'rgba(59, 130, 246, 0.12)',
+              border: '1px solid rgba(59, 130, 246, 0.25)',
+              borderRadius: '8px',
+              fontSize: '0.85rem'
+            }}>
+              <div style={{ fontWeight: 700, color: '#60a5fa', marginBottom: '4px' }}>
+                💡 Existing Stock Found: {existingItem.units} Units of {form.bloodGroup}
+                {existingItem.expiresAt ? ` (Earliest Batch Expiry: ${formatExpiry(existingItem.expiresAt)})` : ''}
+              </div>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '6px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#f8fafc' }}>
+                  <input
+                    type="radio"
+                    name="updateMode"
+                    value="add"
+                    checked={updateMode === 'add'}
+                    onChange={() => setUpdateMode('add')}
+                  />
+                  ➕ <strong>Add New Received Units</strong> (Will add to existing {existingItem.units} units)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#f8fafc' }}>
+                  <input
+                    type="radio"
+                    name="updateMode"
+                    value="set"
+                    checked={updateMode === 'set'}
+                    onChange={() => setUpdateMode('set')}
+                  />
+                  ✏️ <strong>Set Total Count</strong> (Overwrite total stock)
+                </label>
+              </div>
+            </div>
+          )}
+
           <div className="inventory-form-grid">
             <div className="input-group">
               <label className="input-label">Blood Group <span className="required">*</span></label>
@@ -340,29 +404,42 @@ function InventoryTab({ profile, hooks }) {
                   const existingUnits = existingStockMap[g];
                   return (
                     <option key={g} value={g}>
-                      {g} {existingUnits !== undefined ? `(In Stock: ${existingUnits} units)` : ''}
+                      {g} {existingUnits !== undefined ? `(Current Stock: ${existingUnits} units)` : ''}
                     </option>
                   );
                 })}
               </select>
             </div>
+
             <div className="input-group">
-              <label className="input-label">Available Units <span className="required">*</span></label>
+              <label className="input-label">
+                {existingItem && !editId && updateMode === 'add' ? 'New Units Received *' : 'Available Units *'}
+              </label>
               <input
                 type="number" min={0} className="input"
                 value={form.units}
                 onChange={e => setForm(p => ({ ...p, units: e.target.value }))}
-                placeholder="e.g. 10"
+                placeholder={existingItem && updateMode === 'add' ? 'e.g. 10 to add' : 'e.g. 10'}
               />
+              {existingItem && !editId && updateMode === 'add' && form.units !== '' && !isNaN(form.units) && (
+                <div style={{ fontSize: '0.78rem', color: '#34d399', marginTop: '4px', fontWeight: 600 }}>
+                  ✓ Total after save: {existingItem.units} + {Number(form.units)} = {existingItem.units + Number(form.units)} units
+                </div>
+              )}
             </div>
+
             <div className="input-group">
-              <label className="input-label">Expiry Date</label>
+              <label className="input-label">Earliest Expiry Date</label>
               <input
                 type="date" className="input"
                 value={form.expiresAt}
                 onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))}
               />
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                First-In, First-Out (FIFO) Rule: Set to the earliest batch expiry date.
+              </div>
             </div>
+
             <div className="input-group">
               <label className="input-label">Low Stock Threshold</label>
               <input
@@ -372,9 +449,13 @@ function InventoryTab({ profile, hooks }) {
               />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+
+          <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
             <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
-              {saving ? <Loader2 size={15} className="spin" /> : <><Plus size={15} />{editId ? 'Update Stock' : 'Add Stock'}</>}
+              {saving
+                ? <Loader2 size={15} className="spin" />
+                : <><Plus size={15} />{editId ? 'Update Stock' : existingItem && updateMode === 'add' ? `Add +${form.units || 0} Units` : 'Save Stock'}</>
+              }
             </button>
             {editId && <button type="button" className="btn btn-ghost btn-sm" onClick={resetForm}>Cancel</button>}
           </div>
