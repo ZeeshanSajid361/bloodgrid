@@ -85,6 +85,8 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
   const [committing, setCommitting] = useState(false);
   const [cancellingPledge, setCancellingPledge] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [localCommitment, setLocalCommitment] = useState(null);
+  const [commitError, setCommitError] = useState(null);
 
   const handleCopyToken = () => {
     if (!qrData?.token) return;
