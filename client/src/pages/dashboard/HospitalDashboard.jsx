@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom';
 import {
   Building2, DropletIcon, AlertTriangle, Settings,
   LogOut, Plus, Pencil, Trash2, Siren, X, Loader2,
-  CheckCircle, Clock, MapPin, Phone, Mail, QrCode, ClipboardList, Camera, Upload,
+  CheckCircle, Clock, MapPin, Phone, Mail, QrCode, ClipboardList, Camera, Upload, ChevronRight, Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -990,16 +990,23 @@ function RequestsTab() {
               )}
             </div>
 
-            {/* Historical Audit Log (Fulfilled & Cancelled Requests) */}
+            {/* Historical Audit Log Preview (Max 2 recent items) */}
             {historyRequests.length > 0 && (
               <div style={{ marginTop: 'var(--space-6)' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 'var(--space-4)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  📜 Fulfillment & Request History Log ({historyRequests.length})
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    📜 Recent History Log (Showing 2 of {historyRequests.length})
+                  </h3>
+                  {onNavigateToHistory && (
+                    <button className="btn btn-secondary btn-sm" onClick={onNavigateToHistory} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem' }}>
+                      View Full History Log ({historyRequests.length}) <ChevronRight size={14} />
+                    </button>
+                  )}
+                </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                  {historyRequests.map(req => (
-                    <div key={req._id} className="card" style={{ padding: 'var(--space-3) var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, opacity: 0.8, background: 'rgba(15, 23, 42, 0.6)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                  {historyRequests.slice(0, 2).map(req => (
+                    <div key={req._id} className="card" style={{ padding: 'var(--space-3) var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, opacity: 0.75, background: 'rgba(15, 23, 42, 0.6)' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                           <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '1px 7px', borderRadius: 10, fontSize: '0.75rem', fontWeight: 800 }}>
@@ -1026,11 +1033,122 @@ function RequestsTab() {
   );
 }
 
+/* ── HISTORY TAB ───────────────────────────────────────────────────────── */
+function HistoryTab({ requests = [], loading, fetchRequests }) {
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const historyRequests = requests.filter(r => ['fulfilled', 'cancelled', 'rejected'].includes(r.status));
+  const fulfilledCount = historyRequests.filter(r => r.status === 'fulfilled').length;
+  const cancelledCount = historyRequests.filter(r => r.status === 'cancelled').length;
+  const fulfilledUnits = historyRequests.filter(r => r.status === 'fulfilled').reduce((sum, r) => sum + (r.unitsNeeded || 1), 0);
+
+  const filteredList = historyRequests.filter(r => {
+    if (filter === 'fulfilled' && r.status !== 'fulfilled') return false;
+    if (filter === 'cancelled' && !['cancelled', 'rejected'].includes(r.status)) return false;
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      const patient = (r.patientName || '').toLowerCase();
+      const bloodGroup = (r.patientBloodGroup || '').toLowerCase();
+      const id = (r._id || '').toLowerCase();
+      return patient.includes(q) || bloodGroup.includes(q) || id.includes(q);
+    }
+
+    return true;
+  });
+
+  return (
+    <div className="animate-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      {/* Top Metrics Cards */}
+      <div className="card" style={{
+        padding: 'var(--space-5) var(--space-6)',
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95))',
+        border: '1px solid rgba(59, 130, 246, 0.3)',
+        borderRadius: '16px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+        gap: '16px'
+      }}>
+        <div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Total History Log</div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>{historyRequests.length} Records</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Fulfilled Requests</div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#10b981' }}>{fulfilledCount} Completed</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Blood Units Collected</div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#60a5fa' }}>🩸 {fulfilledUnits} Units</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Cancelled Reqs</div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f87171' }}>{cancelledCount} Cancelled</div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('all')}>All ({historyRequests.length})</button>
+          <button className={`btn btn-sm ${filter === 'fulfilled' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('fulfilled')}>Fulfilled ({fulfilledCount})</button>
+          <button className={`btn btn-sm ${filter === 'cancelled' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('cancelled')}>Cancelled ({cancelledCount})</button>
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input
+            className="input"
+            style={{ paddingLeft: 34, width: 280, fontSize: '0.85rem' }}
+            placeholder="Search Patient, ID, or Blood Group..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* List */}
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 80, borderRadius: 12 }} />)}
+        </div>
+      ) : filteredList.length === 0 ? (
+        <div className="card" style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--text-muted)' }}>
+          📋 No historical records matching your filter.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {filteredList.map(req => (
+            <div key={req._id} className="card" style={{ padding: 'var(--space-4) var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ background: req.status === 'fulfilled' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: req.status === 'fulfilled' ? '#34d399' : '#f87171', padding: '2px 8px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 800 }}>
+                    {req.patientBloodGroup}
+                  </span>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#f8fafc' }}>Request #{req._id.slice(-6)}</span>
+                  <span className={`badge ${req.status === 'fulfilled' ? 'badge-green' : 'badge-red'}`}>
+                    {req.status.toUpperCase()}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                  Patient: {req.patientName || 'Anonymous'} · Units: {req.unitsNeeded || 1} · Date: {new Date(req.updatedAt || req.createdAt).toLocaleString('en-PK')}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── main dashboard ──────────────────────────────────────────────────────── */
 
 const TABS = [
   { id: 'overview',   label: 'Overview',   icon: DropletIcon },
   { id: 'requests',   label: 'Counter Check-In', icon: QrCode },
+  { id: 'history',    label: 'History Log', icon: Clock },
   { id: 'inventory',  label: 'Inventory',  icon: Plus },
   { id: 'profile',    label: 'Profile',    icon: Settings },
 ];
@@ -1156,13 +1274,15 @@ export default function HospitalDashboard() {
                   <h1 className="dashboard-page-title">
                     {tab === 'overview'  && 'Dashboard Overview'}
                     {tab === 'requests'  && 'Counter Check-In & Requests'}
+                    {tab === 'history'   && 'Fulfillment & Request History Log'}
                     {tab === 'inventory' && 'Blood Inventory'}
                     {tab === 'profile'   && 'Organisation Profile'}
                   </h1>
                 </div>
               </div>
               {tab === 'overview'  && <OverviewTab  profile={profile} />}
-              {tab === 'requests'  && <RequestsTab />}
+              {tab === 'requests'  && <RequestsTab  onNavigateToHistory={() => setTab('history')} />}
+              {tab === 'history'   && <HistoryTab   requests={hookData.requests || []} loading={hookData.loading} fetchRequests={hookData.fetchRequests} />}
               {tab === 'inventory' && <InventoryTab profile={profile} hooks={hookData} />}
               {tab === 'profile'   && <ProfileTab   profile={profile} hooks={hookData} />}
             </>
