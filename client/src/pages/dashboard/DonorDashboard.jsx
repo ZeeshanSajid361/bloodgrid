@@ -136,10 +136,10 @@ export default function DonorDashboard() {
 
         {/* Main Content Area */}
         <main className="dashboard-main">
-          {loading && <DashboardSkeleton />}
-          {error   && <ErrorBanner message={error} onRetry={refetch} />}
+          {loading && !donor && <DashboardSkeleton />}
+          {error && !donor   && <ErrorBanner message={error} onRetry={() => refetch(false)} />}
 
-          {!loading && !error && donor && (
+          {donor && (
             <>
               {activeTab === 'overview' && (
                 <OverviewTab donor={donor} refetch={refetch} />
