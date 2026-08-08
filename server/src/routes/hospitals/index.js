@@ -697,6 +697,31 @@ router.post(
       const bloodRequest = donationToken.requestId;
       const donor        = donationToken.donorId;
 
+      if (!bloodRequest) {
+        return res.status(404).json({ success: false, message: 'Associated blood request not found.' });
+      }
+
+      // Hospital Location & Identity Verification:
+      // Verify that the scanned QR token belongs to a blood request intended for THIS hospital/clinic
+      if (req.org && req.user.role !== 'admin') {
+        const counterHospitalId = String(req.org._id || req.org.id || '');
+        const requestHospitalId = String(bloodRequest.hospital || '');
+        const counterHospitalName = (req.org.name || '').trim().toLowerCase();
+        const requestHospitalName = (bloodRequest.hospitalName || '').trim().toLowerCase();
+
+        const matchById = counterHospitalId && requestHospitalId && counterHospitalId === requestHospitalId;
+        const matchByName = counterHospitalName && requestHospitalName && (
+          counterHospitalName.includes(requestHospitalName) || requestHospitalName.includes(counterHospitalName)
+        );
+
+        if (!matchById && !matchByName) {
+          return res.status(403).json({
+            success: false,
+            message: `Hospital Location Mismatch! This QR token is for a blood request at "${bloodRequest.hospitalName}" (${bloodRequest.hospitalCity || 'specified location'}). It cannot be verified or fulfilled at ${req.org.name}.`,
+          });
+        }
+      }
+
       donationToken.usedAt     = new Date();
       donationToken.verifiedBy = req.user.id;
       await donationToken.save();

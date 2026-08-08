@@ -138,6 +138,30 @@ router.get('/verify/:token', requireAuth, requireRole(['admin', 'hospital']), as
       });
     }
 
+    // Hospital Location & Identity Verification:
+    if (req.user && req.user.role === 'hospital') {
+      const { Organization } = require('../../models/Organization');
+      const hospitalOrg = await Organization.findOne({ owner: req.user.id }).lean();
+      if (hospitalOrg) {
+        const counterHospitalId = String(hospitalOrg._id || hospitalOrg.id || '');
+        const requestHospitalId = String(bloodRequest.hospital || '');
+        const counterHospitalName = (hospitalOrg.name || '').trim().toLowerCase();
+        const requestHospitalName = (bloodRequest.hospitalName || '').trim().toLowerCase();
+
+        const matchById = counterHospitalId && requestHospitalId && counterHospitalId === requestHospitalId;
+        const matchByName = counterHospitalName && requestHospitalName && (
+          counterHospitalName.includes(requestHospitalName) || requestHospitalName.includes(counterHospitalName)
+        );
+
+        if (!matchById && !matchByName) {
+          return res.status(403).json({
+            success: false,
+            message: `Hospital Location Mismatch! This QR token is for a blood request at "${bloodRequest.hospitalName}" (${bloodRequest.hospitalCity || 'specified location'}). It cannot be verified or fulfilled at ${hospitalOrg.name}.`,
+          });
+        }
+      }
+    }
+
     // ── Mark token used ───────────────────────────────────────────────────
     donationToken.usedAt     = new Date();
     donationToken.verifiedBy = req.user.id;

@@ -35,6 +35,7 @@ const { Organization }             = require('../../models/Organization');
 const { Inventory }                = require('../../models/Inventory');
 const { Request }                  = require('../../models/Request');
 const { User }                     = require('../../models/User');
+const { DonorProfile }             = require('../../models/DonorProfile');
 const { generateApiKey }           = require('../../utils/apiKey');
 const { deleteAsset }              = require('../../utils/cloudinaryUpload');
 const { notifyUser, notifyCompatibleDonors } = require('../../utils/webPush');
@@ -388,29 +389,42 @@ router.get('/users', async (req, res, next) => {
 
     const enrichedUsers = await Promise.all(
       users.map(async (u) => {
-        const reqs = await Request.find({ seeker: u._id }).select('status unitsNeeded').lean();
-        const totalRequests = reqs.length;
-        const pendingRequests = reqs.filter(r => r.status === 'pending_review' || r.status === 'approved').length;
-        const fulfilledReqs = reqs.filter(r => r.status === 'fulfilled');
-        const fulfilledRequests = fulfilledReqs.length;
-        const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
+        try {
+          const reqs = await Request.find({ seeker: u._id }).select('status unitsNeeded').lean();
+          const totalRequests = reqs.length;
+          const pendingRequests = reqs.filter(r => r.status === 'pending_review' || r.status === 'approved').length;
+          const fulfilledReqs = reqs.filter(r => r.status === 'fulfilled');
+          const fulfilledRequests = fulfilledReqs.length;
+          const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
 
-        let confirmedDonations = 0;
-        if (u.role === 'donor') {
-          const dp = await DonorProfile.findOne({ user: u._id }).select('confirmedDonations').lean();
-          confirmedDonations = dp?.confirmedDonations || 0;
+          let confirmedDonations = 0;
+          if (u.role === 'donor') {
+            const dp = await DonorProfile.findOne({ user: u._id }).select('confirmedDonations').lean();
+            confirmedDonations = dp?.confirmedDonations || 0;
+          }
+
+          return {
+            ...u,
+            stats: {
+              totalRequests,
+              pendingRequests,
+              fulfilledRequests,
+              fulfilledUnits,
+              confirmedDonations,
+            },
+          };
+        } catch (err) {
+          return {
+            ...u,
+            stats: {
+              totalRequests: 0,
+              pendingRequests: 0,
+              fulfilledRequests: 0,
+              fulfilledUnits: 0,
+              confirmedDonations: 0,
+            },
+          };
         }
-
-        return {
-          ...u,
-          stats: {
-            totalRequests,
-            pendingRequests,
-            fulfilledRequests,
-            fulfilledUnits,
-            confirmedDonations,
-          },
-        };
       })
     );
 

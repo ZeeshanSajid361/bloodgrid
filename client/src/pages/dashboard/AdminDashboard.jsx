@@ -108,12 +108,13 @@ function OverviewTab({ admin }) {
 
   return (
     <>
-      <div className="admin-stats">
+      <div className="admin-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
         {[
-          { label: 'Total Users',    value: users.total,        sub: `${byRole.donor||0} donors · ${byRole.seeker||0} seekers` },
-          { label: 'Blood Requests', value: requests.total,     sub: `${byStatus.pending_review||0} pending review` },
-          { label: 'Organisations',  value: organisations.total,sub: `${(organisations.byStatus||[]).find(s=>s._id==='approved')?.count||0} approved` },
-          { label: 'Total Units',    value: inventory.totalUnits, sub: 'across all hospitals' },
+          { label: 'Total Users',        value: users.total,          sub: `${byRole.donor||0} donors · ${byRole.seeker||0} seekers` },
+          { label: 'Blood Requests',     value: requests.total,       sub: `${byStatus.pending_review||0} pending review` },
+          { label: 'Fulfilled Requests', value: byStatus.fulfilled||0,sub: 'successfully completed' },
+          { label: 'Organisations',      value: organisations.total,  sub: `${(organisations.byStatus||[]).find(s=>s._id==='approved')?.count||0} approved` },
+          { label: 'Total Units',        value: inventory.totalUnits, sub: 'across all hospitals' },
         ].map(({ label, value, sub }) => (
           <div className="admin-stat-card" key={label}>
             <div className="admin-stat-label">{label}</div>
