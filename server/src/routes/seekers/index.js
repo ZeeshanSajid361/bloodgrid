@@ -116,10 +116,11 @@ router.get('/search', async (req, res, next) => {
       .populate('user', 'name city')
       .lean();
 
-    // Filter by eligibility and optional city match.
+    // Filter by eligibility, valid user, and optional city match.
     const eligible = profiles.filter((p) => {
+      if (!p.user) return false; // Filter out orphaned profiles
       const { eligible } = getEligibility(p.gender, p.lastDonationDate);
-      if (!eligible) return false;
+      if (!eligible) return false; // Filter out donors currently in cooldown
       if (city && p.user?.city?.toLowerCase() !== city.toLowerCase()) return false;
       return true;
     });

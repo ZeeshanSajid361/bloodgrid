@@ -315,6 +315,8 @@ function OverviewTab({ donor, refetch }) {
 // ═══════════════════════════════════════════════════════════════════════════
 function EligibilityCard({ eligibility }) {
   const { eligible, nextEligibleDate, daysUntilEligible } = eligibility;
+  const weeks = Math.floor(daysUntilEligible / 7);
+  const remDays = daysUntilEligible % 7;
 
   return (
     <div className={`eligibility-card ${eligible ? 'eligible' : 'ineligible'}`}>
@@ -326,21 +328,25 @@ function EligibilityCard({ eligibility }) {
         </div>
         <div>
           <div className="eligibility-title">
-            {eligible ? 'Eligible to Donate' : 'Cooldown Period'}
+            {eligible ? 'Eligible to Donate' : 'Cooldown Period Active'}
           </div>
           <div className="eligibility-detail">
             {eligible
               ? 'You are cleared to donate blood right now.'
-              : `Next eligible on ${formatDate(nextEligibleDate)}`}
+              : `Next eligible to donate on ${formatDate(nextEligibleDate)}`}
           </div>
         </div>
       </div>
 
       {!eligible && daysUntilEligible > 0 && (
-        <div className="eligibility-countdown">
-          <CountdownBox value={Math.floor(daysUntilEligible / 7)} label="Weeks" />
-          <CountdownBox value={daysUntilEligible % 7}            label="Days" />
-          <CountdownBox value={daysUntilEligible}                label="Total days" />
+        <div>
+          <div className="eligibility-countdown">
+            <CountdownBox value={`${weeks}w ${remDays}d`} label="Remaining Time" />
+            <CountdownBox value={daysUntilEligible}       label="Total Days Left" />
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '8px', lineHeight: '1.3' }}>
+            💡 Medical Cooldown Rule: WHO safety guidelines mandate a rest period (90 days for males / 120 days for females) after each blood donation to rebuild red blood cells.
+          </div>
         </div>
       )}
     </div>
