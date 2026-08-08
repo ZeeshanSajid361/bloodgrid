@@ -20,6 +20,7 @@ import { useAuth }                          from '../../context/AuthContext';
 import { useSeekerRequests, useDonorSearch } from '../../hooks/useSeekerData';
 import useNotifications                     from '../../hooks/useNotifications';
 import NotificationBell                     from '../../components/NotificationBell';
+import LocationPickerModal                  from '../../components/LocationPickerModal';
 import api                                  from '../../lib/api';
 import { getViewableDocUrl, isPdfUrl }      from '../../lib/docUrl';
 import '../../styles/dashboard.css';
@@ -466,6 +467,8 @@ function RequestTab({ onSubmitted }) {
   const [gpsStatus, setGpsStatus] = useState('');
   const fileRef                 = useRef();
 
+  const [showMapPicker, setShowMapPicker] = useState(false);
+
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
@@ -680,12 +683,10 @@ function RequestTab({ onSubmitted }) {
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={detectGps}
-                  disabled={detectingGps}
-                  style={{ color: '#60a5fa', padding: '2px 8px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  onClick={() => setShowMapPicker(true)}
+                  style={{ color: '#60a5fa', padding: '3px 10px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.3)' }}
                 >
-                  {detectingGps ? <Loader2 size={13} className="spin" /> : <MapPin size={13} />}
-                  {detectingGps ? 'Detecting GPS...' : '📍 Capture Exact GPS Pin'}
+                  <MapPin size={13} /> 📍 Pick Location on Map
                 </button>
               </label>
               <input
@@ -816,6 +817,30 @@ function RequestTab({ onSubmitted }) {
             </button>
           </div>
         </form>
+
+        {/* Location Picker Modal */}
+        <LocationPickerModal
+          isOpen={showMapPicker}
+          onClose={() => setShowMapPicker(false)}
+          initialLocation={{
+            city:      form.hospitalCity,
+            street:    form.hospitalAddress,
+            latitude:  form.latitude ? parseFloat(form.latitude) : null,
+            longitude: form.longitude ? parseFloat(form.longitude) : null,
+          }}
+          onSelectLocation={(loc) => {
+            setForm((p) => ({
+              ...p,
+              hospitalCity:    loc.city || p.hospitalCity,
+              hospitalAddress: loc.street || p.hospitalAddress,
+              latitude:        loc.latitude ? loc.latitude.toFixed(6) : p.latitude,
+              longitude:       loc.longitude ? loc.longitude.toFixed(6) : p.longitude,
+            }));
+            if (loc.latitude && loc.longitude) {
+              setGpsStatus(`📍 Map Pin Selected (${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)})`);
+            }
+          }}
+        />
       </div>
     </>
   );

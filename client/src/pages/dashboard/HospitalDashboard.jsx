@@ -20,6 +20,7 @@ import useHospitalData from '../../hooks/useHospitalData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import PhoneInput from '../../components/PhoneInput';
+import LocationPickerModal from '../../components/LocationPickerModal';
 import api from '../../lib/api';
 import jsQR from 'jsqr';
 import '../../styles/dashboard.css';
@@ -561,38 +562,16 @@ function ProfileTab({ profile, hooks }) {
     phone:     org.phone             || '',
     email:     org.email             || '',
   });
-  const [saving, setSaving]       = useState(false);
-  const [detecting, setDetecting] = useState(false);
-
-  function handleDetectGps() {
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser.');
-      return;
-    }
-    setDetecting(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-        setForm(p => ({ ...p, mapsUrl: url, latitude: lat, longitude: lng }));
-        setDetecting(false);
-        toast.success('Exact GPS Location Detected!');
-      },
-      (err) => {
-        setDetecting(false);
-        toast.error('Could not detect GPS location: ' + err.message);
-      }
-    );
-  }
+  const [saving, setSaving]             = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   async function handleSave() {
     setSaving(true);
     try {
       await saveProfile(form, true);
-      toast.success('Profile updated successfully.');
+      toast.success('Profile updated successfully.', { id: 'profile-toast' });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Update failed.');
+      toast.error(err.response?.data?.message || 'Update failed.', { id: 'profile-toast' });
     } finally {
       setSaving(false);
     }
@@ -634,18 +613,17 @@ function ProfileTab({ profile, hooks }) {
           </div>
         ))}
 
-        {/* Exact Location & Google Maps Pin */}
+        {/* Interactive Location & Google Maps Pin */}
         <div className="input-group" style={{ gridColumn: '1 / -1' }}>
           <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>🗺️ Exact Google Maps Pin / Location URL</span>
+            <span>🗺️ Exact Hospital Map Pin & Address</span>
             <button
               type="button"
               className="btn btn-ghost btn-sm"
-              onClick={handleDetectGps}
-              disabled={detecting}
-              style={{ fontSize: '0.75rem', color: '#60a5fa', padding: '2px 8px' }}
+              onClick={() => setShowMapPicker(true)}
+              style={{ fontSize: '0.78rem', color: '#60a5fa', padding: '3px 10px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.3)' }}
             >
-              {detecting ? <Loader2 size={13} className="spin" /> : '📍 Detect My GPS Location'}
+              📍 Pick or Detect Location on Map
             </button>
           </label>
           <div className="input-wrapper" style={{ display: 'flex', gap: '8px' }}>
@@ -655,7 +633,7 @@ function ProfileTab({ profile, hooks }) {
                 className="input has-icon"
                 value={form.mapsUrl}
                 onChange={e => setForm(p => ({ ...p, mapsUrl: e.target.value }))}
-                placeholder="Paste Google Maps URL or click 'Detect My GPS Location'"
+                placeholder="Paste Google Maps URL or click 'Pick or Detect Location on Map'"
               />
             </div>
             {form.mapsUrl && (
@@ -684,6 +662,31 @@ function ProfileTab({ profile, hooks }) {
           Status: <strong style={{ color: org.status === 'approved' ? 'var(--color-success)' : 'var(--color-warning)' }}>{org.status}</strong>
         </span>
       </div>
+
+      {/* Interactive Location Picker Modal */}
+      <LocationPickerModal
+        isOpen={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        initialLocation={{
+          city:      form.city,
+          street:    form.street,
+          province:  form.province,
+          mapsUrl:   form.mapsUrl,
+          latitude:  form.latitude,
+          longitude: form.longitude,
+        }}
+        onSelectLocation={(loc) => {
+          setForm(p => ({
+            ...p,
+            city:      loc.city      || p.city,
+            street:    loc.street    || p.street,
+            province:  loc.province  || p.province,
+            mapsUrl:   loc.mapsUrl   || p.mapsUrl,
+            latitude:  loc.latitude  || p.latitude,
+            longitude: loc.longitude || p.longitude,
+          }));
+        }}
+      />
     </div>
   );
 }
@@ -691,11 +694,11 @@ function ProfileTab({ profile, hooks }) {
 /* ── Registration form (shown before org exists) ─────────────────────────── */
 
 function RegisterOrgForm({ onSave }) {
-  const [form, setForm]         = useState({ type: 'web_hospital', name: '', city: '', street: '', province: '', mapsUrl: '', phone: '', email: '' });
-  const [files, setFiles]       = useState([]);
-  const [saving, setSaving]     = useState(false);
-  const [detecting, setDetecting] = useState(false);
-  const [error, setError]       = useState('');
+  const [form, setForm]                 = useState({ type: 'web_hospital', name: '', city: '', street: '', province: '', mapsUrl: '', phone: '', email: '' });
+  const [files, setFiles]               = useState([]);
+  const [saving, setSaving]             = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [error, setError]               = useState('');
 
   function handleDetectGps() {
     if (!navigator.geolocation) {
@@ -792,22 +795,21 @@ function RegisterOrgForm({ onSave }) {
             {/* Exact Location & Google Maps Pin */}
             <div className="input-group" style={{ gridColumn: '1 / -1' }}>
               <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>🗺️ Exact Google Maps Location Pin</span>
+                <span>🗺️ Exact Hospital Map Pin & Address</span>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  onClick={handleDetectGps}
-                  disabled={detecting}
-                  style={{ fontSize: '0.75rem', color: '#60a5fa', padding: '2px 8px' }}
+                  onClick={() => setShowMapPicker(true)}
+                  style={{ fontSize: '0.78rem', color: '#60a5fa', padding: '3px 10px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.3)' }}
                 >
-                  {detecting ? <Loader2 size={13} className="spin" /> : '📍 Detect My GPS Location'}
+                  📍 Pick or Detect Location on Map
                 </button>
               </label>
               <input
                 className="input"
                 value={form.mapsUrl}
                 onChange={e => setForm(p => ({ ...p, mapsUrl: e.target.value }))}
-                placeholder="Paste Google Maps link or click 'Detect My GPS Location'"
+                placeholder="Paste Google Maps URL or click 'Pick or Detect Location on Map'"
               />
             </div>
             
@@ -849,6 +851,29 @@ function RegisterOrgForm({ onSave }) {
             {saving ? <Loader2 size={16} className="spin" /> : 'Submit for Review'}
           </button>
         </form>
+
+        {/* Location Picker Modal */}
+        <LocationPickerModal
+          isOpen={showMapPicker}
+          onClose={() => setShowMapPicker(false)}
+          initialLocation={{
+            city:      form.city,
+            street:    form.street,
+            province:  form.province,
+            mapsUrl:   form.mapsUrl,
+          }}
+          onSelectLocation={(loc) => {
+            setForm(p => ({
+              ...p,
+              city:      loc.city      || p.city,
+              street:    loc.street    || p.street,
+              province:  loc.province  || p.province,
+              mapsUrl:   loc.mapsUrl   || p.mapsUrl,
+              latitude:  loc.latitude  || p.latitude,
+              longitude: loc.longitude || p.longitude,
+            }));
+          }}
+        />
       </div>
     </div>
   );
