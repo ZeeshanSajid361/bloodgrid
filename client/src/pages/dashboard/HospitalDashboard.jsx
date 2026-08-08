@@ -226,9 +226,6 @@ function InventoryTab({ profile, hooks }) {
   const [saving, setSaving]       = useState(false);
   const [codeRedTarget, setCodeRedTarget] = useState(null);
   const [broadcasting, setBroadcasting]   = useState(false);
-  const [toast, setToast]         = useState('');
-
-  function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
 
   function resetForm() { setForm({ bloodGroup: '', units: '', expiresAt: '', lowStockThreshold: 2 }); setEditId(null); }
 
@@ -466,17 +463,14 @@ function ProfileTab({ profile, hooks }) {
     email:    org.email    || '',
   });
   const [saving, setSaving] = useState(false);
-  const [toast,  setToast]  = useState('');
-
-  function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
 
   async function handleSave() {
     setSaving(true);
     try {
       await saveProfile(form, true);
-      showToast('Profile updated successfully.');
+      toast.success('Profile updated successfully.');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Update failed.');
+      toast.error(err.response?.data?.message || 'Update failed.');
     } finally {
       setSaving(false);
     }
@@ -485,11 +479,6 @@ function ProfileTab({ profile, hooks }) {
   return (
     <div className="hospital-profile-card">
       <h3>Organisation Profile</h3>
-      {toast && (
-        <div style={{ marginBottom: 'var(--space-5)', padding: 'var(--space-3) var(--space-4)', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 'var(--radius-md)', color: 'var(--color-success)', fontSize: '0.875rem' }}>
-          {toast}
-        </div>
-      )}
       <div className="profile-form-grid">
         {[
           { label: 'Organisation Name', key: 'name', icon: Building2 },
