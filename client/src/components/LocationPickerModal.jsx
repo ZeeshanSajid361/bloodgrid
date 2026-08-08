@@ -2,16 +2,12 @@
  * LocationPickerModal.jsx
  *
  * Compact 1-Screen Interactive Location Picker for BloodSync.
- * Fits 100% inside any viewport with NO SCROLLING required.
- *
- * Features:
- *   - Google Maps & OpenStreetMap embed with coordinates indicator
- *   - Area/Landmark search bar
- *   - Deduplicated single-toast GPS auto-detect
- *   - Auto-filled City, Province, Street/Landmark, and Google Maps URL
+ * Rendered using React Portal (createPortal) directly into document.body
+ * to guarantee true position: fixed viewport anchoring without parent transform interference.
  */
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -51,13 +47,16 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     }
   }, [initialLocation]);
 
-  // Lock background body scroll whenever the modal is open
+  // Completely freeze body and html scroll when modal is open
   useEffect(() => {
     if (!isOpen) return;
-    const prevOverflow = document.body.style.overflow;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
     };
   }, [isOpen]);
 
@@ -167,13 +166,13 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   // High reliability Google Maps iframe embed
   const mapIframeUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
 
-  return (
+  const modalContent = (
     <div
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999,
-        background: 'rgba(0, 0, 0, 0.82)', backdropFilter: 'blur(8px)',
+        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 999999,
+        background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px',
         touchAction: 'none'
       }}
@@ -181,8 +180,9 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       <div className="card" style={{
         width: '100%', maxWidth: '580px', maxHeight: 'calc(100vh - 24px)',
         display: 'flex', flexDirection: 'column',
-        background: '#0f172a', border: '1px solid rgba(255,255,255,0.12)',
-        borderRadius: '14px', padding: '16px 20px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
+        background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)',
+        borderRadius: '14px', padding: '16px 20px', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.8)',
+        position: 'relative'
       }}>
         {/* Top Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -319,4 +319,6 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
