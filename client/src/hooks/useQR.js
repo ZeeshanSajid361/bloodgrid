@@ -25,7 +25,12 @@ export default function useQR(requestId, requestStatus) {
   useEffect(() => {
     if (requestStatus !== 'approved' || !requestId) return;
     api.get(`/qr/${requestId}`)
-      .then(r => setQrData(r.data.data))
+      .then(r => {
+        if (r.data?.data) {
+          setQrData(r.data.data);
+          setError(null);
+        }
+      })
       .catch(() => {}); // silently ignore — no token yet
   }, [requestId, requestStatus]);
 
@@ -35,6 +40,7 @@ export default function useQR(requestId, requestStatus) {
     try {
       const { data } = await api.post('/qr/generate', { requestId });
       setQrData(data.data);
+      setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to generate QR code.');
     } finally {

@@ -46,6 +46,21 @@ export default function DonorDashboard() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const notifs = useNotifications();
 
+  // Auto-refetch donor profile & history every 6 seconds so status updates (like hospital fulfillment) update in real-time without needing page refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [refetch]);
+
+  // Refetch immediately when a new push notification arrives
+  useEffect(() => {
+    if (notifs.unreadCount > 0) {
+      refetch();
+    }
+  }, [notifs.unreadCount, refetch]);
+
   async function handleLogout() {
     await logout();
     navigate('/login', { replace: true });

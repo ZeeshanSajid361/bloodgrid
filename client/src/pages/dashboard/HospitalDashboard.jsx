@@ -7,7 +7,8 @@
  *   Profile    — update org contact details
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Building2, DropletIcon, AlertTriangle, Settings,
   LogOut, Plus, Pencil, Trash2, Siren, X, Loader2,
@@ -633,6 +634,118 @@ function RegisterOrgForm({ onSave }) {
   );
 }
 
+function LiveCameraScannerModal({ onScan, onClose }) {
+  const videoRef = useRef(null);
+  const [camError, setCamError] = useState(null);
+  const animFrameRef = useRef(null);
+
+  useEffect(() => {
+    let activeStream = null;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCamError('Camera API is not supported on this browser. Please use the "Upload QR Image" option.');
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then((stream) => {
+        activeStream = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.setAttribute('playsinline', 'true');
+          videoRef.current.play().catch(() => {});
+          scanFrame();
+        }
+      })
+      .catch((err) => {
+        console.error('Camera access error:', err);
+        setCamError('Unable to access webcam or camera permission was denied. Please allow camera access or upload a QR image file.');
+      });
+
+    function scanFrame() {
+      if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = videoRef.current.videoWidth;
+          canvas.height = videoRef.current.videoHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+          if (code && code.data) {
+            let extracted = code.data.trim();
+            if (extracted.includes('/qr/verify/')) {
+              extracted = extracted.split('/qr/verify/').pop().trim();
+            }
+            if (extracted) {
+              toast.success(`Live QR Scanned! Token: ${extracted}`);
+              onScan(extracted);
+              if (activeStream) {
+                activeStream.getTracks().forEach(t => t.stop());
+              }
+              return;
+            }
+          }
+        } catch (e) {
+          /* ignore frame scan errors */
+        }
+      }
+      animFrameRef.current = requestAnimationFrame(scanFrame);
+    }
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (activeStream) {
+        activeStream.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, [onScan]);
+
+  return createPortal(
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+      backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: 10000, padding: '16px'
+    }}>
+      <div style={{
+        background: '#151926', border: '1px solid #2d374e', borderRadius: '16px',
+        maxWidth: 500, width: '100%', padding: '20px', color: '#f8fafc',
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Camera size={20} color="#3b82f6" /> Live Webcam QR Scanner
+          </h3>
+          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ color: '#94a3b8' }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {camError ? (
+          <div style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px', color: '#f87171', fontSize: '0.9rem' }}>
+            ⚠️ {camError}
+          </div>
+        ) : (
+          <div style={{ position: 'relative', width: '100%', height: 280, background: '#000', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <video ref={videoRef} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{
+              position: 'absolute', width: 200, height: 200, border: '3px dashed #3b82f6',
+              borderRadius: '16px', boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
+              pointerEvents: 'none'
+            }} />
+          </div>
+        )}
+
+        <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+          <button className="btn btn-secondary btn-sm" onClick={onClose}>Close Scanner</button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 /* ── tabs ────────────────────────────────────────────────────────────────── */
 
 function RequestsTab() {
@@ -642,6 +755,7 @@ function RequestsTab() {
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState(null);
   const [verifyError, setVerifyError] = useState(null);
+  const [showCameraModal, setShowCameraModal] = useState(false);
 
   const fetchRequests = useCallback(() => {
     setLoading(true);
@@ -723,6 +837,17 @@ function RequestsTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      {showCameraModal && (
+        <LiveCameraScannerModal
+          onClose={() => setShowCameraModal(false)}
+          onScan={async (token) => {
+            setShowCameraModal(false);
+            setQrTokenInput(token);
+            await handleVerify(token);
+          }}
+        />
+      )}
+
       {/* Counter Verification Card */}
       <div className="card animate-fade-up" style={{ padding: 'var(--space-6)', background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9))', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
@@ -747,17 +872,15 @@ function RequestsTab() {
             onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
           />
 
-          {/* Option 1: Live Camera Scanner / Snapshot */}
-          <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+          {/* Option 1: Live Camera Scanner */}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowCameraModal(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0 }}
+          >
             <Camera size={16} /> Camera Scan
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: 'none' }}
-              onChange={(e) => handleImageQR(e.target.files?.[0])}
-            />
-          </label>
+          </button>
 
           {/* Option 2: Upload QR Image File */}
           <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0 }}>
@@ -788,7 +911,15 @@ function RequestsTab() {
 
         {verifyResult && (
           <div style={{ marginTop: 'var(--space-3)', padding: '12px 16px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '8px', color: '#34d399', fontSize: '0.9rem' }}>
-            ✅ <strong>Donation Verified!</strong> Donor <strong>{verifyResult.donorName}</strong> successfully donated <strong>{verifyResult.bloodGroup}</strong> blood. Request marked as fulfilled.
+            {(() => {
+              const rawName = verifyResult.donorName || verifyResult.donor?.name || 'Donor';
+              const cleanDonorName = rawName.toLowerCase().startsWith('donor') ? rawName : `Donor ${rawName}`;
+              return (
+                <>
+                  ✅ <strong>Donation Verified!</strong> <strong>{cleanDonorName}</strong> successfully donated <strong>{verifyResult.bloodGroup}</strong> blood. Request marked as fulfilled.
+                </>
+              );
+            })()}
           </div>
         )}
       </div>

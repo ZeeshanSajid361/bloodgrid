@@ -446,7 +446,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
 
       <div className="qr-panel-body">
         {/* ── Error ─────────────────────────────────────────────────────── */}
-        {error && (
+        {error && !qrData && (
           <div className="qr-error">{error}</div>
         )}
 
