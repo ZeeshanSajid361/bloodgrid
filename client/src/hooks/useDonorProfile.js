@@ -15,18 +15,18 @@ export function useDonorProfile() {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
 
-  const fetch = useCallback(async () => {
-    setLoading(true);
+  const fetch = useCallback(async (isSilent = false) => {
+    if (!isSilent && !donor) setLoading(true);
     setError('');
     try {
       const { data } = await api.get('/donors/me');
       setDonor(data.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load donor profile.');
+      if (!isSilent) setError(err.response?.data?.message || 'Failed to load donor profile.');
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
-  }, []);
+  }, [donor]);
 
   useEffect(() => { fetch(); }, [fetch]);
 

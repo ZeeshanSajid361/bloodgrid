@@ -634,6 +634,23 @@ function RegisterOrgForm({ onSave }) {
   );
 }
 
+function extractCleanToken(raw) {
+  if (!raw) return '';
+  let str = String(raw).trim();
+  if (str.includes('/qr/verify/')) {
+    str = str.split('/qr/verify/').pop().trim();
+  }
+  if (str.includes('/')) {
+    const parts = str.split('/').filter(Boolean);
+    str = parts[parts.length - 1].split('?')[0].trim();
+  }
+  const match = str.match(/([a-zA-Z0-9]{8})/);
+  if (match && match[1]) {
+    return match[1].toUpperCase();
+  }
+  return str.slice(-8).toUpperCase();
+}
+
 function LiveCameraScannerModal({ onScan, onClose }) {
   const videoRef = useRef(null);
   const [camError, setCamError] = useState(null);
@@ -674,10 +691,7 @@ function LiveCameraScannerModal({ onScan, onClose }) {
           const code = jsQR(imageData.data, imageData.width, imageData.height);
 
           if (code && code.data) {
-            let extracted = code.data.trim();
-            if (extracted.includes('/qr/verify/')) {
-              extracted = extracted.split('/qr/verify/').pop().trim();
-            }
+            const extracted = extractCleanToken(code.data);
             if (extracted) {
               toast.success(`Live QR Scanned! Token: ${extracted}`);
               onScan(extracted);
@@ -770,8 +784,8 @@ function RequestsTab() {
   }, [fetchRequests]);
 
   async function handleVerify(tokenToVerify) {
-    const t = (tokenToVerify || qrTokenInput).trim();
-    if (!t) return setVerifyError('Please enter a valid QR token code.');
+    const t = extractCleanToken(tokenToVerify || qrTokenInput);
+    if (!t) return setVerifyError('Please enter a valid 8-character QR token code.');
 
     setVerifying(true);
     setVerifyError(null);
@@ -810,10 +824,7 @@ function RequestsTab() {
           const code = jsQR(imageData.data, imageData.width, imageData.height);
 
           if (code && code.data) {
-            let extracted = code.data.trim();
-            if (extracted.includes('/qr/verify/')) {
-              extracted = extracted.split('/qr/verify/').pop().trim();
-            }
+            const extracted = extractCleanToken(code.data);
             toast.success(`QR Code Scanned! Token: ${extracted}`);
             setQrTokenInput(extracted);
             await handleVerify(extracted);
