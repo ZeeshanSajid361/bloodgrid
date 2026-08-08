@@ -168,8 +168,21 @@ export default function NotificationBell({
                 <span className="badge badge-green">Moved to History</span>
               </div>
 
-              <div style={{ padding: 'var(--space-3)', background: 'rgba(52, 152, 219, 0.08)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(52, 152, 219, 0.2)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                ℹ️ This notification has been marked as seen and cleared from your active dropdown menu.
+              {/* Direct Google Maps Navigation Link */}
+              <div style={{ marginTop: '8px' }}>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedNotif.message || 'Hospital')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary btn-sm"
+                  style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#60a5fa', background: 'rgba(37, 99, 235, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+                >
+                  🗺️ Open Hospital Location on Google Maps
+                </a>
+              </div>
+
+              <div style={{ marginTop: '12px', padding: 'var(--space-3)', background: 'rgba(52, 152, 219, 0.08)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(52, 152, 219, 0.2)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                ℹ️ All blood donations take place safely at the specified certified hospital facility.
               </div>
             </div>
 
