@@ -51,6 +51,16 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     }
   }, [initialLocation]);
 
+  // Lock background body scroll whenever the modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Single-toast deduplicated GPS Auto-Detection
@@ -158,11 +168,16 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
   const mapIframeUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(8px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px'
-    }}>
+    <div
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999,
+        background: 'rgba(0, 0, 0, 0.82)', backdropFilter: 'blur(8px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px',
+        touchAction: 'none'
+      }}
+    >
       <div className="card" style={{
         width: '100%', maxWidth: '580px', maxHeight: 'calc(100vh - 24px)',
         display: 'flex', flexDirection: 'column',
