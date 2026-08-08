@@ -35,12 +35,12 @@ const donationTokenSchema = new mongoose.Schema(
       required: true,
     },
 
-    /* Cryptographically random token value (URL-safe) */
+    /* Cryptographically random short token value (8-char uppercase hex, e.g. A7B9X2Y4) */
     token: {
       type:     String,
       required: true,
       unique:   true,
-      default:  () => crypto.randomBytes(64).toString('hex'),
+      default:  () => crypto.randomBytes(4).toString('hex').toUpperCase(),
     },
 
     /* Token expires 24 h after creation */

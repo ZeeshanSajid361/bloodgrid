@@ -104,7 +104,7 @@ router.post('/generate', requireAuth, requireRole(['donor']), async (req, res) =
 router.get('/verify/:token', requireAuth, requireRole(['admin', 'hospital']), async (req, res) => {
   try {
     const donationToken = await DonationToken
-      .findOne({ token: req.params.token })
+      .findOne({ token: new RegExp('^' + req.params.token.trim() + '$', 'i') })
       .populate('requestId donorId');
 
     if (!donationToken) {

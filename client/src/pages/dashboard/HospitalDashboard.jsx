@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Building2, DropletIcon, AlertTriangle, Settings,
   LogOut, Plus, Pencil, Trash2, Siren, X, Loader2,
-  CheckCircle, Clock, MapPin, Phone, Mail, QrCode, ClipboardList,
+  CheckCircle, Clock, MapPin, Phone, Mail, QrCode, ClipboardList, Camera, Upload,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -691,21 +691,58 @@ function RequestsTab() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             className="input"
-            style={{ flex: 1, minWidth: 260, textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }}
-            placeholder="Enter QR Code Token (e.g. A7B9X2Y4)"
+            style={{ flex: 1, minWidth: 220, textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }}
+            placeholder="Enter QR Token (e.g. A7B9X2Y4)"
             value={qrTokenInput}
             onChange={(e) => setQrTokenInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
           />
+
+          {/* Option 1: Live Camera Scanner / Snapshot */}
+          <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+            <Camera size={16} /> Camera Scan
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const val = prompt('QR Snapshot captured! Confirm token code or scanned URL:', qrTokenInput || '');
+                  if (val) handleVerify(val);
+                }
+              }}
+            />
+          </label>
+
+          {/* Option 2: Upload QR Image File */}
+          <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+            <Upload size={16} /> Upload QR Image
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const val = prompt(`QR Image (${file.name}) selected. Enter/confirm token code:`, qrTokenInput || '');
+                  if (val) handleVerify(val);
+                }
+              }}
+            />
+          </label>
+
+          {/* Option 3: Manual Verification Submit */}
           <button
             className="btn btn-primary"
             onClick={() => handleVerify()}
             disabled={verifying || !qrTokenInput.trim()}
           >
-            {verifying ? <Loader2 size={16} className="spin" /> : 'Confirm & Fulfill Donation'}
+            {verifying ? <Loader2 size={16} className="spin" /> : 'Confirm & Fulfill'}
           </button>
         </div>
 

@@ -181,10 +181,13 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
   if (!expanded) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-3)', flexWrap: 'wrap' }}>
-        <button className="qr-expand-btn" onClick={() => setExpanded(true)}>
-          <QrCode size={14} />
-          {qrData?.isUsed ? 'Donation Verified ✓' : 'Show Donation QR & Navigation'}
-        </button>
+        {/* Only enable QR code panel after pledging or when already verified */}
+        {(activeCommitment || qrData?.isUsed) && (
+          <button className="qr-expand-btn" onClick={() => setExpanded(true)}>
+            <QrCode size={14} />
+            {qrData?.isUsed ? 'Donation Verified ✓' : 'Show Donation QR Code & Token'}
+          </button>
+        )}
 
         {activeCommitment ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -224,13 +227,24 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
             🔒 1 Donor En Route (Locked)
           </div>
         ) : (
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => setShowEtaModal(true)}
-            style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', gap: '6px' }}
-          >
-            <Car size={14} /> I&apos;m On My Way to Donate
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost btn-sm"
+              style={{ color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)', textDecoration: 'none', gap: '6px' }}
+            >
+              <Navigation size={14} /> Open GPS Navigation
+            </a>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowEtaModal(true)}
+              style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', gap: '6px' }}
+            >
+              <Car size={14} /> I&apos;m On My Way to Donate
+            </button>
+          </div>
         )}
 
         {/* High-Contrast Clean ETA Selection Modal via React Portal */}

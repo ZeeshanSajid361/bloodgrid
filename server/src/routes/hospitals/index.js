@@ -679,7 +679,9 @@ router.post(
       const { DonorProfile }  = require('../../models/DonorProfile');
       const { notifyUser }    = require('../../utils/webPush');
 
-      const donationToken = await DonationToken.findOne({ token: cleanToken }).populate('requestId donorId');
+      const donationToken = await DonationToken.findOne({
+        token: new RegExp('^' + cleanToken + '$', 'i')
+      }).populate('requestId donorId');
       if (!donationToken) {
         return res.status(404).json({ success: false, message: 'Invalid or expired QR token.' });
       }
