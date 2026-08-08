@@ -7,17 +7,19 @@
  *   Profile    — update org contact details
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Building2, DropletIcon, AlertTriangle, Settings,
   LogOut, Plus, Pencil, Trash2, Siren, X, Loader2,
-  CheckCircle, Clock, MapPin, Phone, Mail,
+  CheckCircle, Clock, MapPin, Phone, Mail, QrCode, ClipboardList,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import useHospitalData from '../../hooks/useHospitalData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import PhoneInput from '../../components/PhoneInput';
+import api from '../../lib/api';
 import '../../styles/dashboard.css';
 import '../../styles/hospital.css';
 
@@ -630,10 +632,151 @@ function RegisterOrgForm({ onSave }) {
   );
 }
 
+/* ── tabs ────────────────────────────────────────────────────────────────── */
+
+function RequestsTab() {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [qrTokenInput, setQrTokenInput] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState(null);
+  const [verifyError, setVerifyError] = useState(null);
+
+  const fetchRequests = useCallback(() => {
+    setLoading(true);
+    api.get('/hospitals/requests')
+      .then(res => setRequests(res.data?.data || []))
+      .catch(err => console.error('Failed to load hospital requests:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  async function handleVerify(tokenToVerify) {
+    const t = (tokenToVerify || qrTokenInput).trim();
+    if (!t) return setVerifyError('Please enter a valid QR token code.');
+
+    setVerifying(true);
+    setVerifyError(null);
+    setVerifyResult(null);
+
+    try {
+      const res = await api.post('/hospitals/verify-qr', { token: t });
+      toast.success(res.data.message || 'Donation verified successfully!');
+      setVerifyResult(res.data.data);
+      setQrTokenInput('');
+      fetchRequests();
+    } catch (err) {
+      setVerifyError(err.response?.data?.message || err.message || 'QR Verification failed.');
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      {/* Counter Verification Card */}
+      <div className="card animate-fade-up" style={{ padding: 'var(--space-6)', background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9))', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+          <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '10px', borderRadius: '12px', color: '#60a5fa' }}>
+            <QrCode size={24} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Hospital Counter QR Check-In</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+              Scan donor QR code or type their token code to confirm donation and mark blood request as fulfilled.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)', flexWrap: 'wrap' }}>
+          <input
+            className="input"
+            style={{ flex: 1, minWidth: 260, textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 700 }}
+            placeholder="Enter QR Code Token (e.g. A7B9X2Y4)"
+            value={qrTokenInput}
+            onChange={(e) => setQrTokenInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
+          />
+          <button
+            className="btn btn-primary"
+            onClick={() => handleVerify()}
+            disabled={verifying || !qrTokenInput.trim()}
+          >
+            {verifying ? <Loader2 size={16} className="spin" /> : 'Confirm & Fulfill Donation'}
+          </button>
+        </div>
+
+        {verifyError && (
+          <div style={{ marginTop: 'var(--space-3)', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#f87171', fontSize: '0.85rem' }}>
+            ⚠️ {verifyError}
+          </div>
+        )}
+
+        {verifyResult && (
+          <div style={{ marginTop: 'var(--space-3)', padding: '12px 16px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '8px', color: '#34d399', fontSize: '0.9rem' }}>
+            ✅ <strong>Donation Verified!</strong> Donor <strong>{verifyResult.donorName}</strong> successfully donated <strong>{verifyResult.bloodGroup}</strong> blood. Request marked as fulfilled.
+          </div>
+        )}
+      </div>
+
+      {/* Incoming Requests List */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Incoming Requests at Your Hospital ({requests.length})</h3>
+          <button className="btn btn-ghost btn-sm" onClick={fetchRequests}>Refresh</button>
+        </div>
+
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[1, 2].map(i => <div key={i} className="skeleton" style={{ height: 90, borderRadius: 12 }} />)}
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="card" style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--text-muted)' }}>
+            🏥 No blood requests currently logged for your hospital.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            {requests.map(req => {
+              const enRouteCount = (req.commitments || []).filter(c => c.status === 'en_route').length;
+              return (
+                <div key={req._id} className="card" style={{ padding: 'var(--space-4) var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ background: 'var(--red-900)', color: 'var(--red-200)', padding: '2px 8px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 800 }}>
+                        {req.patientBloodGroup}
+                      </span>
+                      <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Request #{req._id.slice(-6)}</span>
+                      <span className={`badge ${req.status === 'fulfilled' ? 'badge-green' : req.status === 'approved' ? 'badge-blue' : ''}`}>
+                        {req.status.toUpperCase()}
+                      </span>
+                      {enRouteCount > 0 && req.status === 'approved' && (
+                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 10, fontSize: '0.75rem', fontWeight: 700 }}>
+                          🚗 {enRouteCount} Donor(s) En-Route
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      Patient: {req.patientName || 'Anonymous'} · Units Needed: {req.unitsNeeded} · Urgency: {req.urgency.toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── main dashboard ──────────────────────────────────────────────────────── */
 
 const TABS = [
   { id: 'overview',   label: 'Overview',   icon: DropletIcon },
+  { id: 'requests',   label: 'Counter Check-In', icon: QrCode },
   { id: 'inventory',  label: 'Inventory',  icon: Plus },
   { id: 'profile',    label: 'Profile',    icon: Settings },
 ];
@@ -750,12 +893,14 @@ export default function HospitalDashboard() {
                 <div>
                   <h1 className="dashboard-page-title">
                     {tab === 'overview'  && 'Dashboard Overview'}
+                    {tab === 'requests'  && 'Counter Check-In & Requests'}
                     {tab === 'inventory' && 'Blood Inventory'}
                     {tab === 'profile'   && 'Organisation Profile'}
                   </h1>
                 </div>
               </div>
               {tab === 'overview'  && <OverviewTab  profile={profile} />}
+              {tab === 'requests'  && <RequestsTab />}
               {tab === 'inventory' && <InventoryTab profile={profile} hooks={hookData} />}
               {tab === 'profile'   && <ProfileTab   profile={profile} hooks={hookData} />}
             </>

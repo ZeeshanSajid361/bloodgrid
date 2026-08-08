@@ -622,4 +622,127 @@ router.delete(
   }
 );
 
+/**
+ * GET /api/hospitals/requests
+ * Hospital staff views incoming blood requests submitted at their hospital.
+ */
+router.get(
+  '/requests',
+  requireAuth,
+  requireRole(['hospital']),
+  requireOrg,
+  async (req, res, next) => {
+    try {
+      const { Request } = require('../../models/Request');
+      const requests = await Request.find({
+        $or: [
+          { hospital: req.org._id },
+          { hospitalName: { $regex: req.org.name, $options: 'i' } }
+        ]
+      })
+        .populate('seeker', 'name email phone')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      res.json({ success: true, data: requests });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/hospitals/verify-qr
+ * Hospital staff scans donor QR code or inputs token manually at counter.
+ */
+router.post(
+  '/verify-qr',
+  requireAuth,
+  requireRole(['hospital', 'admin']),
+  requireOrg,
+  async (req, res, next) => {
+    try {
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({ success: false, message: 'Token or QR string is required.' });
+      }
+
+      // Extract raw token if full URL was scanned
+      let cleanToken = String(token).trim();
+      if (cleanToken.includes('/qr/verify/')) {
+        cleanToken = cleanToken.split('/qr/verify/').pop().trim();
+      }
+
+      const { DonationToken } = require('../../models/DonationToken');
+      const { Request }       = require('../../models/Request');
+      const { User }          = require('../../models/User');
+      const { DonorProfile }  = require('../../models/DonorProfile');
+      const { notifyUser }    = require('../../utils/webPush');
+
+      const donationToken = await DonationToken.findOne({ token: cleanToken }).populate('requestId donorId');
+      if (!donationToken) {
+        return res.status(404).json({ success: false, message: 'Invalid or expired QR token.' });
+      }
+
+      if (donationToken.usedAt) {
+        return res.status(409).json({ success: false, message: 'This QR token was already verified previously.' });
+      }
+
+      if (new Date() > donationToken.expiresAt) {
+        return res.status(410).json({ success: false, message: 'This QR token has expired. Ask donor to regenerate.' });
+      }
+
+      const bloodRequest = donationToken.requestId;
+      const donor        = donationToken.donorId;
+
+      donationToken.usedAt     = new Date();
+      donationToken.verifiedBy = req.user.id;
+      await donationToken.save();
+
+      bloodRequest.status      = 'fulfilled';
+      bloodRequest.fulfilledAt = new Date();
+      bloodRequest.fulfilledBy = donor._id;
+      await bloodRequest.save();
+
+      await User.findByIdAndUpdate(donor._id, { $inc: { donationCount: 1 } });
+      await DonorProfile.findOneAndUpdate(
+        { user: donor._id },
+        { $inc: { confirmedDonations: 1 }, lastDonationDate: new Date() },
+        { upsert: true }
+      );
+
+      // Notify Seeker
+      await notifyUser({
+        userId:  bloodRequest.seeker,
+        type:    'request_fulfilled',
+        title:   '🩸 Donation Confirmed & Request Fulfilled!',
+        message: `Donor ${donor.name} has arrived at ${bloodRequest.hospitalName} and completed donation of ${bloodRequest.patientBloodGroup} blood.`,
+        link:    '/dashboard/seeker',
+      }).catch(() => {});
+
+      // Notify Donor
+      await notifyUser({
+        userId:  donor._id,
+        type:    'donation_confirmed',
+        title:   '✅ Donation Confirmed — Thank You!',
+        message: `Your donation for ${bloodRequest.patientBloodGroup} blood at ${bloodRequest.hospitalName} has been verified by the counter staff.`,
+        link:    '/dashboard/donor',
+      }).catch(() => {});
+
+      res.json({
+        success: true,
+        message: `Donation verified! Request for ${bloodRequest.patientBloodGroup} blood marked as fulfilled.`,
+        data: {
+          requestId:  bloodRequest._id,
+          donorName:  donor.name,
+          bloodGroup: bloodRequest.patientBloodGroup,
+          hospital:   bloodRequest.hospitalName,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

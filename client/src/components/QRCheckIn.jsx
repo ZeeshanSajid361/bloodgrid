@@ -437,7 +437,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
               Show this QR code to the hospital staff when you arrive at <strong>{hospitalName}</strong>. They will scan it to confirm your donation.
             </div>
 
-            <div className="qr-code-wrap">
+            <div className="qr-code-wrap" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <QRCodeCanvas
                 id={`qr-canvas-${requestId}`}
                 value={qrData.verifyUrl}
@@ -447,6 +447,26 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
                 fgColor="#1a1a2e"
                 bgColor="#ffffff"
               />
+              {qrData.token && (
+                <div style={{
+                  marginTop: '12px',
+                  background: 'rgba(59, 130, 246, 0.12)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '2px'
+                }}>
+                  <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>
+                    8-Digit Verification Code Token
+                  </span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#60a5fa', letterSpacing: '4px', fontFamily: 'monospace' }}>
+                    {qrData.token}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="qr-expiry">

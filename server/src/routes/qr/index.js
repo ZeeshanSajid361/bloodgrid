@@ -150,24 +150,32 @@ router.get('/verify/:token', requireAuth, requireRole(['admin', 'hospital']), as
     await bloodRequest.save();
 
     // ── Update donor donation count (for recognition level) ───────────────
+    const { DonorProfile } = require('../../models/DonorProfile');
     await User.findByIdAndUpdate(donor._id, { $inc: { donationCount: 1 } });
+    await DonorProfile.findOneAndUpdate(
+      { user: donor._id },
+      { $inc: { confirmedDonations: 1 }, lastDonationDate: new Date() },
+      { upsert: true }
+    );
 
     // ── Notify the seeker ─────────────────────────────────────────────────
     try {
-      await notifyUser(bloodRequest.seeker, {
+      await notifyUser({
+        userId:  bloodRequest.seeker,
         type:    'request_fulfilled',
         title:   '🩸 Your blood request has been fulfilled!',
-        message: `A donor has arrived at ${bloodRequest.hospitalName} and your request for ${bloodRequest.bloodGroup} blood is now marked as fulfilled.`,
+        message: `A donor has arrived at ${bloodRequest.hospitalName} and your request for ${bloodRequest.patientBloodGroup} blood is now marked as fulfilled.`,
         link:    '/dashboard/seeker',
       });
     } catch (_) { /* non-fatal */ }
 
     // ── Notify the donor ──────────────────────────────────────────────────
     try {
-      await notifyUser(donor._id, {
+      await notifyUser({
+        userId:  donor._id,
         type:    'donation_confirmed',
         title:   '✅ Donation confirmed — thank you!',
-        message: `Your donation for ${bloodRequest.bloodGroup} blood at ${bloodRequest.hospitalName} has been verified. Your recognition level has been updated!`,
+        message: `Your donation for ${bloodRequest.patientBloodGroup} blood at ${bloodRequest.hospitalName} has been verified. Your recognition level has been updated!`,
         link:    '/dashboard/donor',
       });
     } catch (_) { /* non-fatal */ }
