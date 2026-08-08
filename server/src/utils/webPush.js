@@ -139,4 +139,26 @@ async function notifyCompatibleDonors(request, org) {
   await Promise.allSettled(sends);
 }
 
-module.exports = { notifyUser, notifyCompatibleDonors };
+/**
+ * Send a notification to all Admin users.
+ */
+async function notifyAdmins({ type = 'admin_alert', title, message, link = '/dashboard/admin' }) {
+  try {
+    const { User } = require('../models/User');
+    const admins = await User.find({ role: 'admin', isBlocked: false }, { _id: 1 }).lean();
+    const sends = admins.map(a =>
+      notifyUser({
+        userId:  a._id,
+        type,
+        title,
+        message,
+        link,
+      }).catch(() => {})
+    );
+    await Promise.allSettled(sends);
+  } catch (err) {
+    console.error('[notifyAdmins] Error notifying admins:', err.message);
+  }
+}
+
+module.exports = { notifyUser, notifyCompatibleDonors, notifyAdmins };

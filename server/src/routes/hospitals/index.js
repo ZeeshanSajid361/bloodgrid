@@ -219,6 +219,15 @@ router.post(
         verificationDocumentPublicIds,
       });
 
+      // Notify Admins about new hospital pending verification
+      const { notifyAdmins } = require('../../utils/webPush');
+      notifyAdmins({
+        type: 'admin_alert',
+        title: `🏥 New Hospital Registration: ${name}`,
+        message: `${name} (${city}) registered and requires admin document verification.`,
+        link: '/dashboard/admin',
+      }).catch(() => {});
+
       res.status(201).json({
         success: true,
         message: 'Organisation registered. Pending admin approval.',

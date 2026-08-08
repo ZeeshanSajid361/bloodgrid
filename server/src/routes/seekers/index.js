@@ -194,6 +194,15 @@ router.post(
         documentPublicIds: uploadResults.map(res => res.public_id),
       });
 
+      // Notify Admins about new request pending review
+      const { notifyAdmins } = require('../../utils/webPush');
+      notifyAdmins({
+        type: 'admin_alert',
+        title: `🩸 New Request: ${request.patientBloodGroup} (${request.unitsNeeded || 1} units)`,
+        message: `Seeker submitted a request for ${request.patientBloodGroup} blood at ${request.hospitalName} requiring admin review.`,
+        link: '/dashboard/admin',
+      }).catch(() => {});
+
       return res.status(201).json({
         success: true,
         message:
