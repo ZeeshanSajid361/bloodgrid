@@ -404,93 +404,114 @@ function AvailabilityCard({ isAvailable, eligible, onToggle }) {
 function LevelCard({ level, confirmedDonations, allLevels }) {
   if (!level) {
     return (
-      <div className="level-card" style={{ marginBottom: 'var(--space-5)' }}>
-        <div className="level-header">
-          <div
-            className="level-icon-wrap"
-            style={{ background: 'rgba(255,255,255,0.06)' }}
-          >
-            🌱
-          </div>
+      <div className="card animate-fade-up" style={{
+        marginBottom: 'var(--space-5)',
+        padding: 'var(--space-6)',
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))',
+        border: '1px solid rgba(245, 158, 11, 0.3)',
+        borderRadius: '16px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+          <div style={{
+            fontSize: '2rem',
+            background: 'rgba(245, 158, 11, 0.15)',
+            width: 56,
+            height: 56,
+            borderRadius: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid rgba(245, 158, 11, 0.3)'
+          }}>🌱</div>
           <div>
-            <div className="level-name" style={{ color: 'var(--text-secondary)' }}>
-              No level yet
-            </div>
-            <div className="level-desc">
-              Complete your first confirmed donation to earn your first recognition badge.
-            </div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f59e0b' }}>Donor Recognition System</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Complete your first confirmed donation to earn your first recognition badge.</div>
           </div>
         </div>
-
-        <div className="level-progress-wrap">
-          <div className="level-progress-label">
-            <span>Progress to Spark</span>
-            <span>0 / 1 donation</span>
-          </div>
-          <div className="level-progress-track">
-            <div className="level-progress-fill" style={{ width: '0%', background: '#f59e0b' }} />
-          </div>
-        </div>
-
         <LevelTiers allLevels={allLevels} />
       </div>
     );
   }
 
-  const progress = level.progress * 100;
+  const progress = Math.min(100, Math.max(0, (level.progress || 0) * 100));
 
   return (
-    <div className="level-card" style={{ marginBottom: 'var(--space-5)' }}>
-      <div className="level-header">
-        <div
-          className="level-icon-wrap"
-          style={{ background: `${level.color}22` }}
-        >
-          {level.icon}
-        </div>
-        <div>
-          <div className="level-name" style={{ color: level.color }}>
-            {level.label}
+    <div className="card animate-fade-up" style={{
+      marginBottom: 'var(--space-5)',
+      padding: 'var(--space-6)',
+      background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95))',
+      border: `1px solid ${level.color}55`,
+      boxShadow: `0 10px 25px -5px ${level.color}15`,
+      borderRadius: '18px'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            fontSize: '2.2rem',
+            background: `${level.color}25`,
+            width: 64,
+            height: 64,
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: `1px solid ${level.color}55`,
+            boxShadow: `0 0 15px ${level.color}30`
+          }}>
+            {level.icon}
           </div>
-          <div className="level-desc">{level.description}</div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 900, color: level.color, letterSpacing: '0.5px' }}>
+                {level.label} Level
+              </span>
+              <span style={{
+                background: `${level.color}20`,
+                color: level.color,
+                border: `1px solid ${level.color}40`,
+                padding: '2px 10px',
+                borderRadius: '12px',
+                fontSize: '0.75rem',
+                fontWeight: 800
+              }}>
+                ACTIVE BADGE
+              </span>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              {level.description}
+            </div>
+          </div>
         </div>
-        <span
-          className="badge"
-          style={{
-            marginLeft: 'auto',
-            background: `${level.color}22`,
-            color: level.color,
-          }}
-        >
-          {confirmedDonations} donation{confirmedDonations !== 1 ? 's' : ''}
-        </span>
+
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '12px',
+          padding: '8px 16px',
+          textAlign: 'right'
+        }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+            Lifetime Verified
+          </div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f8fafc' }}>
+            {confirmedDonations} Confirmed Donation{confirmedDonations !== 1 ? 's' : ''}
+          </div>
+        </div>
       </div>
 
       {level.nextLevel && (
-        <div className="level-progress-wrap">
-          <div className="level-progress-label">
-            <span>
+        <div style={{ marginBottom: '20px', background: 'rgba(15, 23, 42, 0.6)', padding: '14px 18px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px' }}>
+            <span style={{ color: 'var(--text-primary)' }}>
               Progress to {level.nextLevel.icon} {level.nextLevel.label}
             </span>
-            <span>
+            <span style={{ color: level.color }}>
               {level.donationsToNextLevel} more donation{level.donationsToNextLevel !== 1 ? 's' : ''} needed
             </span>
           </div>
-          <div className="level-progress-track">
-            <div
-              className="level-progress-fill"
-              style={{ width: `${progress}%`, background: level.color }}
-            />
+          <div style={{ height: '8px', width: '100%', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${progress}%`, background: `linear-gradient(90deg, ${level.color}, #38bdf8)`, borderRadius: '4px', transition: 'width 0.5s ease' }} />
           </div>
-        </div>
-      )}
-
-      {!level.nextLevel && (
-        <div
-          className="badge badge-blue"
-          style={{ display: 'inline-flex', marginBottom: 'var(--space-4)' }}
-        >
-          ⚓ Maximum level achieved
         </div>
       )}
 
@@ -499,17 +520,33 @@ function LevelCard({ level, confirmedDonations, allLevels }) {
   );
 }
 
-function LevelTiers({ allLevels }) {
+function LevelTiers({ allLevels = [] }) {
   return (
-    <div className="level-tiers">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginTop: '12px' }}>
       {allLevels.map((l) => (
         <div
           key={l.id}
-          className={`level-tier-pip ${l.unlocked ? 'unlocked' : 'locked'}`}
+          style={{
+            background: l.unlocked ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+            border: `1px solid ${l.unlocked ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255, 255, 255, 0.08)'}`,
+            borderRadius: '12px',
+            padding: '10px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            opacity: l.unlocked ? 1 : 0.6
+          }}
           title={`${l.label} — ${l.minDonations}+ donations`}
         >
-          <span>{l.icon}</span>
-          <span>{l.label}</span>
+          <span style={{ fontSize: '1.4rem' }}>{l.icon}</span>
+          <div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: l.unlocked ? '#34d399' : 'var(--text-muted)' }}>
+              {l.label}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              {l.unlocked ? 'Unlocked ✓' : `${l.minDonations}+ Don.`}
+            </div>
+          </div>
         </div>
       ))}
     </div>
@@ -852,6 +889,29 @@ function HistoryTabInner({ donor }) {
         </div>
       </div>
 
+      {donor.eligibility && donor.eligibility.eligible === false && (
+        <div className="animate-fade-up" style={{
+          marginBottom: 'var(--space-5)',
+          padding: '16px 20px',
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.15))',
+          border: '1px solid rgba(239, 68, 68, 0.4)',
+          borderRadius: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{ fontSize: '2rem' }}>⏳</div>
+          <div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#f87171' }}>
+              Post-Donation Cooldown Active
+            </div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Your body is recovering after your recent donation. Next eligible donation date: <strong>{formatDate(donor.eligibility.nextEligibleDate)}</strong>. Travel pledges are paused to protect your health & safety.
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {[1,2].map(i => <div key={i} className="skeleton" style={{ height: 100, borderRadius: 16 }} />)}
@@ -935,6 +995,7 @@ function HistoryTabInner({ donor }) {
                   bloodGroup={req.patientBloodGroup}
                   commitments={req.commitments}
                   urgency={req.urgency}
+                  donorEligibility={donor.eligibility}
                   onCommitmentChange={refetch}
                 />
               </div>

@@ -15,7 +15,8 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Loader2, QrCode, RefreshCw, Download, CheckCircle2, X, Clock, Navigation, Car } from 'lucide-react';
+import { Loader2, QrCode, RefreshCw, Download, CheckCircle2, X, Clock, Navigation, Car, Copy, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 import useQR from '../hooks/useQR';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
@@ -74,7 +75,7 @@ function getEtaConfig(urgency = 'routine') {
   };
 }
 
-export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, bloodGroup, commitments = [], urgency = 'routine', onCommitmentChange }) {
+export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, bloodGroup, commitments = [], urgency = 'routine', donorEligibility, onCommitmentChange }) {
   const { user } = useAuth();
   const { qrData, generating, cancelling, error, generate, cancel } = useQR(requestId, requestStatus);
   const [expanded, setExpanded] = useState(false);
@@ -83,8 +84,15 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
   const [customUnit, setCustomUnit] = useState('mins'); // 'mins' or 'hours'
   const [committing, setCommitting] = useState(false);
   const [cancellingPledge, setCancellingPledge] = useState(false);
-  const [commitError, setCommitError] = useState(null);
-  const [localCommitment, setLocalCommitment] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyToken = () => {
+    if (!qrData?.token) return;
+    navigator.clipboard.writeText(qrData.token);
+    setCopied(true);
+    toast.success('Token code copied to clipboard!');
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const etaConfig = getEtaConfig(urgency);
 
@@ -225,6 +233,29 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
             fontWeight: 600
           }}>
             🔒 1 Donor En Route (Locked)
+          </div>
+        ) : donorEligibility && donorEligibility.eligible === false ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost btn-sm"
+              style={{ color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)', textDecoration: 'none', gap: '6px' }}
+            >
+              <Navigation size={14} /> Open GPS Navigation
+            </a>
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '20px',
+              padding: '6px 14px',
+              fontSize: '0.8rem',
+              color: '#f87171',
+              fontWeight: 600
+            }}>
+              ⏳ On Cooldown (No Pledges Allowed)
+            </div>
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -466,19 +497,39 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
                   marginTop: '12px',
                   background: 'rgba(59, 130, 246, 0.12)',
                   border: '1px solid rgba(59, 130, 246, 0.4)',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   padding: '8px 16px',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '2px'
+                  gap: '12px'
                 }}>
-                  <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>
-                    8-Digit Verification Code Token
-                  </span>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#60a5fa', letterSpacing: '4px', fontFamily: 'monospace' }}>
-                    {qrData.token}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+                      8-DIGIT VERIFICATION CODE TOKEN
+                    </span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#60a5fa', letterSpacing: '4px', fontFamily: 'monospace' }}>
+                      {qrData.token}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleCopyToken}
+                    className="btn btn-ghost btn-sm"
+                    style={{
+                      background: copied ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                      color: copied ? '#34d399' : '#60a5fa',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.78rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title="Copy token to clipboard"
+                  >
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copied ? 'Copied' : 'Copy Token'}
+                  </button>
                 </div>
               )}
             </div>

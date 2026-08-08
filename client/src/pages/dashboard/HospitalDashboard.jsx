@@ -20,6 +20,7 @@ import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import PhoneInput from '../../components/PhoneInput';
 import api from '../../lib/api';
+import jsQR from 'jsqr';
 import '../../styles/dashboard.css';
 import '../../styles/hospital.css';
 
@@ -675,6 +676,51 @@ function RequestsTab() {
     }
   }
 
+  const handleImageQR = (file) => {
+    if (!file) return;
+    setVerifying(true);
+    setVerifyError(null);
+    setVerifyResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          const imageData = ctx.getImageData(0, 0, img.width, img.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+          if (code && code.data) {
+            let extracted = code.data.trim();
+            if (extracted.includes('/qr/verify/')) {
+              extracted = extracted.split('/qr/verify/').pop().trim();
+            }
+            toast.success(`QR Code Scanned! Token: ${extracted}`);
+            setQrTokenInput(extracted);
+            await handleVerify(extracted);
+          } else {
+            setVerifyError('Could not decode QR code from image. Please ensure the QR image is clear or enter the 8-character token manually.');
+            setVerifying(false);
+          }
+        } catch (err) {
+          setVerifyError('Failed to process image QR code.');
+          setVerifying(false);
+        }
+      };
+      img.onerror = () => {
+        setVerifyError('Failed to load image file.');
+        setVerifying(false);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       {/* Counter Verification Card */}
@@ -686,7 +732,7 @@ function RequestsTab() {
           <div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Hospital Counter QR Check-In</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-              Scan donor QR code or type their token code to confirm donation and mark blood request as fulfilled.
+              Scan donor QR code image or enter their 8-character token code to verify donation and mark request as fulfilled.
             </p>
           </div>
         </div>
@@ -709,13 +755,7 @@ function RequestsTab() {
               accept="image/*"
               capture="environment"
               style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const val = prompt('QR Snapshot captured! Confirm token code or scanned URL:', qrTokenInput || '');
-                  if (val) handleVerify(val);
-                }
-              }}
+              onChange={(e) => handleImageQR(e.target.files?.[0])}
             />
           </label>
 
@@ -726,13 +766,7 @@ function RequestsTab() {
               type="file"
               accept="image/*"
               style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const val = prompt(`QR Image (${file.name}) selected. Enter/confirm token code:`, qrTokenInput || '');
-                  if (val) handleVerify(val);
-                }
-              }}
+              onChange={(e) => handleImageQR(e.target.files?.[0])}
             />
           </label>
 
@@ -870,7 +904,15 @@ export default function HospitalDashboard() {
             <div className="sidebar-avatar" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-900))' }}>{initials}</div>
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{profile?.org?.name || user?.name}</div>
-              <div className="sidebar-user-role">Hospital Portal</div>
+              <div className="sidebar-user-role">
+                {profile?.org?.type === 'web_hospital'
+                  ? 'Web Portal Hospital'
+                  : profile?.org?.type === 'api_hospital'
+                  ? 'Enterprise Medical Network'
+                  : profile?.org?.type === 'partner'
+                  ? 'Partner Organisation'
+                  : 'Hospital Portal'}
+              </div>
             </div>
           </div>
         </div>
