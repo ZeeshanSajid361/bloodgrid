@@ -36,21 +36,24 @@ export function useSeekerRequests() {
 
 // ── useDonorSearch ──────────────────────────────────────────────────────────
 export function useDonorSearch() {
-  const [results,  setResults]  = useState(null);     // null = not yet searched
-  const [summary,  setSummary]  = useState(null);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
+  const [results,       setResults]       = useState(null);     // null = not yet searched
+  const [hospitalStock, setHospitalStock] = useState([]);
+  const [summary,       setSummary]       = useState(null);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState('');
 
   const search = useCallback(async (patientBloodGroup, city) => {
     setLoading(true);
     setError('');
     setResults(null);
+    setHospitalStock([]);
     try {
       const params = new URLSearchParams({ patientBloodGroup });
       if (city) params.set('city', city);
 
       const { data } = await api.get(`/seekers/search?${params.toString()}`);
-      setResults(data.data.results);
+      setResults(data.data.results || []);
+      setHospitalStock(data.data.hospitalStock || []);
       setSummary(data.data.compatibilitySummary);
     } catch (err) {
       setError(err.response?.data?.message || 'Search failed. Please try again.');
@@ -59,5 +62,5 @@ export function useDonorSearch() {
     }
   }, []);
 
-  return { results, summary, loading, error, search };
+  return { results, hospitalStock, summary, loading, error, search };
 }

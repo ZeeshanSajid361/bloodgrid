@@ -72,6 +72,41 @@ router.get('/search', async (req, res, next) => {
     const limitNum = Math.min(parseInt(limit, 10), 50);
     const skip     = (pageNum - 1) * limitNum;
 
+    const { Inventory } = require('../../models/Inventory');
+
+    // Query hospital stock for compatible blood groups
+    const rawInventory = await Inventory.find({
+      bloodGroup: { $in: compatibleGroups },
+      units: { $gt: 0 },
+    })
+      .populate('hospital', 'name address phone email status')
+      .lean();
+
+    const hospitalStock = rawInventory
+      .filter((inv) => {
+        if (!inv.hospital || inv.hospital.status !== 'approved') return false;
+        if (city && inv.hospital.address?.city?.toLowerCase() !== city.toLowerCase()) return false;
+        return true;
+      })
+      .map((inv) => {
+        const addr = inv.hospital?.address;
+        const addressText = addr
+          ? [addr.street, addr.city, addr.province].filter(Boolean).join(', ')
+          : 'City Location';
+        return {
+          inventoryId: inv._id,
+          hospitalName: inv.hospital?.name || 'Hospital Blood Bank',
+          address: addressText,
+          city: addr?.city || 'Unknown',
+          phone: inv.hospital?.phone || 'Available at Counter',
+          email: inv.hospital?.email || '',
+          bloodGroup: inv.bloodGroup,
+          units: inv.units,
+          expiresAt: inv.expiresAt,
+          codeRed: !!inv.codeRed?.active,
+        };
+      });
+
     // Pull all availability-matching profiles; eligibility is time-based so
     // it must be computed in JS after the DB query.
     const profiles = await DonorProfile.find({
@@ -105,6 +140,7 @@ router.get('/search', async (req, res, next) => {
       data: {
         patientBloodGroup,
         compatibilitySummary: summary,
+        hospitalStock,
         results,
         total,
         page:  pageNum,

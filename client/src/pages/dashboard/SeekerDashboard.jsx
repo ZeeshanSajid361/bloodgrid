@@ -12,7 +12,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search, FilePlus, ClipboardList, LogOut,
   MapPin, AlertCircle, CheckCircle2, FileText,
-  Loader2, X, ExternalLink, Edit3,
+  Loader2, X, ExternalLink, Edit3, Phone, Building2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -221,7 +221,7 @@ export default function SeekerDashboard() {
 function SearchTab() {
   const [bloodGroup, setBloodGroup] = useState('');
   const [city,       setCity]       = useState('');
-  const { results, summary, loading, error, search } = useDonorSearch();
+  const { results, hospitalStock = [], summary, loading, error, search } = useDonorSearch();
 
   function handleSearch(e) {
     e.preventDefault();
@@ -233,9 +233,9 @@ function SearchTab() {
     <>
       <div className="dashboard-topbar animate-fade-up">
         <div>
-          <h1 className="dashboard-page-title">Find Compatible Donors</h1>
+          <h1 className="dashboard-page-title">Find Compatible Blood & Donors</h1>
           <p className="dashboard-page-subtitle">
-            Search by patient blood group — we match all compatible donor types.
+            Search by patient blood group — discover ready hospital stock and compatible volunteer donors.
           </p>
         </div>
       </div>
@@ -307,16 +307,61 @@ function SearchTab() {
         </div>
       )}
 
-      {/* Results */}
+      {/* Hospital Ready Stock Results */}
+      {results !== null && (
+        <div className="animate-fade-up" style={{ marginTop: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: 'var(--space-3)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Building2 size={18} color="#38bdf8" /> Hospitals & Blood Banks with Ready Stock ({hospitalStock.length})
+          </h3>
+
+          {hospitalStock.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              {hospitalStock.map((h) => (
+                <div key={h.inventoryId} className="card" style={{ padding: 'var(--space-4) var(--space-5)', borderLeft: '4px solid #10b981', background: 'rgba(15, 23, 42, 0.85)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#f8fafc' }}>{h.hospitalName}</h4>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <MapPin size={13} color="#60a5fa" /> {h.address}
+                      </div>
+                    </div>
+                    <span style={{ background: 'var(--red-900)', color: 'var(--red-200)', padding: '2px 8px', borderRadius: 12, fontSize: '0.8rem', fontWeight: 900 }}>
+                      {h.bloodGroup}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#34d399' }}>🩸 {h.units} Units Available</span>
+                      {h.phone && (
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Phone size={12} /> {h.phone}
+                        </div>
+                      )}
+                    </div>
+                    {h.codeRed && (
+                      <span className="badge badge-red" style={{ fontSize: '0.72rem' }}>🚨 CODE RED ALERT</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card" style={{ padding: 'var(--space-4) var(--space-5)', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+              🏥 No hospitals in this city currently have pre-collected freezer stock for {bloodGroup}. Request volunteer donors below!
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Volunteer Donors Results */}
       {results !== null && (
         <div className="animate-fade-up">
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
-            {results.length === 0
-              ? 'No available donors found for these criteria.'
-              : `${results.length} available donor${results.length !== 1 ? 's' : ''} found`}
-          </p>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: 'var(--space-3)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            🩸 Volunteer Donors Available ({results.length})
+          </h3>
 
-          {results.length > 0 && (
+          {results.length > 0 ? (
             <div className="results-grid">
               {results.map((d) => (
                 <div key={d.donorId} className="donor-result-card">
@@ -333,9 +378,7 @@ function SearchTab() {
                 </div>
               ))}
             </div>
-          )}
-
-          {results.length === 0 && (
+          ) : (
             <div className="empty-state">
               <div className="empty-state-icon">🔍</div>
               <h3>No donors found</h3>
