@@ -762,7 +762,7 @@ function LiveCameraScannerModal({ onScan, onClose }) {
 
 /* ── tabs ────────────────────────────────────────────────────────────────── */
 
-function RequestsTab() {
+function RequestsTab({ onNavigateToHistory }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [qrTokenInput, setQrTokenInput] = useState('');
@@ -1034,9 +1034,23 @@ function RequestsTab() {
 }
 
 /* ── HISTORY TAB ───────────────────────────────────────────────────────── */
-function HistoryTab({ requests = [], loading, fetchRequests }) {
+function HistoryTab() {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const fetchRequests = useCallback(() => {
+    setLoading(true);
+    api.get('/hospitals/requests')
+      .then(res => setRequests(res.data?.data || []))
+      .catch(err => console.error('Failed to load history requests:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
   const historyRequests = requests.filter(r => ['fulfilled', 'cancelled', 'rejected'].includes(r.status));
   const fulfilledCount = historyRequests.filter(r => r.status === 'fulfilled').length;
@@ -1282,7 +1296,7 @@ export default function HospitalDashboard() {
               </div>
               {tab === 'overview'  && <OverviewTab  profile={profile} />}
               {tab === 'requests'  && <RequestsTab  onNavigateToHistory={() => setTab('history')} />}
-              {tab === 'history'   && <HistoryTab   requests={hookData.requests || []} loading={hookData.loading} fetchRequests={hookData.fetchRequests} />}
+              {tab === 'history'   && <HistoryTab />}
               {tab === 'inventory' && <InventoryTab profile={profile} hooks={hookData} />}
               {tab === 'profile'   && <ProfileTab   profile={profile} hooks={hookData} />}
             </>
