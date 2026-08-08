@@ -1,18 +1,20 @@
 /**
  * LocationPickerModal.jsx
  *
- * Interactive Location Picker component for BloodSync.
- * Allows hospital staff and blood seekers to set location via:
- *   1. Interactive OpenStreetMap Pin Picker
- *   2. GPS Browser Auto-Detect with deduplicated single-toast feedback
- *   3. Manual Address Entry / Google Maps URL Paste
+ * Compact 1-Screen Interactive Location Picker for BloodSync.
+ * Fits 100% inside any viewport with NO SCROLLING required.
+ *
+ * Features:
+ *   - Google Maps & OpenStreetMap embed with coordinates indicator
+ *   - Area/Landmark search bar
+ *   - Deduplicated single-toast GPS auto-detect
+ *   - Auto-filled City, Province, Street/Landmark, and Google Maps URL
  */
 
 import { useState, useEffect } from 'react';
 import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// Major Pakistani cities fallback coordinates
 const CITY_COORDS = {
   islamabad:  { lat: 33.6844, lng: 73.0479 },
   rawalpindi: { lat: 33.5989, lng: 73.0441 },
@@ -25,15 +27,15 @@ const CITY_COORDS = {
 };
 
 export default function LocationPickerModal({ isOpen, onClose, onSelectLocation, initialLocation = {} }) {
-  const [lat, setLat]               = useState(initialLocation.latitude || 33.6844);
-  const [lng, setLng]               = useState(initialLocation.longitude || 73.0479);
+  const [lat, setLat]                 = useState(initialLocation.latitude || 33.6844);
+  const [lng, setLng]                 = useState(initialLocation.longitude || 73.0479);
   const [addressText, setAddressText] = useState(initialLocation.street || '');
-  const [city, setCity]             = useState(initialLocation.city || 'Islamabad');
-  const [province, setProvince]     = useState(initialLocation.province || 'Punjab');
-  const [mapsUrl, setMapsUrl]       = useState(initialLocation.mapsUrl || '');
+  const [city, setCity]               = useState(initialLocation.city || 'Islamabad');
+  const [province, setProvince]       = useState(initialLocation.province || 'Punjab');
+  const [mapsUrl, setMapsUrl]         = useState(initialLocation.mapsUrl || '');
 
-  const [loading, setLoading]       = useState(false);
-  const [geocoding, setGeocoding]   = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [geocoding, setGeocoding]     = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       return;
     }
     setLoading(true);
-    toast.loading('Detecting exact GPS position…', { id: 'gps-toast' });
+    toast.loading('Detecting GPS position…', { id: 'gps-toast' });
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -71,13 +73,13 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         
         await reverseGeocode(latitude, longitude);
         setLoading(false);
-        toast.success('Exact GPS location detected!', { id: 'gps-toast' });
+        toast.success('GPS position detected!', { id: 'gps-toast' });
       },
       (err) => {
         setLoading(false);
         const errMsg = err.code === 1 
-          ? 'GPS permission denied. Please pick a location on the map below.' 
-          : 'Could not acquire GPS coordinates.';
+          ? 'GPS access denied. Use search or select location manually.' 
+          : 'Could not fetch GPS location.';
         toast.error(errMsg, { id: 'gps-toast' });
       },
       { timeout: 10000, maximumAge: 60000 }
@@ -109,7 +111,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     }
   }
 
-  // Forward geocode search query (e.g. "PIMS Hospital Islamabad")
+  // Forward geocode search query (e.g. "CMH Rawalpindi")
   async function handleSearchLocation(e) {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -127,9 +129,9 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         setLng(longitude);
         setMapsUrl(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`);
         await reverseGeocode(latitude, longitude);
-        toast.success(`Found location: ${first.display_name.split(',')[0]}`, { id: 'gps-toast' });
+        toast.success(`Found: ${first.display_name.split(',')[0]}`, { id: 'gps-toast' });
       } else {
-        toast.error('Location not found. Try searching with city name.', { id: 'gps-toast' });
+        toast.error('Location not found. Try adding city name.', { id: 'gps-toast' });
       }
     } catch (err) {
       toast.error('Search failed. Please try again.', { id: 'gps-toast' });
@@ -152,43 +154,43 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
     onClose();
   }
 
-  // Interactive OpenStreetMap Embed bounding box calculation
-  const bboxDelta = 0.01;
-  const bbox = `${lng - bboxDelta},${lat - bboxDelta},${lng + bboxDelta},${lat + bboxDelta}`;
-  const mapIframeUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+  // High reliability Google Maps iframe embed
+  const mapIframeUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(6px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+      background: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(8px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px'
     }}>
       <div className="card" style={{
-        width: '100%', maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto',
-        background: '#0f172a', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px'
+        width: '100%', maxWidth: '580px', maxHeight: 'calc(100vh - 24px)',
+        display: 'flex', flexDirection: 'column',
+        background: '#0f172a', border: '1px solid rgba(255,255,255,0.12)',
+        borderRadius: '14px', padding: '16px 20px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
       }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
-            <MapPin size={22} color="#ef4444" /> Select Exact Location
+        {/* Top Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', color: '#f8fafc' }}>
+            <MapPin size={18} color="#ef4444" /> Select Exact Location
           </h3>
-          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '4px' }}>
-            <X size={20} />
+          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '2px 6px' }}>
+            <X size={18} />
           </button>
         </div>
 
-        {/* Search bar & GPS button */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-          <form onSubmit={handleSearchLocation} style={{ flex: 1, display: 'flex', gap: '6px', minWidth: '220px' }}>
+        {/* Search Bar & GPS Auto-Detect */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+          <form onSubmit={handleSearchLocation} style={{ flex: 1, display: 'flex', gap: '4px' }}>
             <input
               className="input"
-              style={{ fontSize: '0.85rem' }}
-              placeholder="Search area, hospital name or landmark…"
+              style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+              placeholder="Search area, hospital or landmark…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
-            <button type="submit" className="btn btn-secondary btn-sm" disabled={geocoding}>
-              {geocoding ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
+            <button type="submit" className="btn btn-secondary btn-sm" disabled={geocoding} style={{ padding: '6px 12px' }}>
+              {geocoding ? <Loader2 size={13} className="spin" /> : <Search size={13} />}
             </button>
           </form>
 
@@ -197,75 +199,77 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
             className="btn btn-primary btn-sm"
             onClick={handleDetectGps}
             disabled={loading}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', background: '#2563eb' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', background: '#2563eb', padding: '6px 10px', whiteSpace: 'nowrap' }}
           >
-            {loading ? <Loader2 size={14} className="spin" /> : <Navigation size={14} />}
-            <span>Detect GPS Location</span>
+            {loading ? <Loader2 size={13} className="spin" /> : <Navigation size={13} />}
+            <span>GPS Auto-Detect</span>
           </button>
         </div>
 
-        {/* Interactive Map Canvas Embed */}
+        {/* Interactive Map Embed (Compact 160px height) */}
         <div style={{
-          position: 'relative', width: '100%', height: '240px', borderRadius: '12px',
-          overflow: 'hidden', border: '1px solid var(--border-color)', marginBottom: '16px', background: '#1e293b'
+          position: 'relative', width: '100%', height: '160px', minHeight: '140px', borderRadius: '10px',
+          overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '10px', background: '#1e293b'
         }}>
           <iframe
-            title="Interactive Location Map"
+            title="Location Map Embed"
             width="100%"
             height="100%"
-            frameBorder="0"
-            scrolling="no"
+            style={{ border: 0 }}
+            loading="lazy"
+            allowFullScreen
             src={mapIframeUrl}
           />
           <div style={{
-            position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(15, 23, 42, 0.9)',
-            padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600
+            position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15, 23, 42, 0.9)',
+            padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', color: '#38bdf8', fontWeight: 600,
+            border: '1px solid rgba(56, 189, 248, 0.3)'
           }}>
             📍 Coordinates: {lat.toFixed(4)}, {lng.toFixed(4)}
           </div>
         </div>
 
-        {/* Auto-filled Location Details */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-          <div className="input-group">
-            <label className="input-label" style={{ fontSize: '0.78rem' }}>City *</label>
+        {/* Compact 2-Column Inputs Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+          <div className="input-group" style={{ margin: 0 }}>
+            <label className="input-label" style={{ fontSize: '0.72rem', marginBottom: '2px' }}>City *</label>
             <input
               className="input"
-              style={{ fontSize: '0.85rem' }}
+              style={{ fontSize: '0.8rem', padding: '5px 8px' }}
               value={city}
               onChange={e => setCity(e.target.value)}
               placeholder="e.g. Islamabad"
             />
           </div>
 
-          <div className="input-group">
-            <label className="input-label" style={{ fontSize: '0.78rem' }}>Province</label>
+          <div className="input-group" style={{ margin: 0 }}>
+            <label className="input-label" style={{ fontSize: '0.72rem', marginBottom: '2px' }}>Province</label>
             <input
               className="input"
-              style={{ fontSize: '0.85rem' }}
+              style={{ fontSize: '0.8rem', padding: '5px 8px' }}
               value={province}
               onChange={e => setProvince(e.target.value)}
               placeholder="e.g. Punjab"
             />
           </div>
 
-          <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="input-label" style={{ fontSize: '0.78rem' }}>Street Address / Landmark</label>
+          <div className="input-group" style={{ gridColumn: '1 / -1', margin: 0 }}>
+            <label className="input-label" style={{ fontSize: '0.72rem', marginBottom: '2px' }}>Street Address / Landmark</label>
             <input
               className="input"
-              style={{ fontSize: '0.85rem' }}
+              style={{ fontSize: '0.8rem', padding: '5px 8px' }}
               value={addressText}
               onChange={e => setAddressText(e.target.value)}
-              placeholder="e.g. Sector I-12, Near Main Gate, CMH Hospital"
+              placeholder="e.g. Block 3, Near Commercial Market, CMH"
             />
           </div>
 
-          <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="input-label" style={{ fontSize: '0.78rem' }}>Google Maps Link (Auto-Generated)</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="input-group" style={{ gridColumn: '1 / -1', margin: 0 }}>
+            <label className="input-label" style={{ fontSize: '0.72rem', marginBottom: '2px' }}>Google Maps Link (Auto-Generated)</label>
+            <div style={{ display: 'flex', gap: '6px' }}>
               <input
                 className="input"
-                style={{ fontSize: '0.85rem', flex: 1 }}
+                style={{ fontSize: '0.78rem', padding: '5px 8px', flex: 1 }}
                 value={mapsUrl || `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
                 onChange={e => setMapsUrl(e.target.value)}
                 placeholder="Google Maps URL"
@@ -275,26 +279,26 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-ghost btn-sm"
-                style={{ textDecoration: 'none', color: '#60a5fa', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                style={{ textDecoration: 'none', color: '#60a5fa', fontSize: '0.75rem', padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
               >
-                <ExternalLink size={14} /> Preview
+                <ExternalLink size={12} /> Link
               </a>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'auto', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose} style={{ fontSize: '0.8rem', padding: '5px 12px' }}>
             Cancel
           </button>
           <button
             type="button"
             className="btn btn-primary btn-sm"
             onClick={handleConfirm}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#10b981', color: '#fff' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#10b981', color: '#fff', fontSize: '0.8rem', padding: '5px 14px' }}
           >
-            <CheckCircle2 size={16} /> Confirm & Fill Location
+            <CheckCircle2 size={14} /> Confirm Location
           </button>
         </div>
       </div>
