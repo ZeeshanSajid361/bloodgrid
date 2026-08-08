@@ -401,13 +401,22 @@ router.get('/users', async (req, res, next) => {
           const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
 
           let confirmedDonations = 0;
+          let bloodGroup = '—';
+
           if (u.role === 'donor') {
-            const dp = await DonorProfile.findOne({ user: u._id }).select('confirmedDonations').lean();
+            const dp = await DonorProfile.findOne({ user: u._id }).select('confirmedDonations bloodGroup').lean();
             confirmedDonations = dp?.confirmedDonations || 0;
+            bloodGroup = dp?.bloodGroup || '—';
+          } else if (u.role === 'seeker') {
+            const latestReq = await Request.findOne({ seeker: u._id }).sort({ createdAt: -1 }).select('patientBloodGroup').lean();
+            if (latestReq?.patientBloodGroup) {
+              bloodGroup = latestReq.patientBloodGroup;
+            }
           }
 
           return {
             ...u,
+            bloodGroup,
             stats: {
               totalRequests,
               pendingRequests,

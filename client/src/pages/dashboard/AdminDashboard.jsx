@@ -497,15 +497,34 @@ function UsersTab({ admin }) {
       {loading
         ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
         : <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City</th><th>Fulfillment & Requests Track</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Blood Group</th><th>City</th><th>Fulfillment & Requests Track</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               {users.users.length === 0
-                ? <tr><td colSpan={7} className="admin-empty">No users found.</td></tr>
+                ? <tr><td colSpan={8} className="admin-empty">No users found.</td></tr>
                 : users.users.map(u => (
                     <tr key={u._id}>
                       <td style={{ fontWeight: 600 }}>{u.name}</td>
                       <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>
                       <td><span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{u.role}</span></td>
+                      <td>
+                        {u.bloodGroup && u.bloodGroup !== '—' ? (
+                          <span style={{
+                            background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                            color: '#ffffff',
+                            padding: '3px 9px',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}>
+                            🩸 {u.bloodGroup}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>—</span>
+                        )}
+                      </td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{u.city || '—'}</td>
                       <td style={{ fontSize: '0.82rem' }}>
                         {(() => {
