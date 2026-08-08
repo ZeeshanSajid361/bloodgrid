@@ -408,9 +408,12 @@ router.get('/users', async (req, res, next) => {
             confirmedDonations = dp?.confirmedDonations || 0;
             bloodGroup = dp?.bloodGroup || '—';
           } else if (u.role === 'seeker') {
-            const latestReq = await Request.findOne({ seeker: u._id }).sort({ createdAt: -1 }).select('patientBloodGroup').lean();
-            if (latestReq?.patientBloodGroup) {
-              bloodGroup = latestReq.patientBloodGroup;
+            const seekerReqs = await Request.find({ seeker: u._id }).select('patientBloodGroup').lean();
+            const uniqueGroups = [...new Set(seekerReqs.map(r => r.patientBloodGroup).filter(Boolean))];
+            if (uniqueGroups.length === 1) {
+              bloodGroup = uniqueGroups[0];
+            } else if (uniqueGroups.length > 1) {
+              bloodGroup = uniqueGroups.join(', ');
             }
           }
 
