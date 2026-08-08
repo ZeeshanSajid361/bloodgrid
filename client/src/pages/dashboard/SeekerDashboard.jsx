@@ -773,6 +773,7 @@ function HistoryTab({ requests, loading, error, total, refetch, onNewRequest }) 
         const fulfilledReqs = requests.filter(r => r.status === 'fulfilled');
         const fulfilledCount = fulfilledReqs.length;
         const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
+        const cancelledCount = requests.filter(r => r.status === 'cancelled').length;
 
         return (
           <div className="card animate-fade-up" style={{
@@ -782,24 +783,28 @@ function HistoryTab({ requests, loading, error, total, refetch, onNewRequest }) 
             border: '1px solid rgba(59, 130, 246, 0.3)',
             borderRadius: '16px',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
             gap: '16px'
           }}>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Total Submitted</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text-primary)' }}>{totalSubmitted} Requests</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>{totalSubmitted} Requests</div>
             </div>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Active / Pending</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#f59e0b' }}>{pendingCount + approvedCount} Active</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f59e0b' }}>{pendingCount + approvedCount} Active</div>
             </div>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Fulfilled Requests</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#10b981' }}>{fulfilledCount} Completed</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#10b981' }}>{fulfilledCount} Completed</div>
             </div>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Blood Units Received</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#60a5fa' }}>🩸 {fulfilledUnits} Units</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#60a5fa' }}>🩸 {fulfilledUnits} Units</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Cancelled Reqs</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f87171' }}>{cancelledCount} Cancelled</div>
             </div>
           </div>
         );
@@ -833,13 +838,23 @@ function HistoryTab({ requests, loading, error, total, refetch, onNewRequest }) 
         </div>
       )}
 
-      {!loading && requests.length > 0 && (
-        <div className="request-list animate-fade-up">
-          {requests.map((r) => (
-            <RequestCard key={r._id} request={r} onCancel={handleCancel} />
-          ))}
-        </div>
-      )}
+      {!loading && requests.length > 0 && (() => {
+        const sortedRequests = [...requests].sort((a, b) => {
+          const isActiveA = ['pending_review', 'approved'].includes(a.status);
+          const isActiveB = ['pending_review', 'approved'].includes(b.status);
+          if (isActiveA && !isActiveB) return -1;
+          if (!isActiveA && isActiveB) return 1;
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        return (
+          <div className="request-list animate-fade-up">
+            {sortedRequests.map((r) => (
+              <RequestCard key={r._id} request={r} onCancel={handleCancel} />
+            ))}
+          </div>
+        );
+      })()}
     </>
   );
 }
