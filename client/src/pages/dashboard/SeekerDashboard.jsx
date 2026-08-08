@@ -240,6 +240,24 @@ function SearchTab() {
         </div>
       </div>
 
+      {/* Emergency Guidance Recommendation Banner */}
+      <div className="animate-fade-up" style={{
+        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.25))',
+        border: '1px solid rgba(239, 68, 68, 0.4)',
+        borderRadius: '12px',
+        padding: 'var(--space-3) var(--space-4)',
+        marginBottom: 'var(--space-5)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
+      }}>
+        <span style={{ fontSize: '1.4rem' }}>🚨</span>
+        <div style={{ fontSize: '0.85rem', color: '#fca5a5', lineHeight: 1.4 }}>
+          <strong style={{ color: '#ffffff', display: 'block', marginBottom: 2 }}>Medical Recommendation for Urgent & Critical Cases:</strong>
+          For urgent trauma or critical ICU emergencies, we strongly advise contacting or admitting the patient to a hospital with <strong>Ready Stock (Freezer Inventory)</strong> for instant blood availability. If freezer stock is unavailable, post a blood request to alert local volunteer donors!
+        </div>
+      </div>
+
       {/* Search controls */}
       <form className="search-controls animate-fade-up" onSubmit={handleSearch}>
         <div className="input-group" style={{ margin: 0 }}>
