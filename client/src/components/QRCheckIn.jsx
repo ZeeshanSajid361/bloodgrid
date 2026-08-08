@@ -75,7 +75,7 @@ function getEtaConfig(urgency = 'routine') {
   };
 }
 
-export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, bloodGroup, commitments = [], urgency = 'routine', donorEligibility, onCommitmentChange }) {
+export default function QRCheckIn({ requestId, requestStatus, hospitalName, hospitalCity, hospitalAddress, latitude, longitude, bloodGroup, commitments = [], urgency = 'routine', donorEligibility, onCommitmentChange }) {
   const { user } = useAuth();
   const { qrData, generating, cancelling, error, generate, cancel } = useQR(requestId, requestStatus);
   const [expanded, setExpanded] = useState(false);
@@ -87,6 +87,12 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
   const [copied, setCopied] = useState(false);
   const [localCommitment, setLocalCommitment] = useState(null);
   const [commitError, setCommitError] = useState(null);
+
+  const mapsUrl = (latitude && longitude)
+    ? `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        hospitalName + (hospitalAddress ? `, ${hospitalAddress}` : '') + (hospitalCity ? `, ${hospitalCity}` : '')
+      )}`;
 
   const handleCopyToken = () => {
     if (!qrData?.token) return;
@@ -186,8 +192,6 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
   }
 
   const mapsQuery = encodeURIComponent(`${hospitalName}${hospitalCity ? ', ' + hospitalCity : ''}`);
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
-
   if (!expanded) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-3)', flexWrap: 'wrap' }}>

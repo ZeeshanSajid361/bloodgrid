@@ -1007,6 +1007,9 @@ function HistoryTabInner({ donor }) {
                   requestStatus={req.status}
                   hospitalName={req.hospitalName}
                   hospitalCity={req.hospitalCity}
+                  hospitalAddress={req.hospitalAddress}
+                  latitude={req.latitude}
+                  longitude={req.longitude}
                   bloodGroup={req.patientBloodGroup}
                   commitments={req.commitments}
                   urgency={req.urgency}

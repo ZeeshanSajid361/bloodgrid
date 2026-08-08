@@ -348,6 +348,17 @@ function SearchTab() {
   );
 }
 
+const PRESET_HOSPITALS = [
+  { name: 'CMH Rawalpindi', city: 'Rawalpindi', address: 'The Mall Road, Saddar, Rawalpindi' },
+  { name: 'Rabia Clinic & Hospital', city: 'Rawalpindi', address: 'Block 3, Satellite Town, Rawalpindi' },
+  { name: 'PIMS Hospital', city: 'Islamabad', address: 'G-8/3, Sector G-8, Islamabad' },
+  { name: 'Holy Family Hospital', city: 'Rawalpindi', address: 'Holy Family Road, Satellite Town, Rawalpindi' },
+  { name: 'Shifa International Hospital', city: 'Islamabad', address: 'Pitras Bukhari Road, H-8/4, Islamabad' },
+  { name: 'Combined Military Hospital (CMH)', city: 'Lahore', address: 'Abid Majeed Road, Cantonment, Lahore' },
+  { name: 'Aga Khan University Hospital', city: 'Karachi', address: 'National Stadium Road, Karachi' },
+  { name: 'Jinnah Postgraduate Medical Centre', city: 'Karachi', address: 'Rafiqui Shaheed Road, Karachi' },
+];
+
 /* ════════════════════════════════════════════════════════
    NEW REQUEST TAB
 ════════════════════════════════════════════════════════ */
@@ -356,6 +367,9 @@ function RequestTab({ onSubmitted }) {
     patientBloodGroup: '',
     hospitalName:      '',
     hospitalCity:      '',
+    hospitalAddress:   '',
+    latitude:          '',
+    longitude:         '',
     unitsNeeded:       1,
     urgency:           'routine',
     patientName:       '',
@@ -364,12 +378,59 @@ function RequestTab({ onSubmitted }) {
   const [files,    setFiles]    = useState([]);
   const [saving,   setSaving]   = useState(false);
   const [apiError, setApiError] = useState('');
+  const [detectingGps, setDetectingGps] = useState(false);
+  const [gpsStatus, setGpsStatus] = useState('');
   const fileRef                 = useRef();
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
     setApiError('');
+  }
+
+  function handleHospitalSelect(e) {
+    const val = e.target.value;
+    if (!val) return;
+    if (val === 'custom') {
+      setForm((p) => ({ ...p, hospitalName: '', hospitalCity: '', hospitalAddress: '' }));
+      return;
+    }
+    const found = PRESET_HOSPITALS.find(h => h.name === val);
+    if (found) {
+      setForm((p) => ({
+        ...p,
+        hospitalName: found.name,
+        hospitalCity: found.city,
+        hospitalAddress: found.address,
+      }));
+    }
+  }
+
+  function detectGps() {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+    setDetectingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setForm((prev) => ({
+          ...prev,
+          latitude: latitude.toFixed(6),
+          longitude: longitude.toFixed(6),
+        }));
+        setGpsStatus(`📍 GPS Pin Captured (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+        setDetectingGps(false);
+        toast.success('Exact GPS coordinates captured successfully for turn-by-turn navigation!');
+      },
+      (err) => {
+        console.error('GPS error:', err);
+        toast.error('Could not fetch GPS location. Please check browser permissions.');
+        setDetectingGps(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   }
 
   function handleFile(e) {
@@ -398,7 +459,9 @@ function RequestTab({ onSubmitted }) {
 
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      Object.entries(form).forEach(([k, v]) => {
+        if (v !== '' && v !== null && v !== undefined) fd.append(k, v);
+      });
       files.forEach(f => fd.append('documents', f));
 
       await api.post('/seekers/requests', fd, {
@@ -477,6 +540,27 @@ function RequestTab({ onSubmitted }) {
               />
             </div>
 
+            {/* Preset Hospital Selector */}
+            <div className="input-group full">
+              <label className="input-label" htmlFor="req-preset-hospital">
+                Select Hospital / Medical Center (Quick Auto-Fill)
+              </label>
+              <select
+                id="req-preset-hospital"
+                className="input"
+                onChange={handleHospitalSelect}
+                defaultValue=""
+              >
+                <option value="">— Choose from Verified Hospitals (Optional) —</option>
+                {PRESET_HOSPITALS.map((h) => (
+                  <option key={h.name} value={h.name}>
+                    🏥 {h.name} ({h.city})
+                  </option>
+                ))}
+                <option value="custom">✏️ Other / Manual Hospital Entry</option>
+              </select>
+            </div>
+
             {/* Hospital name */}
             <div className="input-group">
               <label className="input-label" htmlFor="req-hospital">
@@ -486,7 +570,7 @@ function RequestTab({ onSubmitted }) {
                 id="req-hospital"
                 name="hospitalName"
                 className="input"
-                placeholder="PIMS Hospital"
+                placeholder="e.g. Rabia Clinic & Hospital"
                 value={form.hospitalName}
                 onChange={handleChange}
               />
@@ -499,10 +583,40 @@ function RequestTab({ onSubmitted }) {
                 id="req-hcity"
                 name="hospitalCity"
                 className="input"
-                placeholder="Islamabad"
+                placeholder="e.g. Rawalpindi"
                 value={form.hospitalCity}
                 onChange={handleChange}
               />
+            </div>
+
+            {/* Hospital Street Address & Area / Landmark */}
+            <div className="input-group full">
+              <label className="input-label" htmlFor="req-haddress" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Exact Hospital Street Address & Landmark</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={detectGps}
+                  disabled={detectingGps}
+                  style={{ color: '#60a5fa', padding: '2px 8px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  {detectingGps ? <Loader2 size={13} className="spin" /> : <MapPin size={13} />}
+                  {detectingGps ? 'Detecting GPS...' : '📍 Capture Exact GPS Pin'}
+                </button>
+              </label>
+              <input
+                id="req-haddress"
+                name="hospitalAddress"
+                className="input"
+                placeholder="e.g. Block 3, Near Commercial Market, Satellite Town"
+                value={form.hospitalAddress}
+                onChange={handleChange}
+              />
+              {gpsStatus && (
+                <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#34d399', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {gpsStatus}
+                </div>
+              )}
             </div>
 
             {/* Patient name */}

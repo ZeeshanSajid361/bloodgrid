@@ -57,6 +57,19 @@ const requestSchema = new mongoose.Schema(
       trim:  true,
     },
 
+    hospitalAddress: {
+      type:  String,
+      trim:  true,
+    },
+
+    latitude: {
+      type: Number,
+    },
+
+    longitude: {
+      type: Number,
+    },
+
     // ── Medical details ───────────────────────────────────────────────────────
     patientBloodGroup: {
       type:     String,
