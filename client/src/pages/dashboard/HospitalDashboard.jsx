@@ -243,8 +243,16 @@ function InventoryTab({ profile, hooks }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  async function handleSave() {
-    if (!form.bloodGroup || form.units === '') return;
+  async function handleSave(e) {
+    if (e) e.preventDefault();
+    if (!form.bloodGroup) {
+      toast.error('Please select a blood group from the dropdown.');
+      return;
+    }
+    if (form.units === '' || isNaN(form.units) || Number(form.units) < 0) {
+      toast.error('Please enter a valid number of units (0 or greater).');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -255,14 +263,14 @@ function InventoryTab({ profile, hooks }) {
       };
       if (editId) {
         await updateInventory(editId, payload);
-        showToast('Inventory updated successfully.');
+        toast.success(`Inventory for ${form.bloodGroup} updated successfully!`);
       } else {
         await saveInventory(payload);
-        showToast('Stock entry added.');
+        toast.success(`Added ${payload.units} units of ${form.bloodGroup} to freezer stock!`);
       }
       resetForm();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to save inventory.');
+      toast.error(err.response?.data?.message || 'Failed to save inventory stock.');
     } finally {
       setSaving(false);
     }
@@ -272,9 +280,9 @@ function InventoryTab({ profile, hooks }) {
     if (!window.confirm('Remove this blood group entry?')) return;
     try {
       await removeInventory(id);
-      showToast('Entry removed.');
+      toast.success('Inventory entry removed.');
     } catch {
-      showToast('Failed to remove entry.');
+      toast.error('Failed to remove entry.');
     }
   }
 
@@ -282,10 +290,10 @@ function InventoryTab({ profile, hooks }) {
     setBroadcasting(true);
     try {
       await issueCodeRed(invId, message);
-      showToast('Code Red broadcast issued!');
+      toast.success('Code Red broadcast issued!');
       setCodeRedTarget(null);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to issue broadcast.');
+      toast.error(err.response?.data?.message || 'Failed to issue broadcast.');
     } finally {
       setBroadcasting(false);
     }
@@ -294,27 +302,33 @@ function InventoryTab({ profile, hooks }) {
   async function handleCancelRed(invId) {
     try {
       await cancelCodeRed(invId);
-      showToast('Code Red cancelled.');
+      toast.success('Code Red cancelled.');
     } catch {
-      showToast('Failed to cancel broadcast.');
+      toast.error('Failed to cancel broadcast.');
     }
   }
 
   const isApproved = org.status === 'approved';
 
+  // Map existing stock levels for dropdown annotations
+  const existingStockMap = inventory.reduce((acc, item) => {
+    acc[item.bloodGroup] = item.units;
+    return acc;
+  }, {});
+
   return (
     <>
       {!isApproved && <PendingBanner />}
 
-      {toast && (
-        <div style={{ marginBottom: 'var(--space-4)', padding: 'var(--space-3) var(--space-5)', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 'var(--radius-md)', color: 'var(--color-success)', fontSize: '0.875rem' }}>
-          {toast}
-        </div>
-      )}
-
       {isApproved && (
-        <div className="inventory-form-card">
-          <h3>{editId ? 'Edit Entry' : 'Add Blood Group Stock'}</h3>
+        <form className="inventory-form-card" onSubmit={handleSave}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+            <h3 style={{ margin: 0 }}>{editId ? `Edit ${form.bloodGroup} Stock` : 'Add or Update Blood Group Stock'}</h3>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Select any of the 8 blood groups (O+, O-, A+, A-, B+, B-, AB+, AB-) to add or update freezer stock.
+            </span>
+          </div>
+
           <div className="inventory-form-grid">
             <div className="input-group">
               <label className="input-label">Blood Group <span className="required">*</span></label>
@@ -324,12 +338,19 @@ function InventoryTab({ profile, hooks }) {
                 onChange={e => setForm(p => ({ ...p, bloodGroup: e.target.value }))}
                 disabled={!!editId}
               >
-                <option value="">Select…</option>
-                {BLOOD_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                <option value="">Select Blood Group…</option>
+                {BLOOD_GROUPS.map(g => {
+                  const existingUnits = existingStockMap[g];
+                  return (
+                    <option key={g} value={g}>
+                      {g} {existingUnits !== undefined ? `(In Stock: ${existingUnits} units)` : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div className="input-group">
-              <label className="input-label">Units <span className="required">*</span></label>
+              <label className="input-label">Available Units <span className="required">*</span></label>
               <input
                 type="number" min={0} className="input"
                 value={form.units}
@@ -355,12 +376,12 @@ function InventoryTab({ profile, hooks }) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-            <button className="btn btn-secondary btn-sm" onClick={handleSave} disabled={saving || !form.bloodGroup || form.units === ''}>
-              {saving ? <Loader2 size={15} className="spin" /> : <><Plus size={15} />{editId ? 'Update' : 'Add'}</>}
+            <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
+              {saving ? <Loader2 size={15} className="spin" /> : <><Plus size={15} />{editId ? 'Update Stock' : 'Add Stock'}</>}
             </button>
-            {editId && <button className="btn btn-ghost btn-sm" onClick={resetForm}>Cancel</button>}
+            {editId && <button type="button" className="btn btn-ghost btn-sm" onClick={resetForm}>Cancel</button>}
           </div>
-        </div>
+        </form>
       )}
 
       <div className="inventory-table-wrap">
