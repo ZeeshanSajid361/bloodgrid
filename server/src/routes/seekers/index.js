@@ -107,6 +107,7 @@ router.get('/search', async (req, res, next) => {
           hospitalId:   inv.hospital._id,
           hospitalName: inv.hospital.name || 'Hospital Blood Bank',
           address:      addressText,
+          mapsUrl:      addr?.mapsUrl || null,
           city:         addr?.city || 'Unknown',
           phone:        inv.hospital.phone || 'Available at Counter',
           email:        inv.hospital.email || '',

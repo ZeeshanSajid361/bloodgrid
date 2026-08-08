@@ -58,6 +58,9 @@ const organizationSchema = new mongoose.Schema(
       street: String,
       city: { type: String, required: [true, 'City is required'] },
       province: String,
+      mapsUrl: String,
+      latitude: Number,
+      longitude: Number,
     },
 
     // Coordinates cached from Nominatim (Phase 6); null until first geocode lookup.

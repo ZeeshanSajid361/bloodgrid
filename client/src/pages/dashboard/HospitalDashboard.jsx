@@ -551,14 +551,40 @@ function ProfileTab({ profile, hooks }) {
   const { saveProfile } = hooks;
 
   const [form, setForm] = useState({
-    name:     org.name     || '',
-    city:     org.address?.city     || '',
-    street:   org.address?.street   || '',
-    province: org.address?.province || '',
-    phone:    org.phone    || '',
-    email:    org.email    || '',
+    name:      org.name              || '',
+    city:      org.address?.city     || '',
+    street:    org.address?.street   || '',
+    province:  org.address?.province || '',
+    mapsUrl:   org.address?.mapsUrl  || '',
+    latitude:  org.address?.latitude  || null,
+    longitude: org.address?.longitude || null,
+    phone:     org.phone             || '',
+    email:     org.email             || '',
   });
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [detecting, setDetecting] = useState(false);
+
+  function handleDetectGps() {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+    setDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        setForm(p => ({ ...p, mapsUrl: url, latitude: lat, longitude: lng }));
+        setDetecting(false);
+        toast.success('Exact GPS Location Detected!');
+      },
+      (err) => {
+        setDetecting(false);
+        toast.error('Could not detect GPS location: ' + err.message);
+      }
+    );
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -607,7 +633,49 @@ function ProfileTab({ profile, hooks }) {
             )}
           </div>
         ))}
+
+        {/* Exact Location & Google Maps Pin */}
+        <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+          <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>🗺️ Exact Google Maps Pin / Location URL</span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={handleDetectGps}
+              disabled={detecting}
+              style={{ fontSize: '0.75rem', color: '#60a5fa', padding: '2px 8px' }}
+            >
+              {detecting ? <Loader2 size={13} className="spin" /> : '📍 Detect My GPS Location'}
+            </button>
+          </label>
+          <div className="input-wrapper" style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <MapPin className="input-icon" size={17} />
+              <input
+                className="input has-icon"
+                value={form.mapsUrl}
+                onChange={e => setForm(p => ({ ...p, mapsUrl: e.target.value }))}
+                placeholder="Paste Google Maps URL or click 'Detect My GPS Location'"
+              />
+            </div>
+            {form.mapsUrl && (
+              <a
+                href={form.mapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-ghost btn-sm"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}
+              >
+                <ExternalLink size={14} /> Open Pin
+              </a>
+            )}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+            Allows blood seekers to navigate directly to your hospital gate on Google Maps.
+          </div>
+        </div>
       </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginTop: 'var(--space-2)' }}>
         <button className="btn btn-secondary" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 size={16} className="spin" /> : 'Save Changes'}
@@ -623,16 +691,38 @@ function ProfileTab({ profile, hooks }) {
 /* ── Registration form (shown before org exists) ─────────────────────────── */
 
 function RegisterOrgForm({ onSave }) {
-  const [form, setForm]     = useState({ type: 'web_hospital', name: '', city: '', street: '', province: '', phone: '', email: '' });
-  const [files, setFiles]   = useState([]);
-  const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState('');
+  const [form, setForm]         = useState({ type: 'web_hospital', name: '', city: '', street: '', province: '', mapsUrl: '', phone: '', email: '' });
+  const [files, setFiles]       = useState([]);
+  const [saving, setSaving]     = useState(false);
+  const [detecting, setDetecting] = useState(false);
+  const [error, setError]       = useState('');
+
+  function handleDetectGps() {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+    setDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        setForm(p => ({ ...p, mapsUrl: url, latitude: lat, longitude: lng }));
+        setDetecting(false);
+        toast.success('Exact GPS Location Detected!');
+      },
+      (err) => {
+        setDetecting(false);
+        toast.error('Could not detect GPS location: ' + err.message);
+      }
+    );
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name || !form.city) return setError('Name and city are required.');
     
-    // Phone validation: allow optional + at start, and 10 to 14 digits (Pakistani format is typically 11 digits starting with 0, or +92 followed by 10 digits)
     if (form.phone && !/^\+?\d{10,14}$/.test(form.phone.replace(/[\s-]/g, ''))) {
       return setError('Please enter a valid phone number (e.g. 03001234567 or +923001234567).');
     }
@@ -643,7 +733,9 @@ function RegisterOrgForm({ onSave }) {
     setError('');
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      Object.entries(form).forEach(([k, v]) => {
+        if (v !== null && v !== undefined) fd.append(k, v);
+      });
       files.forEach(f => fd.append('verificationDocuments', f));
 
       await onSave(fd, false);
@@ -696,6 +788,28 @@ function RegisterOrgForm({ onSave }) {
                 )}
               </div>
             ))}
+
+            {/* Exact Location & Google Maps Pin */}
+            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>🗺️ Exact Google Maps Location Pin</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={handleDetectGps}
+                  disabled={detecting}
+                  style={{ fontSize: '0.75rem', color: '#60a5fa', padding: '2px 8px' }}
+                >
+                  {detecting ? <Loader2 size={13} className="spin" /> : '📍 Detect My GPS Location'}
+                </button>
+              </label>
+              <input
+                className="input"
+                value={form.mapsUrl}
+                onChange={e => setForm(p => ({ ...p, mapsUrl: e.target.value }))}
+                placeholder="Paste Google Maps link or click 'Detect My GPS Location'"
+              />
+            </div>
             
             <div className="input-group" style={{ gridColumn: '1 / -1' }}>
               <label className="input-label">Registration / Verification Documents (Max 3) *</label>

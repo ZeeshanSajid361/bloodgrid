@@ -342,7 +342,7 @@ function SearchTab() {
                       
                       {/* Clickable Exact Google Maps Location Link */}
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${h.hospitalName}, ${h.address}`)}`}
+                        href={h.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${h.hospitalName}, ${h.address}`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ fontSize: '0.82rem', color: '#60a5fa', marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'underline', cursor: 'pointer', fontWeight: 600 }}

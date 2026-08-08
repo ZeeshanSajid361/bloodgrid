@@ -181,7 +181,7 @@ router.post(
   upload.array('verificationDocuments', 3),
   async (req, res, next) => {
     try {
-      const { name, type = 'hospital', city, street, province, phone, email } = req.body;
+      const { name, type = 'hospital', city, street, province, mapsUrl, latitude, longitude, phone, email } = req.body;
 
       if (!name || !city) {
         return res.status(400).json({ success: false, message: 'Name and city are required.' });
@@ -211,7 +211,7 @@ router.post(
         owner:   req.user.id,
         name,
         type,
-        address: { city, street, province },
+        address: { city, street, province, mapsUrl, latitude, longitude },
         phone,
         email:   email || req.user.email,
         status:  'pending',
@@ -291,14 +291,17 @@ router.put(
   requireOrg,
   async (req, res, next) => {
     try {
-      const { name, city, street, province, phone, email } = req.body;
+      const { name, city, street, province, mapsUrl, latitude, longitude, phone, email } = req.body;
 
-      if (name)     req.org.name              = name;
-      if (city)     req.org.address.city      = city;
-      if (street)   req.org.address.street    = street;
-      if (province) req.org.address.province  = province;
-      if (phone)    req.org.phone             = phone;
-      if (email)    req.org.email             = email;
+      if (name)      req.org.name              = name;
+      if (city)      req.org.address.city      = city;
+      if (street)    req.org.address.street    = street;
+      if (province)  req.org.address.province  = province;
+      if (mapsUrl !== undefined)   req.org.address.mapsUrl   = mapsUrl;
+      if (latitude !== undefined)  req.org.address.latitude  = latitude;
+      if (longitude !== undefined) req.org.address.longitude = longitude;
+      if (phone)     req.org.phone             = phone;
+      if (email)     req.org.email             = email;
 
       await req.org.save();
 
