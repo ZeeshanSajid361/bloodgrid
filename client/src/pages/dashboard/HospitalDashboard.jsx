@@ -254,18 +254,40 @@ function InventoryTab({ profile, hooks }) {
       return;
     }
 
+    const threshold = Number(form.lowStockThreshold || 2);
+
+    // Rule 1: New stock batch units cannot be less than threshold
+    if (!editId && Number(form.units) < threshold) {
+      toast.error(`New stock batch units (${form.units}) must meet or exceed low stock threshold (min ${threshold} units).`);
+      return;
+    }
+
+    // Rule 3: Expiry date cannot be in the past
+    if (form.expiresAt) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      if (new Date(form.expiresAt) < todayStart) {
+        toast.error('Expiry date cannot be in the past. Please select today or a future date.');
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const payload = {
         bloodGroup:        form.bloodGroup,
         units:             Number(form.units),
         expiresAt:         form.expiresAt || undefined,
-        lowStockThreshold: Number(form.lowStockThreshold),
+        lowStockThreshold: threshold,
       };
 
       if (editId) {
         await updateInventory(editId, payload);
-        toast.success(`Batch for ${form.bloodGroup} updated successfully!`);
+        if (payload.units <= threshold) {
+          toast.success(`Batch for ${form.bloodGroup} updated to ${payload.units} units. Automatic Emergency Code Red alert activated!`);
+        } else {
+          toast.success(`Batch for ${form.bloodGroup} updated successfully!`);
+        }
       } else {
         await saveInventory(payload);
         toast.success(`Added new batch of ${payload.units} units for ${form.bloodGroup}!`);
@@ -361,6 +383,9 @@ function InventoryTab({ profile, hooks }) {
                 onChange={e => setForm(p => ({ ...p, units: e.target.value }))}
                 placeholder="e.g. 10"
               />
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                {!editId ? `New stock must be ≥ threshold (${form.lowStockThreshold || 2} units).` : 'Decreasing units below threshold triggers Code Red.'}
+              </div>
             </div>
 
             <div className="input-group">
@@ -368,8 +393,12 @@ function InventoryTab({ profile, hooks }) {
               <input
                 type="date" className="input"
                 value={form.expiresAt}
+                min={new Date().toISOString().split('T')[0]}
                 onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))}
               />
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                Must be today or a future date.
+              </div>
             </div>
 
             <div className="input-group">
@@ -379,6 +408,9 @@ function InventoryTab({ profile, hooks }) {
                 value={form.lowStockThreshold}
                 onChange={e => setForm(p => ({ ...p, lowStockThreshold: e.target.value }))}
               />
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                Automatic alert triggers when stock ≤ threshold.
+              </div>
             </div>
           </div>
 

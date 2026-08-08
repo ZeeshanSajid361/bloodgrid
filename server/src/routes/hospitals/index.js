@@ -405,12 +405,31 @@ router.post(
         return res.status(400).json({ success: false, message: 'Units must be 0 or greater.' });
       }
 
+      const threshold = lowStockThreshold !== undefined ? Number(lowStockThreshold) : 2;
+
+      // Rule 1: New stock batch units must meet or exceed threshold
+      if (Number(units) < threshold) {
+        return res.status(400).json({
+          success: false,
+          message: `New stock batch units (${units}) cannot be less than low stock threshold (${threshold}).`,
+        });
+      }
+
+      // Rule 3: Expiry date must be today or in the future
+      if (expiresAt) {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        if (new Date(expiresAt) < todayStart) {
+          return res.status(400).json({ success: false, message: 'Batch expiry date cannot be in the past.' });
+        }
+      }
+
       const inv = await Inventory.create({
         hospital:          req.org._id,
         bloodGroup,
-        units,
+        units:             Number(units),
         expiresAt:         expiresAt || undefined,
-        lowStockThreshold: lowStockThreshold ?? 2,
+        lowStockThreshold: threshold,
         lastUpdatedBy:     'manual',
       });
 
@@ -446,10 +465,31 @@ router.put(
 
       if (units !== undefined) {
         if (units < 0) return res.status(400).json({ success: false, message: 'Units cannot be negative.' });
-        inv.units = units;
+        inv.units = Number(units);
       }
-      if (expiresAt !== undefined) inv.expiresAt         = expiresAt;
-      if (lowStockThreshold !== undefined) inv.lowStockThreshold = lowStockThreshold;
+      if (lowStockThreshold !== undefined) inv.lowStockThreshold = Number(lowStockThreshold);
+
+      if (expiresAt !== undefined && expiresAt) {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        if (new Date(expiresAt) < todayStart) {
+          return res.status(400).json({ success: false, message: 'Batch expiry date cannot be in the past.' });
+        }
+        inv.expiresAt = expiresAt;
+      }
+
+      // Rule 2: If stock count drops to or below threshold, auto-trigger Code Red Emergency Alert
+      if (inv.units <= inv.lowStockThreshold) {
+        inv.codeRed = {
+          active: true,
+          message: `Automatic Emergency Alert: Stock for ${inv.bloodGroup} at ${req.org.name} has dropped to ${inv.units} unit(s). Urgent donors needed!`,
+          issuedAt: new Date(),
+          expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours TTL
+        };
+      } else if (inv.codeRed?.active && inv.units > inv.lowStockThreshold) {
+        inv.codeRed.active = false;
+      }
+
       inv.lastUpdatedBy = 'manual';
 
       await inv.save();

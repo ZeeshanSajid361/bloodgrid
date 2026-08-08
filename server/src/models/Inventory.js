@@ -86,4 +86,13 @@ inventorySchema.index({ units: 1, bloodGroup: 1 });
 
 const Inventory = mongoose.model('Inventory', inventorySchema);
 
+// Safely drop legacy unique index from MongoDB collection if present
+mongoose.connection.once('open', async () => {
+  try {
+    await Inventory.collection.dropIndex('hospital_1_bloodGroup_1');
+  } catch (err) {
+    // Index already dropped or doesn't exist
+  }
+});
+
 module.exports = { Inventory, BLOOD_GROUPS };
