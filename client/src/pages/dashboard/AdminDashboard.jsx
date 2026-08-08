@@ -467,8 +467,14 @@ function UsersTab({ admin }) {
     } finally { setActing(''); }
   }
 
-  function handleSearch(e) {
-    e.preventDefault();
+  function handleSearchChange(e) {
+    const val = e.target.value;
+    setSearch(val);
+    fetchUsers(roleFilter, val);
+  }
+
+  function handleSearchSubmit(e) {
+    if (e) e.preventDefault();
     fetchUsers(roleFilter, search);
   }
 
@@ -486,9 +492,9 @@ function UsersTab({ admin }) {
               </button>
             ))}
           </div>
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: 'var(--space-2)' }}>
             <input className="input" style={{ height: '32px', padding: '0 var(--space-3)', fontSize: '0.85rem', width: 180 }}
-              placeholder="Search name or email…" value={search} onChange={e => setSearch(e.target.value)} />
+              placeholder="Search name or email…" value={search} onChange={handleSearchChange} />
             <button type="submit" className="btn btn-ghost btn-sm">Search</button>
           </form>
         </div>
