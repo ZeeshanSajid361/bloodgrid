@@ -315,27 +315,50 @@ function SearchTab() {
           </h3>
 
           {hospitalStock.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
               {hospitalStock.map((h) => (
-                <div key={h.inventoryId} className="card" style={{ padding: 'var(--space-4) var(--space-5)', borderLeft: '4px solid #10b981', background: 'rgba(15, 23, 42, 0.85)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                <div key={h.inventoryId} className="card" style={{ padding: 'var(--space-5)', borderLeft: '4px solid #10b981', background: 'rgba(15, 23, 42, 0.85)', position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8 }}>
                     <div>
-                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#f8fafc' }}>{h.hospitalName}</h4>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <MapPin size={13} color="#60a5fa" /> {h.address}
-                      </div>
+                      <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc' }}>{h.hospitalName}</h4>
+                      
+                      {/* Clickable Exact Google Maps Location Link */}
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${h.hospitalName}, ${h.address}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: '0.82rem', color: '#60a5fa', marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'underline', cursor: 'pointer', fontWeight: 600 }}
+                        title="Click to open exact hospital location on Google Maps"
+                      >
+                        <MapPin size={14} color="#60a5fa" /> {h.address} <ExternalLink size={12} />
+                      </a>
                     </div>
-                    <span style={{ background: 'var(--red-900)', color: 'var(--red-200)', padding: '2px 8px', borderRadius: 12, fontSize: '0.8rem', fontWeight: 900 }}>
-                      {h.bloodGroup}
-                    </span>
+
+                    {/* Prominent High-Contrast Blood Group Badge */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                      color: '#ffffff',
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.95rem',
+                      fontWeight: 900,
+                      boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      🩸 {h.bloodGroup}
+                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                     <div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#34d399' }}>🩸 {h.units} Units Available</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#34d399' }}>🩸 {h.units} Units Available</span>
                       {h.phone && (
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <Phone size={12} /> {h.phone}
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Phone size={12} /> <a href={`tel:${h.phone}`} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>{h.phone}</a>
                         </div>
                       )}
                     </div>
