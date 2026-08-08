@@ -70,6 +70,11 @@ const requestSchema = new mongoose.Schema(
       type: Number,
     },
 
+    mapsUrl: {
+      type: String,
+      trim: true,
+    },
+
     // ── Medical details ───────────────────────────────────────────────────────
     patientBloodGroup: {
       type:     String,
