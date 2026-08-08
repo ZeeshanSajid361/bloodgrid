@@ -508,29 +508,37 @@ function UsersTab({ admin }) {
                       <td><span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{u.role}</span></td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{u.city || '—'}</td>
                       <td style={{ fontSize: '0.82rem' }}>
-                        {u.role === 'hospital' || u.role === 'admin' ? (
-                          <span style={{ color: 'var(--text-muted)' }}>—</span>
-                        ) : u.role === 'donor' ? (
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#34d399' }}>
-                              🩸 Donated: {u.stats?.confirmedDonations || 0} unit(s)
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              Verified Blood Donations
-                            </div>
-                          </div>
-                        ) : u.stats ? (
-                          <div>
-                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                              Fulfilled: <span style={{ color: '#34d399' }}>{u.stats.fulfilledRequests} reqs</span> ({u.stats.fulfilledUnits} units)
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              Pending: {u.stats.pendingRequests} ({u.stats.pendingUnits || 0} units) · Total: {u.stats.totalRequests}
-                            </div>
-                          </div>
-                        ) : (
-                          '—'
-                        )}
+                        {(() => {
+                          const r = (u.role || '').toLowerCase();
+                          if (r === 'hospital' || r === 'admin') {
+                            return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+                          }
+                          if (r === 'donor') {
+                            return (
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#34d399' }}>
+                                  🩸 Donated: {u.stats?.confirmedDonations || 0} unit(s)
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                  Verified Blood Donations
+                                </div>
+                              </div>
+                            );
+                          }
+                          if (r === 'seeker' && u.stats) {
+                            return (
+                              <div>
+                                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                                  Fulfilled: <span style={{ color: '#34d399' }}>{u.stats.fulfilledRequests || 0} reqs</span> ({u.stats.fulfilledUnits || 0} units)
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                  Pending: {u.stats.pendingRequests || 0} reqs ({u.stats.pendingUnits || 0} units) · Total: {u.stats.totalRequests || 0}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+                        })()}
                       </td>
                       <td>
                         <span className={`badge badge-${u.isBlocked ? 'red' : 'green'}`}>
