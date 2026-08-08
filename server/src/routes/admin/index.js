@@ -392,7 +392,10 @@ router.get('/users', async (req, res, next) => {
         try {
           const reqs = await Request.find({ seeker: u._id }).select('status unitsNeeded').lean();
           const totalRequests = reqs.length;
-          const pendingRequests = reqs.filter(r => r.status === 'pending_review' || r.status === 'approved').length;
+          const pendingReqs = reqs.filter(r => r.status === 'pending_review' || r.status === 'approved');
+          const pendingRequests = pendingReqs.length;
+          const pendingUnits = pendingReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
+
           const fulfilledReqs = reqs.filter(r => r.status === 'fulfilled');
           const fulfilledRequests = fulfilledReqs.length;
           const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
@@ -408,6 +411,7 @@ router.get('/users', async (req, res, next) => {
             stats: {
               totalRequests,
               pendingRequests,
+              pendingUnits,
               fulfilledRequests,
               fulfilledUnits,
               confirmedDonations,
@@ -419,6 +423,7 @@ router.get('/users', async (req, res, next) => {
             stats: {
               totalRequests: 0,
               pendingRequests: 0,
+              pendingUnits: 0,
               fulfilledRequests: 0,
               fulfilledUnits: 0,
               confirmedDonations: 0,

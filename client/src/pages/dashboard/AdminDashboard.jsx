@@ -508,14 +508,24 @@ function UsersTab({ admin }) {
                       <td><span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{u.role}</span></td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{u.city || '—'}</td>
                       <td style={{ fontSize: '0.82rem' }}>
-                        {u.stats ? (
+                        {u.role === 'hospital' || u.role === 'admin' ? (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        ) : u.role === 'donor' ? (
+                          <div>
+                            <div style={{ fontWeight: 700, color: '#34d399' }}>
+                              🩸 Donated: {u.stats?.confirmedDonations || 0} unit(s)
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              Verified Blood Donations
+                            </div>
+                          </div>
+                        ) : u.stats ? (
                           <div>
                             <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
                               Fulfilled: <span style={{ color: '#34d399' }}>{u.stats.fulfilledRequests} reqs</span> ({u.stats.fulfilledUnits} units)
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              Pending: {u.stats.pendingRequests} · Total: {u.stats.totalRequests}
-                              {u.role === 'donor' && ` · Donated: ${u.stats.confirmedDonations}`}
+                              Pending: {u.stats.pendingRequests} ({u.stats.pendingUnits || 0} units) · Total: {u.stats.totalRequests}
                             </div>
                           </div>
                         ) : (
