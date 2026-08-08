@@ -78,8 +78,8 @@ const inventorySchema = new mongoose.Schema(
   }
 );
 
-// Compound unique index: one record per hospital × blood group.
-inventorySchema.index({ hospital: 1, bloodGroup: 1 }, { unique: true });
+// Compound index to fast query batches per hospital & blood group.
+inventorySchema.index({ hospital: 1, bloodGroup: 1 });
 
 // Efficient queries: find all low-stock items across hospitals.
 inventorySchema.index({ units: 1, bloodGroup: 1 });

@@ -74,7 +74,9 @@ router.get('/search', async (req, res, next) => {
 
     const { Inventory } = require('../../models/Inventory');
 
-    // Query hospital stock for compatible blood groups
+    const now = new Date();
+
+    // Query unexpired hospital stock for compatible blood groups
     const rawInventory = await Inventory.find({
       bloodGroup: { $in: compatibleGroups },
       units: { $gt: 0 },
@@ -82,30 +84,48 @@ router.get('/search', async (req, res, next) => {
       .populate('hospital', 'name address phone email status')
       .lean();
 
-    const hospitalStock = rawInventory
-      .filter((inv) => {
-        if (!inv.hospital || inv.hospital.status !== 'approved') return false;
-        if (city && inv.hospital.address?.city?.toLowerCase() !== city.toLowerCase()) return false;
-        return true;
-      })
-      .map((inv) => {
-        const addr = inv.hospital?.address;
+    // Filter valid, approved, unexpired batches
+    const validBatches = rawInventory.filter((inv) => {
+      if (!inv.hospital || inv.hospital.status !== 'approved') return false;
+      if (inv.expiresAt && new Date(inv.expiresAt) < now) return false; // Filter out expired batches!
+      if (city && inv.hospital.address?.city?.toLowerCase() !== city.toLowerCase()) return false;
+      return true;
+    });
+
+    // Group batches by (hospitalId + bloodGroup) to sum total available units
+    const groupedMap = new Map();
+    for (const inv of validBatches) {
+      const key = `${inv.hospital._id}_${inv.bloodGroup}`;
+      if (!groupedMap.has(key)) {
+        const addr = inv.hospital.address;
         const addressText = addr
           ? [addr.street, addr.city, addr.province].filter(Boolean).join(', ')
           : 'City Location';
-        return {
-          inventoryId: inv._id,
-          hospitalName: inv.hospital?.name || 'Hospital Blood Bank',
-          address: addressText,
-          city: addr?.city || 'Unknown',
-          phone: inv.hospital?.phone || 'Available at Counter',
-          email: inv.hospital?.email || '',
-          bloodGroup: inv.bloodGroup,
-          units: inv.units,
-          expiresAt: inv.expiresAt,
-          codeRed: !!inv.codeRed?.active,
-        };
-      });
+
+        groupedMap.set(key, {
+          inventoryId:  inv._id,
+          hospitalId:   inv.hospital._id,
+          hospitalName: inv.hospital.name || 'Hospital Blood Bank',
+          address:      addressText,
+          city:         addr?.city || 'Unknown',
+          phone:        inv.hospital.phone || 'Available at Counter',
+          email:        inv.hospital.email || '',
+          bloodGroup:   inv.bloodGroup,
+          units:        0,
+          expiresAt:    inv.expiresAt || null,
+          codeRed:      false,
+        });
+      }
+
+      const item = groupedMap.get(key);
+      item.units += inv.units;
+      if (inv.codeRed?.active) item.codeRed = true;
+      if (inv.expiresAt && (!item.expiresAt || new Date(inv.expiresAt) < new Date(item.expiresAt))) {
+        item.expiresAt = inv.expiresAt;
+      }
+    }
+
+    const hospitalStock = Array.from(groupedMap.values());
 
     // Pull all availability-matching profiles; eligibility is time-based so
     // it must be computed in JS after the DB query.

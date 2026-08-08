@@ -222,7 +222,6 @@ function InventoryTab({ profile, hooks }) {
   const { saveInventory, updateInventory, removeInventory, issueCodeRed, cancelCodeRed } = hooks;
 
   const [form, setForm]                   = useState({ bloodGroup: '', units: '', expiresAt: '', lowStockThreshold: 2 });
-  const [updateMode, setUpdateMode]       = useState('add'); // 'add' (additive) vs 'set' (overwrite)
   const [editId, setEditId]               = useState(null);
   const [saving, setSaving]               = useState(false);
   const [codeRedTarget, setCodeRedTarget] = useState(null);
@@ -231,12 +230,10 @@ function InventoryTab({ profile, hooks }) {
   function resetForm() {
     setForm({ bloodGroup: '', units: '', expiresAt: '', lowStockThreshold: 2 });
     setEditId(null);
-    setUpdateMode('add');
   }
 
   function startEdit(inv) {
     setEditId(inv._id);
-    setUpdateMode('set');
     setForm({
       bloodGroup:        inv.bloodGroup,
       units:             inv.units,
@@ -245,9 +242,6 @@ function InventoryTab({ profile, hooks }) {
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
-  // Check if selected blood group already exists in inventory
-  const existingItem = inventory.find(i => i.bloodGroup === form.bloodGroup);
 
   async function handleSave(e) {
     if (e) e.preventDefault();
@@ -262,49 +256,35 @@ function InventoryTab({ profile, hooks }) {
 
     setSaving(true);
     try {
-      const addedUnits = Number(form.units);
-      const isAdditive = !editId && existingItem && updateMode === 'add';
-      const finalUnits = isAdditive ? (existingItem.units + addedUnits) : addedUnits;
-
-      // Handle Expiry Date (FIFO principle)
-      let finalExpiry = form.expiresAt || undefined;
-      if (!finalExpiry && existingItem?.expiresAt) {
-        finalExpiry = existingItem.expiresAt.slice(0, 10);
-      }
-
       const payload = {
         bloodGroup:        form.bloodGroup,
-        units:             finalUnits,
-        expiresAt:         finalExpiry,
+        units:             Number(form.units),
+        expiresAt:         form.expiresAt || undefined,
         lowStockThreshold: Number(form.lowStockThreshold),
       };
 
       if (editId) {
         await updateInventory(editId, payload);
-        toast.success(`Inventory for ${form.bloodGroup} updated successfully!`);
+        toast.success(`Batch for ${form.bloodGroup} updated successfully!`);
       } else {
         await saveInventory(payload);
-        if (isAdditive) {
-          toast.success(`Added +${addedUnits} units to ${form.bloodGroup}! Total stock is now ${finalUnits} units.`);
-        } else {
-          toast.success(`Set ${form.bloodGroup} freezer stock to ${finalUnits} units!`);
-        }
+        toast.success(`Added new batch of ${payload.units} units for ${form.bloodGroup}!`);
       }
       resetForm();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save inventory stock.');
+      toast.error(err.response?.data?.message || 'Failed to save inventory batch.');
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Remove this blood group entry?')) return;
+    if (!window.confirm('Remove this blood batch entry?')) return;
     try {
       await removeInventory(id);
-      toast.success('Inventory entry removed.');
+      toast.success('Batch entry removed.');
     } catch {
-      toast.error('Failed to remove entry.');
+      toast.error('Failed to remove batch entry.');
     }
   }
 
@@ -332,9 +312,15 @@ function InventoryTab({ profile, hooks }) {
 
   const isApproved = org.status === 'approved';
 
-  // Map existing stock levels for dropdown annotations
-  const existingStockMap = inventory.reduce((acc, item) => {
-    acc[item.bloodGroup] = item.units;
+  // Compute aggregated unexpired totals for summary bar
+  const now = new Date();
+  const summaryMap = inventory.reduce((acc, item) => {
+    const isExpired = item.expiresAt && new Date(item.expiresAt) < now;
+    if (!isExpired && item.units > 0) {
+      if (!acc[item.bloodGroup]) acc[item.bloodGroup] = { units: 0, batches: 0 };
+      acc[item.bloodGroup].units += item.units;
+      acc[item.bloodGroup].batches += 1;
+    }
     return acc;
   }, {});
 
@@ -345,50 +331,11 @@ function InventoryTab({ profile, hooks }) {
       {isApproved && (
         <form className="inventory-form-card" onSubmit={handleSave}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-            <h3 style={{ margin: 0 }}>{editId ? `Edit ${form.bloodGroup} Stock` : 'Add or Update Blood Group Stock'}</h3>
+            <h3 style={{ margin: 0 }}>{editId ? `Edit ${form.bloodGroup} Batch` : 'Add New Blood Stock Batch'}</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Select any of the 8 blood groups (O+, O-, A+, A-, B+, B-, AB+, AB-) to add or update freezer stock.
+              Add multiple batches with different expiry dates. Unexpired batches are automatically summed for seekers.
             </span>
           </div>
-
-          {/* Banner when selected blood group already exists */}
-          {existingItem && !editId && (
-            <div style={{
-              marginBottom: 'var(--space-4)',
-              padding: '12px 16px',
-              background: 'rgba(59, 130, 246, 0.12)',
-              border: '1px solid rgba(59, 130, 246, 0.25)',
-              borderRadius: '8px',
-              fontSize: '0.85rem'
-            }}>
-              <div style={{ fontWeight: 700, color: '#60a5fa', marginBottom: '4px' }}>
-                💡 Existing Stock Found: {existingItem.units} Units of {form.bloodGroup}
-                {existingItem.expiresAt ? ` (Earliest Batch Expiry: ${formatExpiry(existingItem.expiresAt)})` : ''}
-              </div>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '6px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#f8fafc' }}>
-                  <input
-                    type="radio"
-                    name="updateMode"
-                    value="add"
-                    checked={updateMode === 'add'}
-                    onChange={() => setUpdateMode('add')}
-                  />
-                  ➕ <strong>Add New Received Units</strong> (Will add to existing {existingItem.units} units)
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#f8fafc' }}>
-                  <input
-                    type="radio"
-                    name="updateMode"
-                    value="set"
-                    checked={updateMode === 'set'}
-                    onChange={() => setUpdateMode('set')}
-                  />
-                  ✏️ <strong>Set Total Count</strong> (Overwrite total stock)
-                </label>
-              </div>
-            </div>
-          )}
 
           <div className="inventory-form-grid">
             <div className="input-group">
@@ -400,44 +347,29 @@ function InventoryTab({ profile, hooks }) {
                 disabled={!!editId}
               >
                 <option value="">Select Blood Group…</option>
-                {BLOOD_GROUPS.map(g => {
-                  const existingUnits = existingStockMap[g];
-                  return (
-                    <option key={g} value={g}>
-                      {g} {existingUnits !== undefined ? `(Current Stock: ${existingUnits} units)` : ''}
-                    </option>
-                  );
-                })}
+                {BLOOD_GROUPS.map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
               </select>
             </div>
 
             <div className="input-group">
-              <label className="input-label">
-                {existingItem && !editId && updateMode === 'add' ? 'New Units Received *' : 'Available Units *'}
-              </label>
+              <label className="input-label">Batch Units <span className="required">*</span></label>
               <input
                 type="number" min={0} className="input"
                 value={form.units}
                 onChange={e => setForm(p => ({ ...p, units: e.target.value }))}
-                placeholder={existingItem && updateMode === 'add' ? 'e.g. 10 to add' : 'e.g. 10'}
+                placeholder="e.g. 10"
               />
-              {existingItem && !editId && updateMode === 'add' && form.units !== '' && !isNaN(form.units) && (
-                <div style={{ fontSize: '0.78rem', color: '#34d399', marginTop: '4px', fontWeight: 600 }}>
-                  ✓ Total after save: {existingItem.units} + {Number(form.units)} = {existingItem.units + Number(form.units)} units
-                </div>
-              )}
             </div>
 
             <div className="input-group">
-              <label className="input-label">Earliest Expiry Date</label>
+              <label className="input-label">Batch Expiry Date</label>
               <input
                 type="date" className="input"
                 value={form.expiresAt}
                 onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))}
               />
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                First-In, First-Out (FIFO) Rule: Set to the earliest batch expiry date.
-              </div>
             </div>
 
             <div className="input-group">
@@ -454,7 +386,7 @@ function InventoryTab({ profile, hooks }) {
             <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
               {saving
                 ? <Loader2 size={15} className="spin" />
-                : <><Plus size={15} />{editId ? 'Update Stock' : existingItem && updateMode === 'add' ? `Add +${form.units || 0} Units` : 'Save Stock'}</>
+                : <><Plus size={15} />{editId ? 'Update Batch' : 'Add New Batch'}</>
               }
             </button>
             {editId && <button type="button" className="btn btn-ghost btn-sm" onClick={resetForm}>Cancel</button>}
@@ -462,40 +394,91 @@ function InventoryTab({ profile, hooks }) {
         </form>
       )}
 
+      {/* Aggregated Total Stock Summary Header */}
+      <div style={{
+        margin: 'var(--space-4) 0',
+        padding: '14px 18px',
+        background: 'rgba(30, 41, 59, 0.6)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: 'var(--radius-md)',
+        display: 'flex',
+        alignItems: 'center',
+        justify: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
+        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          🩸 Total Unexpired Stock (Public View):
+        </div>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {Object.keys(summaryMap).length === 0 ? (
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No active stock available.</span>
+          ) : (
+            Object.entries(summaryMap).map(([bg, data]) => (
+              <span key={bg} style={{
+                background: 'linear-gradient(135deg, #1e293b, #0f172a)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                fontSize: '0.78rem',
+                color: '#f8fafc'
+              }}>
+                <strong style={{ color: '#ef4444' }}>{bg}:</strong> {data.units} units ({data.batches} batch{data.batches > 1 ? 'es' : ''})
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="inventory-table-wrap">
         <table className="inventory-table">
           <thead>
             <tr>
-              <th>Blood Group</th><th>Units</th><th>Threshold</th><th>Expiry</th><th>Alert</th>
+              <th>Blood Group</th><th>Batch Units</th><th>Threshold</th><th>Expiry Date</th><th>Batch Status</th>
               {isApproved && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
             {inventory.length === 0 ? (
               <tr><td colSpan={isApproved ? 6 : 5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 'var(--space-8)' }}>
-                No inventory entries yet.
+                No inventory batches added yet.
               </td></tr>
             ) : inventory.map(inv => {
               const live = isCodeRedLive(inv);
+              const isExpired = inv.expiresAt && new Date(inv.expiresAt) < now;
+              const daysLeft = inv.expiresAt ? Math.ceil((new Date(inv.expiresAt) - now) / (1000 * 60 * 60 * 24)) : null;
+              const isExpiringSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
               const level = unitLevel(inv.units, inv.lowStockThreshold);
+
               return (
-                <tr key={inv._id}>
+                <tr key={inv._id} style={{ opacity: isExpired ? 0.6 : 1 }}>
                   <td><span className="blood-group-pill">{inv.bloodGroup}</span></td>
                   <td><strong>{inv.units}</strong></td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{inv.lowStockThreshold}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{formatExpiry(inv.expiresAt)}</td>
+                  <td style={{ color: isExpired ? 'var(--red-400)' : isExpiringSoon ? '#f59e0b' : 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    {formatExpiry(inv.expiresAt)}
+                  </td>
                   <td>
-                    {live
-                      ? <span className="code-red-badge"><span className="pulse-dot" />Active</span>
-                      : <span className={`badge badge-${level === 'good' ? 'green' : level === 'low' ? 'amber' : 'red'}`}>
-                          {level === 'good' ? 'OK' : level === 'low' ? 'Low' : 'Critical'}
-                        </span>
-                    }
+                    {live ? (
+                      <span className="code-red-badge"><span className="pulse-dot" />Code Red</span>
+                    ) : isExpired ? (
+                      <span className="badge badge-red" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+                        ❌ Expired (Hidden from Search)
+                      </span>
+                    ) : isExpiringSoon ? (
+                      <span className="badge badge-amber" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b' }}>
+                        ⚠️ Expiring ({daysLeft}d left)
+                      </span>
+                    ) : (
+                      <span className={`badge badge-${level === 'good' ? 'green' : level === 'low' ? 'amber' : 'red'}`}>
+                        {level === 'good' ? 'OK' : level === 'low' ? 'Low' : 'Critical'}
+                      </span>
+                    )}
                   </td>
                   {isApproved && (
                     <td>
                       <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-                        <button title="Edit" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} onClick={() => startEdit(inv)}>
+                        <button title="Edit Batch" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} onClick={() => startEdit(inv)}>
                           <Pencil size={14} />
                         </button>
                         {live
@@ -506,7 +489,7 @@ function InventoryTab({ profile, hooks }) {
                               <Siren size={14} />
                             </button>
                         }
-                        <button title="Delete" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: 'var(--red-400)' }} onClick={() => handleDelete(inv._id)}>
+                        <button title="Delete Batch" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: 'var(--red-400)' }} onClick={() => handleDelete(inv._id)}>
                           <Trash2 size={14} />
                         </button>
                       </div>

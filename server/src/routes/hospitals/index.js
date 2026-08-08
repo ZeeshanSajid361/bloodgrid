@@ -405,18 +405,14 @@ router.post(
         return res.status(400).json({ success: false, message: 'Units must be 0 or greater.' });
       }
 
-      const inv = await Inventory.findOneAndUpdate(
-        { hospital: req.org._id, bloodGroup },
-        {
-          $set: {
-            units,
-            expiresAt:          expiresAt || undefined,
-            lowStockThreshold:  lowStockThreshold ?? 2,
-            lastUpdatedBy:      'manual',
-          },
-        },
-        { upsert: true, new: true, runValidators: true }
-      );
+      const inv = await Inventory.create({
+        hospital:          req.org._id,
+        bloodGroup,
+        units,
+        expiresAt:         expiresAt || undefined,
+        lowStockThreshold: lowStockThreshold ?? 2,
+        lastUpdatedBy:     'manual',
+      });
 
       res.status(201).json({ success: true, message: 'Inventory entry saved.', data: { inventory: inv } });
     } catch (err) {
