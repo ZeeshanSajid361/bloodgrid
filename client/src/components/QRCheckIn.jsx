@@ -91,8 +91,8 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
   const mapsUrl = (latitude && longitude)
     ? `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        hospitalName + (hospitalAddress ? `, ${hospitalAddress}` : '') + (hospitalCity ? `, ${hospitalCity}` : '')
-      )}`;
+      hospitalName + (hospitalAddress ? `, ${hospitalAddress}` : '') + (hospitalCity ? `, ${hospitalCity}` : '')
+    )}`;
 
   const handleCopyToken = () => {
     if (!qrData?.token) return;
@@ -149,8 +149,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
         });
       }
       setShowEtaModal(false);
-      setExpanded(true);
-      generate(); // Auto-generate QR code upon commitment
+      generate(); // Auto-generate QR code in background upon commitment
       if (onCommitmentChange) onCommitmentChange();
     } catch (err) {
       setCommitError(err.response?.data?.message || err.message || 'Failed to reserve slot.');
@@ -183,7 +182,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
   function handleDownload() {
     const canvas = document.querySelector(`#qr-canvas-${requestId}`);
     if (!canvas) return;
-    
+
     const pngUrl = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = pngUrl;

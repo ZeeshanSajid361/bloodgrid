@@ -935,52 +935,93 @@ function RequestsTab() {
         )}
       </div>
 
-      {/* Incoming Requests List */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Incoming Requests at Your Hospital ({requests.length})</h3>
-          <button className="btn btn-ghost btn-sm" onClick={fetchRequests}>Refresh</button>
-        </div>
+      {/* Active Incoming Requests List */}
+      {(() => {
+        const activeRequests = requests.filter(r => ['approved', 'pending_review'].includes(r.status));
+        const historyRequests = requests.filter(r => ['fulfilled', 'cancelled', 'rejected'].includes(r.status));
 
-        {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[1, 2].map(i => <div key={i} className="skeleton" style={{ height: 90, borderRadius: 12 }} />)}
-          </div>
-        ) : requests.length === 0 ? (
-          <div className="card" style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--text-muted)' }}>
-            🏥 No blood requests currently logged for your hospital.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            {requests.map(req => {
-              const enRouteCount = (req.commitments || []).filter(c => c.status === 'en_route').length;
-              return (
-                <div key={req._id} className="card" style={{ padding: 'var(--space-4) var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ background: 'var(--red-900)', color: 'var(--red-200)', padding: '2px 8px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 800 }}>
-                        {req.patientBloodGroup}
-                      </span>
-                      <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Request #{req._id.slice(-6)}</span>
-                      <span className={`badge ${req.status === 'fulfilled' ? 'badge-green' : req.status === 'approved' ? 'badge-blue' : ''}`}>
-                        {req.status.toUpperCase()}
-                      </span>
-                      {enRouteCount > 0 && req.status === 'approved' && (
-                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 10, fontSize: '0.75rem', fontWeight: 700 }}>
-                          🚗 {enRouteCount} Donor(s) En-Route
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                      Patient: {req.patientName || 'Anonymous'} · Units Needed: {req.unitsNeeded} · Urgency: {req.urgency.toUpperCase()}
-                    </div>
-                  </div>
+        return (
+          <>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  ⚡ Active Check-In Queue ({activeRequests.length})
+                </h3>
+                <button className="btn btn-ghost btn-sm" onClick={fetchRequests}>Refresh</button>
+              </div>
+
+              {loading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[1, 2].map(i => <div key={i} className="skeleton" style={{ height: 90, borderRadius: 12 }} />)}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              ) : activeRequests.length === 0 ? (
+                <div className="card" style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  🏥 No active incoming requests at your hospital counter right now.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {activeRequests.map(req => {
+                    const enRouteCount = (req.commitments || []).filter(c => c.status === 'en_route').length;
+                    return (
+                      <div key={req._id} className="card" style={{ padding: 'var(--space-4) var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, borderLeft: '4px solid #3b82f6' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                            <span style={{ background: 'var(--red-900)', color: 'var(--red-200)', padding: '2px 8px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 800 }}>
+                              {req.patientBloodGroup}
+                            </span>
+                            <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Request #{req._id.slice(-6)}</span>
+                            <span className="badge badge-blue">
+                              {req.status.toUpperCase()}
+                            </span>
+                            {enRouteCount > 0 && (
+                              <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '2px 8px', borderRadius: 10, fontSize: '0.75rem', fontWeight: 700 }}>
+                                🚗 {enRouteCount} Donor(s) En-Route
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                            Patient: {req.patientName || 'Anonymous'} · Units Needed: {req.unitsNeeded} · Urgency: {req.urgency.toUpperCase()}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Historical Audit Log (Fulfilled & Cancelled Requests) */}
+            {historyRequests.length > 0 && (
+              <div style={{ marginTop: 'var(--space-6)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 'var(--space-4)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📜 Fulfillment & Request History Log ({historyRequests.length})
+                </h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {historyRequests.map(req => (
+                    <div key={req._id} className="card" style={{ padding: 'var(--space-3) var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, opacity: 0.8, background: 'rgba(15, 23, 42, 0.6)' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                          <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '1px 7px', borderRadius: 10, fontSize: '0.75rem', fontWeight: 800 }}>
+                            {req.patientBloodGroup}
+                          </span>
+                          <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Request #{req._id.slice(-6)}</span>
+                          <span className={`badge ${req.status === 'fulfilled' ? 'badge-green' : 'badge-red'}`}>
+                            {req.status.toUpperCase()}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          Patient: {req.patientName || 'Anonymous'} · Units: {req.unitsNeeded} · Date: {new Date(req.updatedAt || req.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }
