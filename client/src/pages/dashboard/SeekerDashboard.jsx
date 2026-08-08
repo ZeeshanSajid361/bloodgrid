@@ -651,6 +651,46 @@ function HistoryTab({ requests, loading, error, total, refetch, onNewRequest }) 
         </button>
       </div>
 
+      {/* Requests & Units Fulfillment Track Metrics */}
+      {!loading && requests.length > 0 && (() => {
+        const totalSubmitted = requests.length;
+        const pendingCount = requests.filter(r => r.status === 'pending_review').length;
+        const approvedCount = requests.filter(r => r.status === 'approved').length;
+        const fulfilledReqs = requests.filter(r => r.status === 'fulfilled');
+        const fulfilledCount = fulfilledReqs.length;
+        const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
+
+        return (
+          <div className="card animate-fade-up" style={{
+            marginBottom: 'var(--space-6)',
+            padding: 'var(--space-5) var(--space-6)',
+            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95))',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '16px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+            gap: '16px'
+          }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Total Submitted</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text-primary)' }}>{totalSubmitted} Requests</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Active / Pending</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#f59e0b' }}>{pendingCount + approvedCount} Active</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Fulfilled Requests</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#10b981' }}>{fulfilledCount} Completed</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Blood Units Received</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#60a5fa' }}>🩸 {fulfilledUnits} Units</div>
+            </div>
+          </div>
+        );
+      })()}
+
       {loading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {[1, 2, 3].map((i) => (

@@ -496,7 +496,7 @@ function UsersTab({ admin }) {
       {loading
         ? <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}><Loader2 size={22} className="spin" /></div>
         : <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City</th><th>Verified</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City</th><th>Fulfillment & Requests Track</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
               {users.users.length === 0
                 ? <tr><td colSpan={7} className="admin-empty">No users found.</td></tr>
@@ -506,10 +506,20 @@ function UsersTab({ admin }) {
                       <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>
                       <td><span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{u.role}</span></td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{u.city || '—'}</td>
-                      <td>
-                        {u.isEmailVerified
-                          ? <CheckCircle size={15} style={{ color: 'var(--color-success)' }} />
-                          : <XCircle size={15} style={{ color: 'var(--text-muted)' }} />}
+                      <td style={{ fontSize: '0.82rem' }}>
+                        {u.stats ? (
+                          <div>
+                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                              Fulfilled: <span style={{ color: '#34d399' }}>{u.stats.fulfilledRequests} reqs</span> ({u.stats.fulfilledUnits} units)
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              Pending: {u.stats.pendingRequests} · Total: {u.stats.totalRequests}
+                              {u.role === 'donor' && ` · Donated: ${u.stats.confirmedDonations}`}
+                            </div>
+                          </div>
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td>
                         <span className={`badge badge-${u.isBlocked ? 'red' : 'green'}`}>

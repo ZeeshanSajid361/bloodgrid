@@ -386,7 +386,35 @@ router.get('/users', async (req, res, next) => {
       User.countDocuments(filter),
     ]);
 
-    res.json({ success: true, data: { users, total, page: Number(page) } });
+    const enrichedUsers = await Promise.all(
+      users.map(async (u) => {
+        const reqs = await Request.find({ seeker: u._id }).select('status unitsNeeded').lean();
+        const totalRequests = reqs.length;
+        const pendingRequests = reqs.filter(r => r.status === 'pending_review' || r.status === 'approved').length;
+        const fulfilledReqs = reqs.filter(r => r.status === 'fulfilled');
+        const fulfilledRequests = fulfilledReqs.length;
+        const fulfilledUnits = fulfilledReqs.reduce((acc, curr) => acc + (curr.unitsNeeded || 1), 0);
+
+        let confirmedDonations = 0;
+        if (u.role === 'donor') {
+          const dp = await DonorProfile.findOne({ user: u._id }).select('confirmedDonations').lean();
+          confirmedDonations = dp?.confirmedDonations || 0;
+        }
+
+        return {
+          ...u,
+          stats: {
+            totalRequests,
+            pendingRequests,
+            fulfilledRequests,
+            fulfilledUnits,
+            confirmedDonations,
+          },
+        };
+      })
+    );
+
+    res.json({ success: true, data: { users: enrichedUsers, total, page: Number(page) } });
   } catch (err) {
     next(err);
   }
