@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
 import cacheService from '../utils/CacheService';
 

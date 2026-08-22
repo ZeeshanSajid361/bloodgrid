@@ -33,16 +33,20 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
     }
 
     if (el) {
-      try {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-      } catch {}
       const rect = el.getBoundingClientRect();
-      setTargetRect({
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
-      });
+      if (rect.width > 0 && rect.height > 0) {
+        try {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        } catch {}
+        setTargetRect({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        });
+      } else {
+        setTargetRect(null);
+      }
     } else {
       setTargetRect(null);
     }
@@ -98,7 +102,9 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
 
   // Calculate position of tooltip relative to target rect with strict viewport clamping
   const getTooltipStyle = () => {
-    if (!targetRect) {
+    const isMobile = window.innerWidth <= 768;
+
+    if (!targetRect || isMobile) {
       return {
         style: {
           top: '50%',
@@ -106,13 +112,14 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
           transform: 'translate(-50%, -50%)',
         },
         arrowClass: '',
+        showSpotlight: false,
       };
     }
 
     const preferredPos = step.preferredPos || 'bottom';
     const padding = 16;
     const tooltipWidth = Math.min(340, window.innerWidth - 32);
-    const estimatedHeight = 295; // Increased to 295px to ensure cards with action buttons never overflow screen bottom
+    const estimatedHeight = 295;
 
     let top = 0;
     let left = 0;
@@ -123,7 +130,6 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
       left = Math.max(16, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 16));
       arrow = 'top';
 
-      // Check if placing at bottom overflows screen height
       if (top + estimatedHeight > window.innerHeight - 16) {
         if (targetRect.top - estimatedHeight - padding > 16) {
           top = targetRect.top - estimatedHeight - padding;
@@ -163,23 +169,23 @@ export default function AppSpotlightTour({ isOpen, onClose, steps = [], tourKey 
       }
     }
 
-    // Final safety boundary clamp for top & left so tooltip is ALWAYS 100% visible
     top = Math.max(16, Math.min(top, window.innerHeight - estimatedHeight - 20));
     left = Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16));
 
     return {
       style: { top: `${top}px`, left: `${left}px` },
       arrowClass: `spotlight-arrow-${arrow}`,
+      showSpotlight: true,
     };
   };
 
-  const { style: tooltipStyle, arrowClass } = getTooltipStyle();
+  const { style: tooltipStyle, arrowClass, showSpotlight } = getTooltipStyle();
 
   const tourPortal = (
     <>
       <div className="spotlight-tour-overlay" onClick={handleFinish} />
 
-      {targetRect && (
+      {targetRect && showSpotlight && (
         <div
           className="spotlight-target-box"
           style={{
