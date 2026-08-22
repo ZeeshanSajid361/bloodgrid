@@ -30,18 +30,18 @@ During emergency trauma cases and sudden blood shortages, traditional blood dona
 
 ```mermaid
 graph TD
-    Client[React 18 + Vite Web App] -->|HTTPS / REST API| API[Express.js API Gateway]
+    Client["React 18 + Vite Web App"] -->|HTTPS / REST API| API["Express.js API Gateway"]
     
-    subgraph Core Architecture
-        API -->|JWT Authentication| Auth[Auth Guard & Middleware]
-        Auth -->|Cache First| Cache[Cache Service / Upstash Redis]
-        Cache -- Cache Miss --> DB[(MongoDB Atlas Database)]
+    subgraph Core ["Core Architecture"]
+        API -->|JWT Authentication| Auth["Auth Guard & Middleware"]
+        Auth -->|Cache First| Cache["Cache Service / Upstash Redis"]
+        Cache -->|Cache Miss| DB[("MongoDB Atlas Database")]
         DB --> Cache
     end
 
-    subgraph Real-Time Operations
-        API -->|Batch Expiry Engine| Expiry[35-Day Inventory Integrity]
-        API -->|Code Red Engine| Alerts[Emergency Broadcast System]
+    subgraph Ops ["Real-Time Operations"]
+        API -->|Batch Expiry Engine| Expiry["35-Day Inventory Integrity"]
+        API -->|Code Red Engine| Alerts["Emergency Broadcast System"]
     end
 
     Cache --> API
