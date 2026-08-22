@@ -355,11 +355,12 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         touchAction: 'none'
       }}
     >
-      {/* Outer card: Wide side-by-side split screen layout (No scrolling needed!) */}
-      <div className="card" style={{
+      {/* Outer card: Wide split screen on desktop, stacked on mobile */}
+      <div className="card location-picker-card" style={{
         width: '100%', maxWidth: '980px',
-        height: 'min(580px, 92vh)',
-        display: 'flex', flexDirection: 'row',
+        maxHeight: '92vh',
+        display: 'flex',
+        flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
         background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)',
         borderRadius: '20px', overflow: 'hidden',
         boxShadow: '0 25px 60px rgba(0,0,0,0.85)',
@@ -367,7 +368,12 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       }}>
 
         {/* ── LEFT COLUMN: 100% Real Google Maps View ── */}
-        <div style={{ flex: '1.2', position: 'relative', height: '100%', background: '#1e293b', display: 'flex', flexDirection: 'column' }}>
+        <div style={{
+          flex: window.innerWidth <= 768 ? 'none' : '1.2',
+          height: window.innerWidth <= 768 ? '200px' : '100%',
+          minHeight: window.innerWidth <= 768 ? '200px' : 'auto',
+          position: 'relative', background: '#1e293b', display: 'flex', flexDirection: 'column'
+        }}>
           
           <iframe
             title="Real Google Map View"
@@ -382,16 +388,16 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
           
           {/* Live Location Badge Over Map */}
           <div style={{
-            position: 'absolute', bottom: '16px', left: '16px', zIndex: 1000,
-            background: 'rgba(15, 23, 42, 0.92)', padding: '8px 14px', borderRadius: '12px',
-            fontSize: '0.78rem', color: '#34d399', fontWeight: 700,
+            position: 'absolute', bottom: '12px', left: '12px', zIndex: 1000,
+            background: 'rgba(15, 23, 42, 0.92)', padding: '6px 12px', borderRadius: '10px',
+            fontSize: '0.72rem', color: '#34d399', fontWeight: 700,
             border: '1px solid rgba(16, 185, 129, 0.4)', backdropFilter: 'blur(6px)',
-            pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '8px',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.4)', maxWidth: '85%'
+            pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '6px',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.4)', maxWidth: '90%'
           }}>
-            <MapPin size={16} color="#ef4444" style={{ flexShrink: 0 }} />
+            <MapPin size={14} color="#ef4444" style={{ flexShrink: 0 }} />
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              📍 Google Map View: {activeEmbedQuery}
+              📍 {activeEmbedQuery}
             </span>
           </div>
 
@@ -400,8 +406,11 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         {/* ── RIGHT COLUMN: Search, Controls & Auto-Filled Details Panel ── */}
         <div style={{
           flex: '1', display: 'flex', flexDirection: 'column',
-          padding: '20px 24px', background: '#0f172a',
-          borderLeft: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden'
+          padding: window.innerWidth <= 768 ? '14px 16px' : '20px 24px',
+          background: '#0f172a',
+          borderLeft: window.innerWidth <= 768 ? 'none' : '1px solid rgba(255,255,255,0.1)',
+          borderTop: window.innerWidth <= 768 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+          overflowY: 'auto'
         }}>
 
           {/* Header */}
