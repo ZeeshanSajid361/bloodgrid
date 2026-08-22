@@ -575,6 +575,115 @@ export default function CinematicSplashScreen({ onComplete }) {
           0% { transform: translateY(0) scale(0.9); }
           100% { transform: translateY(-12px) scale(1.1); }
         }
+        /* ── Mobile Responsive Overrides ────────────────────────────── */
+        @media (max-width: 520px) {
+          .splash-main-content {
+            max-width: 100vw;
+            padding: 0 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+          }
+
+          .orbital-galaxy-wrapper {
+            width: 320px;
+            height: 170px;
+            margin-bottom: 12px;
+          }
+
+          .central-ekg-orb {
+            width: 65px;
+            height: 65px;
+            box-shadow: 0 0 35px rgba(255, 77, 77, 0.8), 0 0 60px rgba(192, 57, 43, 0.45);
+          }
+
+          .central-ekg-orb svg {
+            width: 30px !important;
+            height: 30px !important;
+          }
+
+          .node-icon-capsule {
+            width: 28px;
+            height: 28px;
+          }
+
+          .node-icon-capsule svg {
+            width: 12px !important;
+            height: 12px !important;
+          }
+
+          .node-pill-label {
+            padding: 4px 8px;
+            font-size: 0.68rem;
+            gap: 4px;
+            border-radius: 14px;
+          }
+
+          .node-pill-label svg {
+            width: 10px !important;
+            height: 10px !important;
+          }
+
+          .orbital-capsule-node {
+            gap: 4px;
+          }
+
+          .node-top-left { top: -2px; left: -6px; }
+          .node-top-right { top: -2px; right: -6px; }
+          .node-bottom-left { bottom: 6px; left: -6px; }
+          .node-bottom-right { bottom: 6px; right: -6px; }
+
+          .brand-title {
+            font-size: 2.1rem;
+            gap: 8px;
+          }
+
+          .brand-title .brand-icon-wrap svg {
+            width: 26px !important;
+            height: 26px !important;
+          }
+
+          .brand-tagline {
+            font-size: 0.92rem;
+            padding: 0 10px;
+          }
+
+          .brand-bottom-pill {
+            margin-top: 10px;
+            padding: 4px 12px;
+            font-size: 0.72rem;
+          }
+
+          .ground-contact-line {
+            width: 90vw;
+          }
+
+          .ground-shadow {
+            width: 80vw;
+          }
+
+          .splatter-impact-group {
+            width: 90vw;
+          }
+        }
+
+        @media (max-width: 375px) {
+          .orbital-galaxy-wrapper {
+            width: 285px;
+            height: 155px;
+          }
+
+          .node-pill-label span {
+            font-size: 0.6rem;
+          }
+
+          .brand-title {
+            font-size: 1.8rem;
+          }
+
+          .brand-tagline {
+            font-size: 0.85rem;
+          }
+        }
       `}</style>
     </div>
   );
