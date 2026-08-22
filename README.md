@@ -1,9 +1,9 @@
-# 🩸 BloodSync 2.0 — Real-Time Community Blood Network & Inventory Management System
+# 🩸 BloodSync — Real-Time Community Blood Network & Inventory Management System
 
 ![Build Status](https://img.shields.io/badge/build-passing-success) ![Vercel](https://img.shields.io/badge/Deployed-Vercel-black) ![MongoDB](https://img.shields.io/badge/Database-MongoDB_Atlas-green) ![License](https://img.shields.io/badge/License-MIT-blue) ![Author](https://img.shields.io/badge/Developer-Zeeshan_Sajid-red)
 
 > **Save Lives, One Drop at a Time.**  
-> BloodSync 2.0 is a production-grade, full-stack medical emergency platform designed to connect voluntary blood donors, patients in critical need, blood banks, and hospital emergency wards in real time across Pakistan.
+> BloodSync is a production-grade, full-stack medical emergency platform designed to connect voluntary blood donors, patients in critical need, blood banks, and hospital emergency wards in real time across Pakistan.
 
 ---
 
@@ -21,7 +21,7 @@ In critical emergency situations—such as traffic trauma, surgical complication
 4. **Donor Health Risks**: Donors donating too frequently without enforced rest periods risk severe anemia, while hospitals lack reliable check-in verification tokens.
 
 ### 💡 Our Solution
-**BloodSync 2.0** re-engineers blood logistics into an intelligent, high-speed ecosystem:
+**BloodSync** re-engineers blood logistics into an intelligent, high-speed ecosystem:
 * **Instant Emergency Matching (<15s)**: Automated Code Red broadcasting matches patients with compatible, eligible donors in their exact city.
 * **Batch-Level Expiry Isolation (35-Day Rule)**: Enforces a strict 35-day shelf life on all blood bags. Expired or depleted stock is automatically moved to an isolated archive, preserving 100% stock metric accuracy.
 * **0ms Stale-While-Revalidate (SWR) Caching**: Instant client-side hydration eliminates post-login loading delays while fetching background updates silently.
@@ -55,7 +55,7 @@ graph TD
 
 ## 👥 Deep Dive: Profiles, Workflows & Screenshots
 
-BloodSync 2.0 provides 5 dedicated user profiles, each built with tailored user interfaces and strict access control rules.
+BloodSync provides 5 dedicated user profiles, each built with tailored user interfaces and strict access control rules.
 
 ---
 
@@ -197,7 +197,7 @@ npm run dev
 
 ## 👨‍💻 Academic Context & Credits
 
-**BloodSync 2.0** was conceived, architected, designed, and developed independently by **Zeeshan Sajid** (BS 23 Computer Science student at FAST NUCES Islamabad).
+**BloodSync** was conceived, architected, designed, and developed independently by **Zeeshan Sajid** (BS 23 Computer Science student at FAST NUCES Islamabad).
 
 * **Developer**: Zeeshan Sajid
 * **Institution**: FAST National University of Computer and Emerging Sciences, Islamabad
