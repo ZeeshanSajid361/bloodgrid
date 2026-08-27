@@ -356,30 +356,14 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
       }}
     >
       {/* Outer card: Wide split screen on desktop, stacked on mobile */}
-      <div className="card location-picker-card" style={{
-        width: '100%', maxWidth: '980px',
-        maxHeight: '92vh',
-        display: 'flex',
-        flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
-        background: '#0f172a', border: '1px solid rgba(255,255,255,0.15)',
-        borderRadius: '20px', overflow: 'hidden',
-        boxShadow: '0 25px 60px rgba(0,0,0,0.85)',
-        position: 'relative',
-      }}>
+      <div className="card location-picker-modal-card">
 
         {/* ── LEFT COLUMN: 100% Real Google Maps View ── */}
-        <div style={{
-          flex: window.innerWidth <= 768 ? 'none' : '1.2',
-          height: window.innerWidth <= 768 ? '200px' : '100%',
-          minHeight: window.innerWidth <= 768 ? '200px' : 'auto',
-          position: 'relative', background: '#1e293b', display: 'flex', flexDirection: 'column'
-        }}>
+        <div className="location-picker-map-col">
           
           <iframe
+            className="location-picker-map-iframe"
             title="Real Google Map View"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
             loading="lazy"
             allowFullScreen
             referrerPolicy="no-referrer-when-downgrade"
@@ -404,14 +388,71 @@ export default function LocationPickerModal({ isOpen, onClose, onSelectLocation,
         </div>
 
         {/* ── RIGHT COLUMN: Search, Controls & Auto-Filled Details Panel ── */}
-        <div style={{
-          flex: '1', display: 'flex', flexDirection: 'column',
-          padding: window.innerWidth <= 768 ? '14px 16px' : '20px 24px',
-          background: '#0f172a',
-          borderLeft: window.innerWidth <= 768 ? 'none' : '1px solid rgba(255,255,255,0.1)',
-          borderTop: window.innerWidth <= 768 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-          overflowY: 'auto'
-        }}>
+        <div className="location-picker-form-col">
+
+          <style>{`
+            .location-picker-modal-card {
+              width: 100%;
+              max-width: 980px;
+              height: min(580px, 90vh);
+              display: flex;
+              flex-direction: row;
+              background: #0f172a;
+              border: 1px solid rgba(255, 255, 255, 0.15);
+              border-radius: 20px;
+              overflow: hidden;
+              box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+              position: relative;
+            }
+
+            .location-picker-map-col {
+              flex: 1.2;
+              position: relative;
+              height: 100%;
+              width: 100%;
+              background: #1e293b;
+              display: flex;
+              flex-direction: column;
+            }
+
+            .location-picker-map-iframe {
+              width: 100% !important;
+              height: 100% !important;
+              flex: 1 1 auto !important;
+              min-height: 0 !important;
+              border: 0 !important;
+            }
+
+            .location-picker-form-col {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              padding: 20px 24px;
+              background: #0f172a;
+              border-left: 1px solid rgba(255, 255, 255, 0.1);
+              overflow-y: auto;
+            }
+
+            @media (max-width: 768px) {
+              .location-picker-modal-card {
+                flex-direction: column !important;
+                height: auto !important;
+                max-height: 92vh !important;
+              }
+
+              .location-picker-map-col {
+                flex: none !important;
+                height: 220px !important;
+                min-height: 220px !important;
+              }
+
+              .location-picker-form-col {
+                border-left: none !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                padding: 14px 16px !important;
+              }
+            }
+          `}</style>
 
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
