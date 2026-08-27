@@ -995,6 +995,12 @@ function EditProfileTab({ donor, refetch, onSaved }) {
                   placeholder="A short note about your availability or blood donation pledge..."
                   value={form.bio}
                   onChange={handleChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
                   style={{ resize: 'vertical', minHeight: 80, paddingTop: '10px' }}
                 />
               </div>

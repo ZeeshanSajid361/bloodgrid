@@ -907,6 +907,12 @@ function RequestTab({ onSubmitted }) {
                 placeholder="Any additional context for the admin reviewer..."
                 value={form.additionalNotes}
                 onChange={handleChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
                 style={{ resize: 'vertical', minHeight: 80 }}
               />
             </div>

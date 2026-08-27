@@ -560,6 +560,12 @@ export default function LandingPage() {
                     placeholder="Type your message here..." 
                     value={contactMsg} 
                     onChange={(e) => setContactMsg(e.target.value)} 
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleContactSubmit(e);
+                      }
+                    }}
                     required 
                     style={{ resize: 'vertical' }} 
                   />
