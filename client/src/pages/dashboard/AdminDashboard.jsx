@@ -53,9 +53,24 @@ const ADMIN_TOUR_STEPS = [
 /* ── shared note modal ───────────────────────────────────────────────────── */
 function NoteModal({ title, description, onConfirm, onClose, loading, isReject }) {
   const [note, setNote] = useState('');
+
+  function handleSubmit(e) {
+    if (e) e.preventDefault();
+    if (!loading && !(isReject && !note.trim())) {
+      onConfirm(note);
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }
+
   return (
     <div className="admin-note-modal" onClick={onClose}>
-      <div className="admin-note-dialog" onClick={e => e.stopPropagation()}>
+      <form className="admin-note-dialog" onClick={e => e.stopPropagation()} onSubmit={handleSubmit}>
         <h3>{title}</h3>
         <p>{description}</p>
         <div className="input-group" style={{ marginBottom: 'var(--space-5)' }}>
@@ -66,20 +81,22 @@ function NoteModal({ title, description, onConfirm, onClose, loading, isReject }
             style={{ resize: 'vertical' }}
             value={note}
             onChange={e => setNote(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={isReject ? 'Explain why this is being rejected…' : 'Optional message for the applicant…'}
+            autoFocus
           />
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>Cancel</button>
           <button
+            type="submit"
             className={`btn btn-sm ${isReject ? 'btn-danger' : 'btn-secondary'}`}
             disabled={loading || (isReject && !note.trim())}
-            onClick={() => onConfirm(note)}
           >
             {loading ? <Loader2 size={15} className="spin" /> : isReject ? 'Reject' : 'Confirm'}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
