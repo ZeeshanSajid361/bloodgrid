@@ -444,10 +444,19 @@ function RequestsTab({ admin }) {
   async function handleAction(note) {
     setActing(true);
     try {
-      if (modal.type === 'approve') await approveRequest(modal.req._id, note);
-      if (modal.type === 'reject')  await rejectRequest(modal.req._id, note);
-      if (modal.type === 'fulfill') await fulfillRequest(modal.req._id);
+      if (modal?.type === 'approve') await approveRequest(modal.req._id, note);
+      if (modal?.type === 'reject')  await rejectRequest(modal.req._id, note);
       setModal(null);
+      fetchRequests('', true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Action failed.');
+    } finally { setActing(false); }
+  }
+
+  async function handleFulfill(reqId) {
+    setActing(true);
+    try {
+      await fulfillRequest(reqId);
       fetchRequests('', true);
     } catch (err) {
       alert(err.response?.data?.message || 'Action failed.');
@@ -522,7 +531,12 @@ function RequestsTab({ admin }) {
                               </button>
                             </>}
                             {r.status === 'approved' && (
-                              <button className="btn btn-secondary btn-sm" style={{ padding: '4px 8px' }} onClick={() => { setModal({ type: 'fulfill', req: r }); handleAction(); }}>
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '4px 8px' }}
+                                disabled={acting}
+                                onClick={() => handleFulfill(r._id)}
+                              >
                                 <CheckCircle size={13} /> Fulfilled
                               </button>
                             )}
