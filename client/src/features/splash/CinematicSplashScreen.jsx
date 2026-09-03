@@ -212,7 +212,7 @@ export default function CinematicSplashScreen({ onComplete }) {
               <div className="brand-icon-wrap">
                 <Droplets size={36} color="#ff4d4d" style={{ filter: 'drop-shadow(0 0 12px #ff4d4d)' }} />
               </div>
-              <span>Blood<span>Sync</span></span>
+              <span>Blood<span>Grid</span></span>
             </h1>
 
             <p className="brand-tagline">

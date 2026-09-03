@@ -112,7 +112,7 @@ class AuthController {
       await authService.submitContactInquiry(req.body);
       return res.status(200).json({
         success: true,
-        message: 'Your message has been sent to the BloodSync Support Team.',
+        message: 'Your message has been sent to the BloodGrid Support Team.',
       });
     } catch (err) {
       if (err.status) {
