@@ -30,7 +30,7 @@ async function seedPreapprovedAccounts() {
       // 2. Hospital Account 1 (Web UI Hospital)
       {
         name: 'Main City Hospital Admin',
-        email: 'zeeshansajid31@gmail.com',
+        email: 'hospital.web@bloodgrid.com',
         password: defaultPassword,
         role: 'hospital',
         phone: '03001234567',
@@ -42,7 +42,7 @@ async function seedPreapprovedAccounts() {
       // 3. Hospital Account 2 (API Integrated Hospital - EMN Sync)
       {
         name: 'FAST Medical Center Admin',
-        email: 'i230779@isb.nu.edu.pk',
+        email: 'hospital.api@bloodgrid.com',
         password: defaultPassword,
         role: 'hospital',
         phone: '03007654321',
@@ -54,7 +54,7 @@ async function seedPreapprovedAccounts() {
       // 4. Hospital Account 3 (Regional Hospital & Clinic)
       {
         name: 'Regional Clinic Admin',
-        email: 'okzeeshanmalick@gmail.com',
+        email: 'hospital.clinic@bloodgrid.com',
         password: defaultPassword,
         role: 'hospital',
         phone: '03009998877',
@@ -63,31 +63,24 @@ async function seedPreapprovedAccounts() {
         orgName: 'Regional Blood Bank & Clinic',
         orgType: 'hospital',
       },
-      // 5. Seeker Account (Pre-approved)
-      {
-        name: 'Dummy Seeker User',
-        email: 'seeker1@gmail.com',
-        password: defaultPassword,
-        role: 'seeker',
-        phone: '03001112233',
-        city: 'Islamabad',
-        isEmailVerified: true,
-      },
-      // 6. Voluntary Donor Account (Pre-approved)
-      {
-        name: 'Dummy Donor User',
-        email: 'donor1@gmail.com',
-        password: defaultPassword,
-        role: 'donor',
-        phone: '03004445566',
-        city: 'Islamabad',
-        bloodGroup: 'O+',
-        isEmailVerified: true,
-      },
+      // 5. Seeker Accounts (seeker1@bloodgrid.com to seeker5@bloodgrid.com)
+      { name: 'Seeker One', email: 'seeker1@bloodgrid.com', password: defaultPassword, role: 'seeker', phone: '03001110001', city: 'Islamabad', isEmailVerified: true },
+      { name: 'Seeker Two', email: 'seeker2@bloodgrid.com', password: defaultPassword, role: 'seeker', phone: '03001110002', city: 'Rawalpindi', isEmailVerified: true },
+      { name: 'Seeker Three', email: 'seeker3@bloodgrid.com', password: defaultPassword, role: 'seeker', phone: '03001110003', city: 'Lahore', isEmailVerified: true },
+      { name: 'Seeker Four', email: 'seeker4@bloodgrid.com', password: defaultPassword, role: 'seeker', phone: '03001110004', city: 'Karachi', isEmailVerified: true },
+      { name: 'Seeker Five', email: 'seeker5@bloodgrid.com', password: defaultPassword, role: 'seeker', phone: '03001110005', city: 'Peshawar', isEmailVerified: true },
+
+      // 6. Voluntary Donor Accounts (donor1@bloodgrid.com to donor5@bloodgrid.com)
+      { name: 'Donor One (A+)', email: 'donor1@bloodgrid.com', password: defaultPassword, role: 'donor', phone: '03004440001', city: 'Islamabad', bloodGroup: 'A+', isEmailVerified: true },
+      { name: 'Donor Two (O+)', email: 'donor2@bloodgrid.com', password: defaultPassword, role: 'donor', phone: '03004440002', city: 'Rawalpindi', bloodGroup: 'O+', isEmailVerified: true },
+      { name: 'Donor Three (B+)', email: 'donor3@bloodgrid.com', password: defaultPassword, role: 'donor', phone: '03004440003', city: 'Lahore', bloodGroup: 'B+', isEmailVerified: true },
+      { name: 'Donor Four (AB+)', email: 'donor4@bloodgrid.com', password: defaultPassword, role: 'donor', phone: '03004440004', city: 'Karachi', bloodGroup: 'AB+', isEmailVerified: true },
+      { name: 'Donor Five (O- Universal)', email: 'donor5@bloodgrid.com', password: defaultPassword, role: 'donor', phone: '03004440005', city: 'Islamabad', bloodGroup: 'O-', isEmailVerified: true },
+
       // 7. Community Partner Account (Pre-approved NGO/Drive Organizer)
       {
         name: 'Red Cross Partner Admin',
-        email: 'partner1@gmail.com',
+        email: 'partner@bloodgrid.com',
         password: defaultPassword,
         role: 'hospital',
         phone: '03007778899',
