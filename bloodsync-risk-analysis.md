@@ -1,7 +1,7 @@
-# BloodSync 2.0 — Architectural Risk Analysis & Resilience Plan
+# BloodGrid 2.0 — Architectural Risk Analysis & Resilience Plan
 
 ## Executive Summary
-This document outlines a high-level, practical risk analysis for the **BloodSync 2.0** full-stack blood donation platform. The focus is placed on real-world system bottlenecks, serverless scaling, data privacy, and critical path reliability without unnecessary complexity.
+This document outlines a high-level, practical risk analysis for the **BloodGrid 2.0** full-stack blood donation platform. The focus is placed on real-world system bottlenecks, serverless scaling, data privacy, and critical path reliability without unnecessary complexity.
 
 ---
 
@@ -74,4 +74,4 @@ This document outlines a high-level, practical risk analysis for the **BloodSync
 ---
 
 ## Conclusion & Verification
-The BloodSync 2.0 system architecture incorporates production-grade safeguards against database connection starvation, cache connection drops, NoSQL injection, and data leakage. All mitigations are non-intrusive and maintain continuous system operations without disruption.
+The BloodGrid 2.0 system architecture incorporates production-grade safeguards against database connection starvation, cache connection drops, NoSQL injection, and data leakage. All mitigations are non-intrusive and maintain continuous system operations without disruption.
