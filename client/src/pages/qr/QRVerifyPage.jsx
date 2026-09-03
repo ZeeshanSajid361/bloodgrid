@@ -51,7 +51,7 @@ export default function QRVerifyPage() {
         {/* ── Logo ─────────────────────────────────────────────────────── */}
         <div className="qr-verify-brand">
           <div className="qr-verify-logo">🩸</div>
-          <span>BloodSync</span>
+          <span>BloodGrid</span>
         </div>
 
         {/* ── Loading ───────────────────────────────────────────────────── */}
@@ -111,7 +111,7 @@ export default function QRVerifyPage() {
         {/* ── Footer link ───────────────────────────────────────────────── */}
         <div className="qr-verify-footer">
           <Link to="/" className="qr-verify-home">
-            <Home size={14} /> Back to BloodSync
+            <Home size={14} /> Back to BloodGrid
           </Link>
         </div>
       </div>

@@ -23,7 +23,7 @@ export default function OnboardingModal({ isOpen, onClose, role = 'donor', userN
 
   const donorSteps = [
     {
-      title: "Welcome to BloodSync!",
+      title: "Welcome to BloodGrid!",
       badge: "🩸 You Are Active & Ready",
       icon: HeartHandshake,
       color: "#ef4444",
@@ -74,7 +74,7 @@ export default function OnboardingModal({ isOpen, onClose, role = 'donor', userN
 
   const seekerSteps = [
     {
-      title: "Welcome to BloodSync!",
+      title: "Welcome to BloodGrid!",
       badge: "🔍 Find Compatible Donors",
       icon: Sparkles,
       color: "#ef4444",
@@ -235,7 +235,7 @@ export default function OnboardingModal({ isOpen, onClose, role = 'donor', userN
               className="btn btn-primary btn-sm"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#10b981', color: '#ffffff', fontWeight: 700, padding: '8px 20px' }}
             >
-              <CheckCircle2 size={16} /> Got It, Start Using BloodSync!
+              <CheckCircle2 size={16} /> Got It, Start Using BloodGrid!
             </button>
           )}
         </div>

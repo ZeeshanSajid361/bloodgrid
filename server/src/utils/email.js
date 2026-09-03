@@ -66,7 +66,7 @@ async function sendVerificationEmail({ name, email, token }) {
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Verify your BloodSync email</title>
+      <title>Verify your BloodGrid email</title>
       <style>
         body { margin: 0; padding: 0; background: #0d0d0f; font-family: 'Segoe UI', Arial, sans-serif; }
         .wrapper { max-width: 560px; margin: 40px auto; background: #141418; border-radius: 16px; overflow: hidden; }
@@ -86,13 +86,13 @@ async function sendVerificationEmail({ name, email, token }) {
     <body>
       <div class="wrapper">
         <div class="header">
-          <h1>🩸 BloodSync 2.0</h1>
+          <h1>🩸 BloodGrid</h1>
           <p>Connecting donors, seekers & hospitals</p>
         </div>
         <div class="body">
           <p>Hi <strong>${name}</strong>,</p>
           <p>
-            Thank you for joining BloodSync. Before your account goes live,
+            Thank you for joining BloodGrid. Before your account goes live,
             please confirm your email address by clicking the button below.
             This link expires in <strong>2 hours</strong>. Any new request automatically invalidates older links.
 
@@ -100,16 +100,16 @@ async function sendVerificationEmail({ name, email, token }) {
           <div class="btn-wrap">
             <a href="${verifyUrl}" class="btn">Verify Email Address</a>
           </div>
-          <p>If you did not create a BloodSync account, you can safely ignore this email.</p>
+          <p>If you did not create a BloodGrid account, you can safely ignore this email.</p>
           <p class="url">Or paste this link in your browser:<br />${verifyUrl}</p>
         </div>
-        <div class="footer">© ${new Date().getFullYear()} BloodSync — A university project</div>
+        <div class="footer">© ${new Date().getFullYear()} BloodGrid</div>
       </div>
     </body>
     </html>
   `;
 
-  await sendMail({ to: email, subject: 'Verify your BloodSync email address', html });
+  await sendMail({ to: email, subject: 'Verify your BloodGrid email address', html });
 }
 
 /**
@@ -125,7 +125,7 @@ async function sendWelcomeEmail({ name, email, role }) {
     <html lang="en">
     <head>
       <meta charset="UTF-8" />
-      <title>Welcome to BloodSync</title>
+      <title>Welcome to BloodGrid</title>
       <style>
         body { margin: 0; padding: 0; background: #0d0d0f; font-family: 'Segoe UI', Arial, sans-serif; }
         .wrapper { max-width: 560px; margin: 40px auto; background: #141418; border-radius: 16px; overflow: hidden; }
@@ -143,7 +143,7 @@ async function sendWelcomeEmail({ name, email, role }) {
     <body>
       <div class="wrapper">
         <div class="header">
-          <h1>🩸 Welcome to BloodSync</h1>
+          <h1>🩸 Welcome to BloodGrid</h1>
         </div>
         <div class="body">
           <p>Hi <strong>${name}</strong>,</p>
@@ -156,13 +156,13 @@ async function sendWelcomeEmail({ name, email, role }) {
           </div>
           <p>Every donation saves lives. Thank you for being part of the network.</p>
         </div>
-        <div class="footer">© ${new Date().getFullYear()} BloodSync — A university project</div>
+        <div class="footer">© ${new Date().getFullYear()} BloodGrid</div>
       </div>
     </body>
     </html>
   `;
 
-  await sendMail({ to: email, subject: 'You are verified — Welcome to BloodSync!', html });
+  await sendMail({ to: email, subject: 'You are verified — Welcome to BloodGrid!', html });
 }
 
 /**
@@ -178,7 +178,7 @@ async function sendPasswordResetEmail({ name, email, token }) {
     <html lang="en">
     <head>
       <meta charset="UTF-8" />
-      <title>Reset your BloodSync password</title>
+      <title>Reset your BloodGrid password</title>
       <style>
         body { margin: 0; padding: 0; background: #0d0d0f; font-family: 'Segoe UI', Arial, sans-serif; }
         .wrapper { max-width: 560px; margin: 40px auto; background: #141418; border-radius: 16px; overflow: hidden; }
@@ -202,7 +202,7 @@ async function sendPasswordResetEmail({ name, email, token }) {
         <div class="body">
           <p>Hi <strong>${name}</strong>,</p>
           <p>
-            We received a request to reset your password for your BloodSync account.
+            We received a request to reset your password for your BloodGrid account.
             Click the button below to set a new password. This link is valid for <strong>10 minutes</strong>. Any newer request automatically invalidates older links.
 
           </p>
@@ -212,13 +212,13 @@ async function sendPasswordResetEmail({ name, email, token }) {
           <p>If you did not request a password reset, you can safely ignore this email.</p>
           <p class="url">Or paste this link in your browser:<br />${resetUrl}</p>
         </div>
-        <div class="footer">© ${new Date().getFullYear()} BloodSync</div>
+        <div class="footer">© ${new Date().getFullYear()} BloodGrid</div>
       </div>
     </body>
     </html>
   `;
 
-  await sendMail({ to: email, subject: 'Reset your BloodSync password', html });
+  await sendMail({ to: email, subject: 'Reset your BloodGrid password', html });
 }
 
 /**
@@ -257,7 +257,7 @@ async function sendContactSupportEmail({ name, email, message }) {
     </html>
   `;
 
-  await sendMail({ to: 'zeeshansajid361@gmail.com', subject: `[BloodSync Contact] Message from ${name}`, html });
+  await sendMail({ to: 'zeeshansajid361@gmail.com', subject: `[BloodGrid Contact] Message from ${name}`, html });
 }
 
 module.exports = { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendContactSupportEmail };

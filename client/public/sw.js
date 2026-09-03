@@ -20,7 +20,7 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 /* ── Push event ─────────────────────────────────────────────────────────── */
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'BloodSync', message: 'You have a new notification.', link: '/' };
+  let data = { title: 'BloodGrid', message: 'You have a new notification.', link: '/' };
 
   if (event.data) {
     try {

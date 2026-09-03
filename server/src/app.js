@@ -101,7 +101,7 @@ app.use((req, res, next) => {
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get(['/api/health', '/health'], (_req, res) => {
-  res.status(200).json({ success: true, message: 'BloodSync API is running.' });
+  res.status(200).json({ success: true, message: 'BloodGrid API is running.' });
 });
 
 // ── API routes ───────────────────────────────────────────────────────────────
