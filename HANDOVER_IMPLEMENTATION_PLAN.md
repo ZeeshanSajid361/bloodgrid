@@ -154,6 +154,19 @@ Here are the specific features, performance optimizations, and UI refinements to
   - Test custom `PhoneInput` dropdown on mobile viewports.
   - Ensure all modal popups (`LocationPickerModal`, `QRCheckIn`, `OnboardingModal`) fit within mobile screens without horizontal scrollbars.
 
+### 🧪 Task 5: Thorough Feature & Hospital API Integration Testing
+- **Goal**: Perform an exhaustive, end-to-end verification of all system roles and integration pipelines from scratch.
+- **Action Items**:
+  1. **Hospital Profiles & EMN API Testing**:
+     - Test standard Hospital Freezer Stock management and 35-day batch shelf-life auto-quarantining.
+     - Test Hospital Counter QR Code Check-in Verification token generation and scanning.
+     - **API Key Integration**: Test the Enterprise Medical Network (EMN) REST API integration (`/api/hospitals/api-sync` or API key endpoints) to verify that external software can push live inventory updates using generated API keys without throwing auth or schema errors.
+  2. **Role-Based Workflow Testing**:
+     - **Admin**: Verify medical slip approval queue, hospital API key generation, and user moderation.
+     - **Donor**: Verify WHO cooldown lock (90d male / 120d female), badge milestone calculations, and live request matching.
+     - **Seeker**: Test blood request creation, hospital slip file upload, and real-time request stage progress timeline (*Submitted ➔ Approved ➔ Fulfilled*).
+     - **Partner/NGO**: Test community blood drive creation and assisted patient requests.
+
 ---
 
 ## 🚀 5. Quickstart Development Commands
@@ -181,9 +194,10 @@ npm run dev
 | :--- | :---: | :---: |
 | Clone repository & create local `.env` files | 🔥 High | Pending |
 | Add own MongoDB, Gmail SMTP, & Cloudinary credentials | 🔥 High | Pending |
-| Add `VITE_GOOGLE_MAPS_API_KEY` & test Places Autocomplete | 🟡 Medium | Pending |
+| Address Location / Mapping task (API key or OpenStreetMap/Leaflet) | 🟡 Medium | Pending |
 | Implement HTTP-only cookie auth & speed up profile loading | 🟡 Medium | Pending |
 | Update CSS text contrast (`#e2e8f0` / `#ffffff`) for subtitles | 🟢 Normal | Pending |
 | Polish `CinematicSplashScreen.jsx` launch animation | 🟢 Normal | Pending |
+| Comprehensive feature & Hospital EMN API testing across all 5 roles | 🔥 High | Pending |
 
 Happy Coding! 🩸🚀
