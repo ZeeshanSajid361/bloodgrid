@@ -123,13 +123,12 @@ bloodsync/
 
 Here are the specific features, performance optimizations, and UI refinements to implement:
 
-### 📍 Task 1: Google Maps API Integration & Auto-Fill Location
-- **Goal**: Allow seekers and hospitals to search, select, and auto-fill exact addresses using Google Places Autocomplete and interactive Google Maps pins.
-- **Current State**: `LocationPickerModal.jsx` has fallback coordinates set; requires an active Google Cloud API key with Maps JavaScript API & Places API enabled.
-- **Action Items**:
-  1. Add `VITE_GOOGLE_MAPS_API_KEY` to `client/.env`.
-  2. Load the Google Maps JavaScript script dynamically in `LocationPickerModal.jsx` or `index.html`.
-  3. Wire Google Places Autocomplete input so typing an address automatically drops a pin and sets `{ address, city, lat, lng }` into the request form.
+### 📍 Task 1: Location Selection, Auto-Fill & Mapping Integration
+- **Goal**: Enable exact address auto-filling and interactive map pin placement for seekers submitting blood requests and hospitals setting freezer inventory locations.
+- **Current Blocker / Challenge**: The initial implementation attempted to use Google Maps (`LocationPickerModal.jsx`), but it requires an active paid/billing-enabled Google Cloud API key (`VITE_GOOGLE_MAPS_API_KEY`). Because no API key was available during development, this feature could not be fully completed.
+- **Action Items / Options**:
+  - **Option A (Google Maps API)**: Add an active Google Cloud Places & Maps JavaScript API key (`VITE_GOOGLE_MAPS_API_KEY`) to `client/.env` and finish wiring Google Places Autocomplete.
+  - **Option B (Free Open-Source Alternative - Recommended)**: Switch `LocationPickerModal.jsx` to a completely free, open-source library like **Leaflet + OpenStreetMap** (via `react-leaflet` and `leaflet-geosearch` / Nominatim API). This allows 100% free location selection, pin dropping, and address reverse-geocoding without requiring any paid API keys!
 
 ### ⚡ Task 2: Performance & Latency Optimization (Login & Profile Loading)
 - **Goal**: Eliminate initial load delay on sign-in and profile page switching.
