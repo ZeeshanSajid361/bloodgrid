@@ -186,7 +186,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
     const pngUrl = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = pngUrl;
-    a.download = `bloodsync-qr-${requestId}.png`;
+    a.download = `bloodgrid-qr-${requestId}.png`;
     a.click();
   }
 

@@ -238,7 +238,7 @@ export default function RegisterPage() {
         <div className="auth-form-card">
           <div className="auth-form-header">
             <h1>Create account</h1>
-            <p>Join BloodSync and make a difference.</p>
+            <p>Join BloodGrid and make a difference.</p>
           </div>
 
           {/* Role selector */}
@@ -527,8 +527,8 @@ function BrandPanel() {
       <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="brand-logo-wrap" style={{ cursor: 'pointer' }}>
           <div className="brand-icon">🩸</div>
-          <div className="brand-wordmark">BloodSync</div>
-          <p className="brand-tagline">Connecting donors, seekers, and hospitals across Pakistan.</p>
+          <div className="brand-wordmark">BloodGrid</div>
+          <p className="brand-tagline">Connecting donors, seekers, and hospitals globally.</p>
         </div>
       </Link>
 

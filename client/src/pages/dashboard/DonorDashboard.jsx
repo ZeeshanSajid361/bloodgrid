@@ -332,7 +332,7 @@ export default function DonorDashboard() {
 
           <div style={{ background: '#ffffff', padding: '14px', borderRadius: '14px', display: 'inline-block', marginBottom: '12px' }}>
             <QRCodeCanvas
-              value="https://bloodsync.app/verify/DEMO-88291034"
+              value="https://bloodgrid.app/verify/DEMO-88291034"
               size={170}
               level="H"
               fgColor="#1a1a2e"
@@ -431,7 +431,7 @@ function OverviewTab({ donor, refetch }) {
         <StatCard
           label="Member Since"
           value={formatDate(donor.memberSince)}
-          sub={`${daysSince(donor.memberSince)} days on BloodSync`}
+          sub={`${daysSince(donor.memberSince)} days on BloodGrid`}
           icon="📅"
           iconBg="rgba(124,58,237,0.15)"
         />

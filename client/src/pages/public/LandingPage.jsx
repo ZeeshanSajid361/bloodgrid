@@ -151,7 +151,7 @@ export default function LandingPage() {
         <div className="landing-nav-inner">
           <Link to="/" className="landing-logo" onClick={handleLogoClick}>
             <div className="landing-logo-icon">🩸</div>
-            <span className="landing-logo-text">Blood<span>Sync</span></span>
+            <span className="landing-logo-text">Blood<span>Grid</span></span>
           </Link>
 
           {/* Desktop Nav Links */}
@@ -217,7 +217,7 @@ export default function LandingPage() {
             Every Drop Counts. <span>Save Lives</span> in Real-Time.
           </h1>
           <p className="hero-subtitle">
-            BloodSync connects voluntary blood donors directly with critical patients and emergency hospital wards across your city within minutes.
+            BloodGrid connects voluntary blood donors directly with critical patients and emergency hospital wards across your city within minutes.
           </p>
 
           <div className="hero-ctas">
@@ -235,7 +235,7 @@ export default function LandingPage() {
           <div className="hero-card-glass">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>BloodSync Impact</h3>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>BloodGrid Impact</h3>
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Verified real-time network activity</p>
               </div>
               <span className="badge badge-green">LIVE SYSTEM</span>
@@ -348,7 +348,7 @@ export default function LandingPage() {
 
                 <div style={{ padding: 'var(--space-4)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)', marginBottom: 'var(--space-5)' }}>
                   <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
-                    🔒 <strong>Privacy & Safety Protocol:</strong> BloodSync notifies nearby voluntary donors automatically when an official request is submitted. Direct personal phone numbers of donors are protected and never displayed publicly.
+                    🔒 <strong>Privacy & Safety Protocol:</strong> BloodGrid notifies nearby voluntary donors automatically when an official request is submitted. Direct personal phone numbers of donors are protected and never displayed publicly.
                   </p>
                 </div>
 
@@ -407,7 +407,7 @@ export default function LandingPage() {
       <section id="how-it-works" className="section-wrapper">
         <div className="section-title-wrap">
           <div className="section-tag">Simple & Fast</div>
-          <h2 className="section-main-title">How BloodSync Works</h2>
+          <h2 className="section-main-title">How BloodGrid Works</h2>
           <p className="section-desc">Connecting life-savers with patients in 3 streamlined steps.</p>
         </div>
 
@@ -480,7 +480,7 @@ export default function LandingPage() {
         <div className="section-title-wrap">
           <div className="section-tag">Direct Support & Demo Desks</div>
           <h2 className="section-main-title">Contact & Support Center</h2>
-          <p className="section-desc">Reach out directly to our BloodSync Support Desk or view emergency hospital demo desks.</p>
+          <p className="section-desc">Reach out directly to our BloodGrid Support Desk or view emergency hospital demo desks.</p>
         </div>
 
         <div className="dashboard-grid-2" style={{ gap: 'var(--space-6)' }}>
@@ -521,12 +521,12 @@ export default function LandingPage() {
               <Mail size={20} color="var(--blue-400)" /> Send Email to Support
             </h3>
             <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
-              Have questions or need assistance? Send a message directly to our BloodSync Support Desk.
+              Have questions or need assistance? Send a message directly to our BloodGrid Support Desk.
             </p>
 
             {contactSubmitted ? (
               <div className="badge badge-green" style={{ padding: 'var(--space-4)', fontSize: '0.875rem', width: '100%', justifyContent: 'center', textAlign: 'center', lineHeight: 1.5 }}>
-                ✓ Message Sent! Your inquiry has been sent directly to the BloodSync Support Team.
+                ✓ Message Sent! Your inquiry has been sent directly to the BloodGrid Support Team.
               </div>
             ) : (
               <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -581,10 +581,10 @@ export default function LandingPage() {
 
             <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
               <a 
-                href="mailto:support@bloodsync.app?subject=BloodSync%20Support%20Inquiry" 
+                href="mailto:support@bloodgrid.app?subject=BloodGrid%20Support%20Inquiry" 
                 style={{ fontSize: '0.825rem', color: 'var(--red-400)', fontWeight: 700, textDecoration: 'none' }}
               >
-                ✉️ Direct Mail: support@bloodsync.app
+                ✉️ Direct Mail: support@bloodgrid.app
               </a>
             </div>
           </div>
@@ -598,7 +598,7 @@ export default function LandingPage() {
           <div className="footer-brand">
             <Link to="/" className="landing-logo" onClick={handleLogoClick}>
               <div className="landing-logo-icon">🩸</div>
-              <span className="landing-logo-text">Blood<span>Sync</span></span>
+              <span className="landing-logo-text">Blood<span>Grid</span></span>
             </Link>
             <p>
               A modern, community-driven emergency blood donor connection platform committed to saving lives.
@@ -628,14 +628,14 @@ export default function LandingPage() {
             <h4>Emergency Help</h4>
             <ul>
               <li style={{ color: 'var(--red-300)', fontWeight: 700 }}>24/7 Rescue Line: 1122</li>
-              <li>Email: support@bloodsync.app</li>
+              <li>Email: support@bloodgrid.app</li>
             </ul>
           </div>
 
         </div>
 
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} BloodSync 2.0. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} BloodGrid. All rights reserved.</p>
           <p>Built with ❤️ to save lives.</p>
         </div>
       </footer>

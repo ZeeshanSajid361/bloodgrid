@@ -123,7 +123,7 @@ export default function LoginPage() {
         <div className="auth-form-card">
           <div className="auth-form-header">
             <h1>Welcome back</h1>
-            <p>Sign in to your BloodSync account.</p>
+            <p>Sign in to your BloodGrid account.</p>
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
