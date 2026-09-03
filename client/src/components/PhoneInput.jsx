@@ -1,118 +1,125 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronDown, Search } from 'lucide-react';
 
-const COUNTRY_CODES = [
-  { iso: 'PK', code: '+92',  flag: '🇵🇰', label: 'Pakistan' },
-  { iso: 'US', code: '+1',   flag: '🇺🇸', label: 'United States' },
-  { iso: 'GB', code: '+44',  flag: '🇬🇧', label: 'United Kingdom' },
-  { iso: 'CA', code: '+1',   flag: '🇨🇦', label: 'Canada' },
-  { iso: 'AE', code: '+971', flag: '🇦🇪', label: 'UAE' },
-  { iso: 'SA', code: '+966', flag: '🇸🇦', label: 'Saudi Arabia' },
-  { iso: 'QA', code: '+974', flag: '🇶🇦', label: 'Qatar' },
-  { iso: 'OM', code: '+968', flag: '🇴🇲', label: 'Oman' },
-  { iso: 'KW', code: '+965', flag: '🇰🇼', label: 'Kuwait' },
-  { iso: 'BH', code: '+973', flag: '🇧🇭', label: 'Bahrain' },
-  { iso: 'IN', code: '+91',  flag: '🇮🇳', label: 'India' },
-  { iso: 'BD', code: '+880', flag: '🇧🇩', label: 'Bangladesh' },
-  { iso: 'LK', code: '+94',  flag: '🇱🇰', label: 'Sri Lanka' },
-  { iso: 'NP', code: '+977', flag: '🇳🇵', label: 'Nepal' },
-  { iso: 'MV', code: '+960', flag: '🇲🇻', label: 'Maldives' },
-  { iso: 'AF', code: '+93',  flag: '🇦🇫', label: 'Afghanistan' },
-  { iso: 'TR', code: '+90',  flag: '🇹🇷', label: 'Turkey' },
-  { iso: 'MY', code: '+60',  flag: '🇲🇾', label: 'Malaysia' },
-  { iso: 'SG', code: '+65',  flag: '🇸🇬', label: 'Singapore' },
-  { iso: 'ID', code: '+62',  flag: '🇮🇩', label: 'Indonesia' },
-  { iso: 'TH', code: '+66',  flag: '🇹🇭', label: 'Thailand' },
-  { iso: 'PH', code: '+63',  flag: '🇵🇭', label: 'Philippines' },
-  { iso: 'VN', code: '+84',  flag: '🇻🇳', label: 'Vietnam' },
-  { iso: 'JP', code: '+81',  flag: '🇯🇵', label: 'Japan' },
-  { iso: 'KR', code: '+82',  flag: '🇰🇷', label: 'South Korea' },
-  { iso: 'CN', code: '+86',  flag: '🇨🇳', label: 'China' },
-  { iso: 'HK', code: '+852', flag: '🇭🇰', label: 'Hong Kong' },
-  { iso: 'TW', code: '+886', flag: '🇹🇼', label: 'Taiwan' },
-  { iso: 'AU', code: '+61',  flag: '🇦🇺', label: 'Australia' },
-  { iso: 'NZ', code: '+64',  flag: '🇳🇿', label: 'New Zealand' },
-  { iso: 'DE', code: '+49',  flag: '🇩🇪', label: 'Germany' },
-  { iso: 'FR', code: '+33',  flag: '🇫🇷', label: 'France' },
-  { iso: 'IT', code: '+39',  flag: '🇮🇹', label: 'Italy' },
-  { iso: 'ES', code: '+34',  flag: '🇪🇸', label: 'Spain' },
-  { iso: 'NL', code: '+31',  flag: '🇳🇱', label: 'Netherlands' },
-  { iso: 'CH', code: '+41',  flag: '🇨🇭', label: 'Switzerland' },
-  { iso: 'SE', code: '+46',  flag: '🇸🇪', label: 'Sweden' },
-  { iso: 'NO', code: '+47',  flag: '🇳🇴', label: 'Norway' },
-  { iso: 'DK', code: '+45',  flag: '🇩🇰', label: 'Denmark' },
-  { iso: 'FI', code: '+358', flag: '🇫🇮', label: 'Finland' },
-  { iso: 'IE', code: '+353', flag: '🇮🇪', label: 'Ireland' },
-  { iso: 'BE', code: '+32',  flag: '🇧🇪', label: 'Belgium' },
-  { iso: 'AT', code: '+43',  flag: '🇦🇹', label: 'Austria' },
-  { iso: 'PT', code: '+351', flag: '🇵🇹', label: 'Portugal' },
-  { iso: 'GR', code: '+30',  flag: '🇬🇷', label: 'Greece' },
-  { iso: 'PL', code: '+48',  flag: '🇵🇱', label: 'Poland' },
-  { iso: 'RO', code: '+40',  flag: '🇷🇴', label: 'Romania' },
-  { iso: 'CZ', code: '+420', flag: '🇨🇿', label: 'Czechia' },
-  { iso: 'HU', code: '+36',  flag: '🇭🇺', label: 'Hungary' },
-  { iso: 'ZA', code: '+27',  flag: '🇿🇦', label: 'South Africa' },
-  { iso: 'EG', code: '+20',  flag: '🇪🇬', label: 'Egypt' },
-  { iso: 'NG', code: '+234', flag: '🇳🇬', label: 'Nigeria' },
-  { iso: 'KE', code: '+254', flag: '🇰🇪', label: 'Kenya' },
-  { iso: 'MA', code: '+212', flag: '🇲🇦', label: 'Morocco' },
-  { iso: 'DZ', code: '+213', flag: '🇩🇿', label: 'Algeria' },
-  { iso: 'TN', code: '+216', flag: '🇹🇳', label: 'Tunisia' },
-  { iso: 'GH', code: '+233', flag: '🇬🇭', label: 'Ghana' },
-  { iso: 'ET', code: '+251', flag: '🇪🇹', label: 'Ethiopia' },
-  { iso: 'BR', code: '+55',  flag: '🇧🇷', label: 'Brazil' },
-  { iso: 'MX', code: '+52',  flag: '🇲🇽', label: 'Mexico' },
-  { iso: 'AR', code: '+54',  flag: '🇦🇷', label: 'Argentina' },
-  { iso: 'CL', code: '+56',  flag: '🇨🇱', label: 'Chile' },
-  { iso: 'CO', code: '+57',  flag: '🇨🇴', label: 'Colombia' },
-  { iso: 'PE', code: '+51',  flag: '🇵🇪', label: 'Peru' },
-  { iso: 'VE', code: '+58',  flag: '🇻🇪', label: 'Venezuela' },
-  { iso: 'RU', code: '+7',   flag: '🇷🇺', label: 'Russia' },
-  { iso: 'UA', code: '+380', flag: '🇺🇦', label: 'Ukraine' },
-  { iso: 'IR', code: '+98',  flag: '🇮🇷', label: 'Iran' },
-  { iso: 'IQ', code: '+964', flag: '🇮🇶', label: 'Iraq' },
-  { iso: 'JO', code: '+962', flag: '🇯🇴', label: 'Jordan' },
-  { iso: 'LB', code: '+961', flag: '🇱🇧', label: 'Lebanon' },
-  { iso: 'SY', code: '+963', flag: '🇸🇾', label: 'Syria' },
-  { iso: 'PS', code: '+970', flag: '🇵🇸', label: 'Palestine' },
-  { iso: 'YE', code: '+967', flag: '🇾🇪', label: 'Yemen' },
+const COUNTRIES = [
+  { iso: 'PK', code: '+92',  name: 'Pakistan' },
+  { iso: 'US', code: '+1',   name: 'United States' },
+  { iso: 'GB', code: '+44',  name: 'United Kingdom' },
+  { iso: 'CA', code: '+1',   name: 'Canada' },
+  { iso: 'AE', code: '+971', name: 'UAE' },
+  { iso: 'SA', code: '+966', name: 'Saudi Arabia' },
+  { iso: 'QA', code: '+974', name: 'Qatar' },
+  { iso: 'OM', code: '+968', name: 'Oman' },
+  { iso: 'KW', code: '+965', name: 'Kuwait' },
+  { iso: 'BH', code: '+973', name: 'Bahrain' },
+  { iso: 'IN', code: '+91',  name: 'India' },
+  { iso: 'BD', code: '+880', name: 'Bangladesh' },
+  { iso: 'LK', code: '+94',  name: 'Sri Lanka' },
+  { iso: 'NP', code: '+977', name: 'Nepal' },
+  { iso: 'MV', code: '+960', name: 'Maldives' },
+  { iso: 'AF', code: '+93',  name: 'Afghanistan' },
+  { iso: 'TR', code: '+90',  name: 'Turkey' },
+  { iso: 'MY', code: '+60',  name: 'Malaysia' },
+  { iso: 'SG', code: '+65',  name: 'Singapore' },
+  { iso: 'ID', code: '+62',  name: 'Indonesia' },
+  { iso: 'TH', code: '+66',  name: 'Thailand' },
+  { iso: 'PH', code: '+63',  name: 'Philippines' },
+  { iso: 'VN', code: '+84',  name: 'Vietnam' },
+  { iso: 'JP', code: '+81',  name: 'Japan' },
+  { iso: 'KR', code: '+82',  name: 'South Korea' },
+  { iso: 'CN', code: '+86',  name: 'China' },
+  { iso: 'HK', code: '+852', name: 'Hong Kong' },
+  { iso: 'TW', code: '+886', name: 'Taiwan' },
+  { iso: 'AU', code: '+61',  name: 'Australia' },
+  { iso: 'NZ', code: '+64',  name: 'New Zealand' },
+  { iso: 'DE', code: '+49',  name: 'Germany' },
+  { iso: 'FR', code: '+33',  name: 'France' },
+  { iso: 'IT', code: '+39',  name: 'Italy' },
+  { iso: 'ES', code: '+34',  name: 'Spain' },
+  { iso: 'NL', code: '+31',  name: 'Netherlands' },
+  { iso: 'CH', code: '+41',  name: 'Switzerland' },
+  { iso: 'SE', code: '+46',  name: 'Sweden' },
+  { iso: 'NO', code: '+47',  name: 'Norway' },
+  { iso: 'DK', code: '+45',  name: 'Denmark' },
+  { iso: 'FI', code: '+358', name: 'Finland' },
+  { iso: 'IE', code: '+353', name: 'Ireland' },
+  { iso: 'BE', code: '+32',  name: 'Belgium' },
+  { iso: 'AT', code: '+43',  name: 'Austria' },
+  { iso: 'PT', code: '+351', name: 'Portugal' },
+  { iso: 'GR', code: '+30',  name: 'Greece' },
+  { iso: 'PL', code: '+48',  name: 'Poland' },
+  { iso: 'RO', code: '+40',  name: 'Romania' },
+  { iso: 'CZ', code: '+420', name: 'Czechia' },
+  { iso: 'HU', code: '+36',  name: 'Hungary' },
+  { iso: 'ZA', code: '+27',  name: 'South Africa' },
+  { iso: 'EG', code: '+20',  name: 'Egypt' },
+  { iso: 'NG', code: '+234', name: 'Nigeria' },
+  { iso: 'KE', code: '+254', name: 'Kenya' },
+  { iso: 'MA', code: '+212', name: 'Morocco' },
+  { iso: 'DZ', code: '+213', name: 'Algeria' },
+  { iso: 'TN', code: '+216', name: 'Tunisia' },
+  { iso: 'GH', code: '+233', name: 'Ghana' },
+  { iso: 'ET', code: '+251', name: 'Ethiopia' },
+  { iso: 'BR', code: '+55',  name: 'Brazil' },
+  { iso: 'MX', code: '+52',  name: 'Mexico' },
+  { iso: 'AR', code: '+54',  name: 'Argentina' },
+  { iso: 'CL', code: '+56',  name: 'Chile' },
+  { iso: 'CO', code: '+57',  name: 'Colombia' },
+  { iso: 'PE', code: '+51',  name: 'Peru' },
+  { iso: 'VE', code: '+58',  name: 'Venezuela' },
+  { iso: 'RU', code: '+7',   name: 'Russia' },
+  { iso: 'UA', code: '+380', name: 'Ukraine' },
+  { iso: 'IR', code: '+98',  name: 'Iran' },
+  { iso: 'IQ', code: '+964', name: 'Iraq' },
+  { iso: 'JO', code: '+962', name: 'Jordan' },
+  { iso: 'LB', code: '+961', name: 'Lebanon' },
+  { iso: 'SY', code: '+963', name: 'Syria' },
+  { iso: 'PS', code: '+970', name: 'Palestine' },
+  { iso: 'YE', code: '+967', name: 'Yemen' },
 ];
 
-// Sort helper: longest dial codes first to avoid partial prefix matching (+971 matched before +97)
-const SORTED_CODES = [...COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length);
+const SORTED_CODES = [...COUNTRIES].sort((a, b) => b.code.length - a.code.length);
 
-export default function PhoneInput({ value = '', onChange, name = 'phone', placeholder = '300-1234567' }) {
+export default function PhoneInput({ value = '', onChange, name = 'phone', placeholder = '300 0000000' }) {
   const [country, setCountry] = useState('+92');
   const [localNumber, setLocalNumber] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (!value) {
       setLocalNumber('');
       return;
     }
-    
-    // Attempt to split an existing full number (e.g. +92 300-1234567 or +1 415-5552671)
-    let foundCode = SORTED_CODES.find(c => value.startsWith(c.code));
-    if (foundCode) {
-      setCountry(foundCode.code);
-      let remainder = value.slice(foundCode.code.length).trim();
+    const found = SORTED_CODES.find(c => value.startsWith(c.code));
+    if (found) {
+      setCountry(found.code);
+      const remainder = value.slice(found.code.length).trim();
       setLocalNumber(formatLocal(remainder));
     } else {
       setLocalNumber(formatLocal(value));
     }
   }, [value]);
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   function formatLocal(text) {
-    // Strip all non-digits
     const raw = text.replace(/\D/g, '');
     if (!raw) return '';
-
     if (raw.startsWith('0')) {
-      // Format: 0XXX-XXXXXXX
       const prefix = raw.slice(0, 4);
       const suffix = raw.slice(4, 11);
       return suffix ? `${prefix}-${suffix}` : prefix;
     } else {
-      // Format: XXX-XXXXXXX
       const prefix = raw.slice(0, 3);
       const suffix = raw.slice(3, 10);
       return suffix ? `${prefix}-${suffix}` : prefix;
@@ -122,54 +129,139 @@ export default function PhoneInput({ value = '', onChange, name = 'phone', place
   function handleNumberChange(e) {
     const formatted = formatLocal(e.target.value);
     setLocalNumber(formatted);
-    // Propagate the full number up
     const fullNumber = formatted ? `${country} ${formatted}` : '';
-    onChange({ target: { name, value: fullNumber } });
+    if (onChange) onChange({ target: { name, value: fullNumber } });
   }
 
-  function handleCountryChange(e) {
-    const newCountry = e.target.value;
-    setCountry(newCountry);
-    const fullNumber = localNumber ? `${newCountry} ${localNumber}` : '';
-    onChange({ target: { name, value: fullNumber } });
+  function handleSelectCountry(code) {
+    setCountry(code);
+    setIsOpen(false);
+    setSearch('');
+    const fullNumber = localNumber ? `${code} ${localNumber}` : '';
+    if (onChange) onChange({ target: { name, value: fullNumber } });
   }
 
-  const activeCountry = COUNTRY_CODES.find(c => c.code === country) || COUNTRY_CODES[0];
+  const filteredCountries = COUNTRIES.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.code.includes(search) ||
+    c.iso.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
-      <div style={{ position: 'relative', width: '115px', flexShrink: 0 }}>
-        <select 
-          className="input" 
-          value={country} 
-          onChange={handleCountryChange}
-          style={{ 
-            paddingLeft: '28px', 
-            paddingRight: '10px', 
-            fontSize: '0.8rem', 
-            cursor: 'pointer',
-            height: '100%',
-            fontWeight: 600
+    <div ref={containerRef} style={{ position: 'relative', display: 'flex', gap: '8px', width: '100%' }}>
+      {/* Trigger Button */}
+      <button
+        type="button"
+        className="input"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '90px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 10px',
+          fontWeight: 700,
+          fontSize: '0.84rem',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
+        <span>{country}</span>
+        <ChevronDown size={14} style={{ opacity: 0.7, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+      </button>
+
+      {/* Floating Dropdown List */}
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            width: '270px',
+            maxHeight: '260px',
+            background: 'var(--surface-color, #131926)',
+            border: '1px solid var(--border-color, #273142)',
+            borderRadius: '10px',
+            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.65)',
+            zIndex: 99999,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
           }}
         >
-          {COUNTRY_CODES.map(c => (
-            <option key={`${c.iso}-${c.code}`} value={c.code}>
-              {c.flag} {c.iso} ({c.code}) — {c.label}
-            </option>
-          ))}
-        </select>
-        <div style={{ position: 'absolute', top: '50%', left: '8px', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '0.85rem' }}>
-          {activeCountry.flag}
+          {/* Search Box */}
+          <div style={{ padding: '8px', borderBottom: '1px solid var(--border-color, #273142)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Search size={14} style={{ opacity: 0.5, flexShrink: 0, marginLeft: '4px' }} />
+            <input
+              type="text"
+              placeholder="Search country or code..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: '#fff',
+                fontSize: '0.8rem',
+              }}
+            />
+          </div>
+
+          {/* Country Options List */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+            {filteredCountries.length === 0 ? (
+              <div style={{ padding: '12px', fontSize: '0.78rem', opacity: 0.6, textAlign: 'center' }}>No countries found</div>
+            ) : (
+              filteredCountries.map(c => {
+                const isSelected = c.code === country;
+                return (
+                  <button
+                    key={`${c.iso}-${c.code}`}
+                    type="button"
+                    onClick={() => handleSelectCountry(c.code)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '8px 12px',
+                      background: isSelected ? 'rgba(255, 77, 77, 0.15)' : 'transparent',
+                      border: 'none',
+                      color: isSelected ? '#ff4d4d' : '#e2e8f0',
+                      fontSize: '0.82rem',
+                      fontWeight: isSelected ? 700 : 500,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                      if (!isSelected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    }}
+                    onMouseLeave={e => {
+                      if (!isSelected) e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    <span>{c.name}</span>
+                    <span style={{ fontSize: '0.78rem', opacity: 0.75, fontFamily: 'monospace' }}>{c.code}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
-      
+      )}
+
+      {/* Main Local Number Field */}
       <input
         type="tel"
         className="input"
         placeholder={placeholder}
         value={localNumber}
         onChange={handleNumberChange}
-        style={{ flex: 1, minWidth: 0, fontSize: '0.82rem', paddingLeft: '10px', paddingRight: '10px' }}
+        style={{ flex: 1, minWidth: 0, fontSize: '0.84rem', paddingLeft: '10px', paddingRight: '10px' }}
       />
     </div>
   );
