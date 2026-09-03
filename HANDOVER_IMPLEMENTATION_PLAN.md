@@ -192,6 +192,24 @@ npm run dev
 
 ---
 
+## 🔐 6. Pre-Configured & Pre-Approved Test Accounts
+
+All the following test accounts have been **pre-verified and pre-approved from the admin side** in MongoDB Atlas. Your collaborator can use them immediately to log in and test all features without waiting for manual verification or email tokens.
+
+| Role | Account / Entity Name | Email Address | Default Password | Org / Access Level |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin** | System Super Admin | `admin@bloodgrid.com` | `Password123!` | Full control center & approval queue |
+| **Hospital (Web UI)** | Emergency Hospital (PIMS) | `zeeshansajid31@gmail.com` | `password123` | Freezer stock & 35d expiry management |
+| **Hospital (API / EMN)** | FAST University Medical Center | `i230779@isb.nu.edu.pk` | `password123` | EMN REST API Key machine auto-sync |
+| **Hospital (Clinic)** | Regional Blood Bank & Clinic | `okzeeshanmalick@gmail.com` | `password123` | Counter QR Code Check-in Verification |
+| **Seeker** | Dummy Seeker User | `seeker1@gmail.com` | `password123` | Request creation & slip upload |
+| **Donor** | Dummy Voluntary Donor | `donor1@gmail.com` | `password123` | Emergency matching & WHO cooldown timer |
+| **Partner** | Red Cross Foundation | `partner1@gmail.com` | `password123` | Blood drive camp management |
+
+*Note: You can re-run `node seed-preapproved-accounts.js` in `server/` anytime to reset or re-create these test accounts.*
+
+---
+
 ## 🤝 Summary Checklist for Collaborator
 
 | Task | Priority | Status |
