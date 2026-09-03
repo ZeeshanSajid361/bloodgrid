@@ -2,6 +2,10 @@
 
 Welcome to the **BloodGrid 2.0** codebase! This document provides a complete contextual overview of the application, instructions for repository access and environment credentials, an architectural walkthrough, and a prioritized task list for ongoing improvements and optimizations.
 
+> 🏷️ **Important Note on Project Naming & Branding**:
+> - **Brand Evolution**: The platform was initially named *BloodLink*, then updated to *BloodSync*. However, since both of those names are already in use by existing apps/services, **BloodGrid** is the final, official brand name.
+> - **README & Repository Screenshots**: The current banner images and screenshots in the repository (`/images/` directory and `README.md`) still depict the legacy *BloodSync* visual wordmark. **We will capture fresh screenshots and update all repository images after completing all testing, design polish, and final feature changes.**
+
 ---
 
 ## 📌 1. Repository Access & Collaboration Setup
