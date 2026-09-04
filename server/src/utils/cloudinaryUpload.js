@@ -26,6 +26,19 @@
 const cloudinary = require('cloudinary').v2;
 const { cloudinary: cloudConfig } = require('../config/env');
 
+/** Placeholder cloud names that indicate "no real Cloudinary account configured".
+ *  Matches .env.example defaults and the values a fresh collaborator is most
+ *  likely to leave in place while testing locally. */
+const PLACEHOLDER_CLOUD_NAMES = new Set([
+  '', 'your_cloud_name', 'demo', 'test', 'placeholder', 'bloodgrid-dev',
+]);
+
+function isPlaceholderConfig() {
+  return PLACEHOLDER_CLOUD_NAMES.has((cloudConfig.cloudName || '').trim().toLowerCase());
+}
+
+let placeholderWarningShown = false;
+
 cloudinary.config({
   cloud_name: cloudConfig.cloudName,
   api_key:    cloudConfig.apiKey,
@@ -43,6 +56,27 @@ cloudinary.config({
  */
 function uploadBuffer(buffer, folder = 'bloodsync/requests', publicId, mimetype) {
   return new Promise((resolve, reject) => {
+    // Dev-mode fallback: with placeholder credentials the Cloudinary API call
+    // would fail (and block local end-to-end testing of the request → approval
+    // → fulfillment flow). Return a stub URL instead so the workflow completes.
+    // Production credentials take the real upload path below, unchanged.
+    if (isPlaceholderConfig()) {
+      if (!placeholderWarningShown) {
+        placeholderWarningShown = true;
+        console.warn(
+          '[Cloudinary] Placeholder credentials detected — uploads are stubbed with local URLs. ' +
+          'Set real CLOUDINARY_* values in server/.env to store documents.'
+        );
+      }
+      const crypto = require('crypto');
+      const id = crypto.randomBytes(10).toString('hex');
+      const isPdf = mimetype === 'application/pdf';
+      return resolve({
+        secure_url: `https://res.cloudinary.com/placeholder/${isPdf ? 'raw' : 'image'}/upload/${folder}/${id}${isPdf ? '.pdf' : '.png'}`,
+        public_id: `${folder}/${id}`,
+      });
+    }
+
     const isPdf = mimetype === 'application/pdf';
 
     let finalPublicId = publicId;

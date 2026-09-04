@@ -1,5 +1,5 @@
 /*
- * BloodSync 2.0 — Premium Design System v2
+ * BloodGrid 2.0 — Premium Design System v2
  * Fully responsive, mobile-first, app-oriented theme.
  */
 
@@ -70,9 +70,12 @@
   --font-ui:      'Inter', -apple-system, sans-serif;
   --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 
-  --text-primary:   rgba(255, 255, 255, 0.95);
-  --text-secondary: rgba(255, 255, 255, 0.60);
-  --text-muted:     rgba(255, 255, 255, 0.30);
+  /* Typography contrast (WCAG-conscious):
+     high-contrast light silver + crisp white replace the old low-alpha
+     greys (0.30/0.60 white) that were hard to read on dark glass surfaces. */
+  --text-primary:   #ffffff;
+  --text-secondary: #ffffff;               /* labels, body copy, table headers */
+  --text-muted:     #e2e8f0;               /* subtitles, form subtexts, captions */
 
   /* Spacing scale */
   --space-1: 0.25rem;

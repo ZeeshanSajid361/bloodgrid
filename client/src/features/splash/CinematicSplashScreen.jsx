@@ -5,20 +5,22 @@ export default function CinematicSplashScreen({ onComplete }) {
   const [stage, setStage] = useState(1); // 1: Slow-Motion Drop Descent & Ground Impact, 2: Micro-Galaxy & Brand Reveal, 3: Fade Out
 
   useEffect(() => {
-    // Stage 1 (Slow Drop Fall & Ground Impact) -> Stage 2 (Orbital Galaxy & Brand Reveal)
+    // Ultra-slick launch timing — the full cinematic (drop → impact → splatter
+    // → brand reveal) completes in ~2.05s instead of the previous 4.4s.
+    // Stage 1 (Drop Fall & Ground Impact) -> Stage 2 (Orbital Galaxy & Brand Reveal)
     const timer1 = setTimeout(() => {
       setStage(2);
-    }, 2300);
+    }, 1150);
 
     // Stage 2 -> Stage 3 (Fade Out)
     const timer2 = setTimeout(() => {
       setStage(3);
-    }, 3900);
+    }, 1750);
 
     // Complete callback
     const timer3 = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 4400);
+    }, 2050);
 
     return () => {
       clearTimeout(timer1);
@@ -41,7 +43,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
-        transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         opacity: stage === 3 ? 0 : 1,
         pointerEvents: stage === 3 ? 'none' : 'auto',
         color: '#ffffff',
@@ -255,7 +257,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         .falling-teardrop {
           position: absolute;
           bottom: 120px;
-          animation: slowMotionDropFall 1.8s cubic-bezier(0.42, 0, 0.58, 1) forwards;
+          animation: slowMotionDropFall 0.8s cubic-bezier(0.42, 0, 0.58, 1) forwards;
           z-index: 10;
         }
 
@@ -303,7 +305,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           border-radius: 50%;
           background: linear-gradient(135deg, #ff4d4d, #c0392b);
           box-shadow: 0 0 60px rgba(192, 57, 43, 1);
-          animation: flattenDiscSplatter 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) 1.75s forwards;
+          animation: flattenDiscSplatter 0.35s cubic-bezier(0.1, 0.8, 0.3, 1) 0.66s forwards;
           opacity: 0;
         }
 
@@ -318,7 +320,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           background: radial-gradient(circle at 35% 35%, #ff4d4d, #96281b);
           box-shadow: 0 0 14px rgba(192, 57, 43, 1);
           opacity: 0;
-          animation: burstSubDrop 0.5s cubic-bezier(0.12, 0.8, 0.32, 1) 1.75s forwards;
+          animation: burstSubDrop 0.45s cubic-bezier(0.12, 0.8, 0.32, 1) 0.66s forwards;
         }
 
         .drop-1, .drop-2, .drop-3, .drop-4, .drop-5     { width: 12px; height: 12px; }
@@ -374,7 +376,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           height: 30px;
           border-radius: 50%;
           border: 2px solid rgba(192, 57, 43, 0.95);
-          animation: crownRingSplash 0.5s cubic-bezier(0.16, 1, 0.3, 1) 1.75s forwards;
+          animation: crownRingSplash 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.66s forwards;
           opacity: 0;
         }
 
@@ -391,7 +393,7 @@ export default function CinematicSplashScreen({ onComplete }) {
           width: 100%;
           max-width: 680px;
           padding: 0 20px;
-          animation: mainFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: mainFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes mainFadeIn {
@@ -516,7 +518,7 @@ export default function CinematicSplashScreen({ onComplete }) {
         .brand-tagline {
           margin: 4px 0 0;
           font-size: 1.1rem;
-          color: #cbd5e1;
+          color: #e2e8f0;
           font-weight: 600;
           letter-spacing: 0.5px;
         }

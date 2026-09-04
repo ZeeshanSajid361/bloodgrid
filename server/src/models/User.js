@@ -126,6 +126,13 @@ userSchema.index(
   { sparse: true, expireAfterSeconds: 0, partialFilterExpression: { emailVerificationToken: { $exists: true } } }
 );
 
+// Role-scoped lookups (admin user filters, webPush admin fan-out) and
+// city+role donor/directory searches. Compound covers both query shapes.
+userSchema.index({ role: 1, city: 1 });
+// Covers the handover's { email: 1, role: 1 } login/admin lookup shape — the
+// unique email index already serves equality on email alone.
+userSchema.index({ email: 1, role: 1 });
+
 // ── Pre-save hook — password hashing ─────────────────────────────────────────
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) return next();

@@ -84,6 +84,13 @@ inventorySchema.index({ hospital: 1, bloodGroup: 1 });
 // Efficient queries: find all low-stock items across hospitals.
 inventorySchema.index({ units: 1, bloodGroup: 1 });
 
+// Standalone bloodGroup index — cross-hospital stock queries (seeker search
+// hospitalStock feed, admin analytics) filter on bloodGroup without hospital.
+inventorySchema.index({ bloodGroup: 1 });
+
+// 35-day batch shelf-life: expiry-quarantine scans filter on expiresAt.
+inventorySchema.index({ expiresAt: 1 });
+
 const Inventory = mongoose.model('Inventory', inventorySchema);
 
 // Safely drop legacy unique index from MongoDB collection if present
