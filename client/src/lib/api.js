@@ -19,11 +19,11 @@ import axios from 'axios';
 const rawUrl = (
   import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-    ? 'https://bloodsync-api.onrender.com'
+    ? ''
     : 'http://localhost:5000')
 ).replace(/\/+$/, '');
 
-const BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
+const BASE_URL = rawUrl ? (rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`) : '/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
