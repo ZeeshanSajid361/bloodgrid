@@ -181,6 +181,13 @@ requestSchema.index({ status: 1, createdAt: -1 });
 requestSchema.index({ seeker: 1, createdAt: -1 });
 requestSchema.index({ patientBloodGroup: 1, status: 1 });
 requestSchema.index({ status: 1, patientBloodGroup: 1, hospitalCity: 1, urgency: 1 });
+// Handover-spec compound: { city, bloodGroup, urgency, status } — leading with
+// the equality fields used by the donor live-matching feed
+// (patientBloodGroup + hospitalCity), then urgency/status filters/sorts.
+requestSchema.index({ patientBloodGroup: 1, hospitalCity: 1, urgency: 1, status: 1 });
+// Hospital-scoped lookups: /hospitals/requests feed + EMN fulfill-api
+// (findOne({ _id, hospital, status: 'approved' })).
+requestSchema.index({ hospital: 1, status: 1, createdAt: -1 });
 
 const Request = mongoose.model('Request', requestSchema);
 
