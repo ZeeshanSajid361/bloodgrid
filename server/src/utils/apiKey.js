@@ -27,12 +27,15 @@ const BCRYPT_ROUNDS = 10;
 /**
  * Generate a new API key and its bcrypt hash.
  *
- * @returns {Promise<{ rawKey: string, hash: string }>}
+ * @returns {Promise<{ rawKey: string, hash: string, lookup: string }>}  
+ *          lookup = first 10 chars of the raw key ("bl_" + 7 hex). Stored in
+ *          plain text on the org so requireApiKey can do an O(1) index lookup
+ *          before a single bcrypt.compare — the prefix cannot recreate the key.
  */
 async function generateApiKey() {
   const raw = KEY_PREFIX + crypto.randomBytes(24).toString('hex');
   const hash = await bcrypt.hash(raw, BCRYPT_ROUNDS);
-  return { rawKey: raw, hash };
+  return { rawKey: raw, hash, lookup: raw.slice(0, 10) };
 }
 
 /**
