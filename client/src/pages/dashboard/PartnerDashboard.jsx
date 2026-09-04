@@ -260,7 +260,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
           <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
             <Building2 size={18} color="#fff" />
           </div>
-          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
+          <span className="sidebar-logo-text">Blood<span>Grid</span></span>
         </a>
 
         <div className="sidebar-user" id="partner-profile-card" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }}>
@@ -380,7 +380,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                 <AlertCircle size={22} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
                 <div>
                   <h4 style={{ margin: '0 0 4px 0', color: '#f59e0b', fontSize: '0.95rem', fontWeight: 700 }}>Account Awaiting Admin Verification</h4>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#e2e8f0', lineHeight: 1.5 }}>
                     Your partner organization registration is currently under review by System Administrators. Campaign creation and assisted patient requests will unlock immediately once approved.
                   </p>
                 </div>
@@ -515,7 +515,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                   <div key={drive._id} className="card" style={{ padding: 20, borderRadius: 14, border: '1px solid var(--surface-border)', background: 'var(--surface-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                       <span className="badge badge-blue">{drive.status.toUpperCase()}</span>
-                      <span style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: '0.78rem', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Users size={14} /> <strong>{drive.rsvps?.length || 0}</strong> / {drive.expectedTurnout} RSVPs
                       </span>
                     </div>
@@ -523,7 +523,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
                     <h4 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: '#f8fafc' }}>{drive.title}</h4>
                     <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 12 }}>{drive.description || 'Blood donation drive organized by ' + org.name}</p>
 
-                    <div style={{ fontSize: '0.82rem', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+                    <div style={{ fontSize: '0.82rem', color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Calendar size={14} color="#60a5fa" /> {new Date(drive.date).toLocaleDateString('en-PK', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} ({drive.startTime} - {drive.endTime})
                       </div>

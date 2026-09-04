@@ -13,6 +13,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 
 const { clientUrl, nodeEnv } = require('./config/env');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -35,9 +36,34 @@ app.set('trust proxy', 1);
 // ── CORS must come BEFORE helmet and all other middleware ─────────────────────
 // This ensures Access-Control-Allow-Origin is present on every response,
 // including preflight OPTIONS requests from the Vercel serverless function.
+//
+// Auth now uses HTTP-only cookies, so the API must echo a SPECIFIC origin
+// (never '*') together with credentials:true — browsers refuse
+// Access-Control-Allow-Origin:* on credentialed requests. Extra origins
+// (e.g. preview deploys) can be whitelisted via CORS_ORIGINS="a,b".
+const extraOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set(
+  [
+    clientUrl,
+    'http://localhost:5173',   // Vite dev
+    'http://localhost:5174',
+    'http://localhost:3000',
+    ...extraOrigins,
+  ].filter(Boolean)
+);
+
 const corsOptions = {
-  origin: '*',
-  credentials: false, // must be false when origin is '*'
+  origin(origin, callback) {
+    // No Origin header = same-origin / server-to-server (curl, EMN sync) — allow.
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    // Unknown origin: reject by omitting the CORS headers (browser blocks it).
+    return callback(null, false);
+  },
+  credentials: true, // required for HTTP-only auth cookies (bg_access / bg_refresh)
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200, // some browsers (IE11) choke on 204
@@ -46,6 +72,11 @@ const corsOptions = {
 // Handle preflight for ALL routes — must be before everything else.
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
+
+// ── Cookie parsing (HTTP-only JWT auth) ──────────────────────────────────────
+// Parses bg_access / bg_refresh cookies into req.cookies for requireAuth and
+// the /auth/refresh + /auth/logout routes.
+app.use(cookieParser());
 
 // ── Security headers ─────────────────────────────────────────────────────────
 // Disable crossOriginResourcePolicy so Vercel serverless assets are accessible.
@@ -87,7 +118,10 @@ const globalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20, // 20 auth attempts per 15 minutes per IP
+  // Production keeps the tight 20/15min; development allows 100 so a single
+  // collaborator can exercise all 5 seeded roles (plus token refreshes) in a
+  // testing session without tripping the limiter.
+  max: nodeEnv === 'production' ? 20 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many authentication attempts. Please wait and try again.' },

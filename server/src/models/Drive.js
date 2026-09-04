@@ -64,6 +64,14 @@ const driveSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// ── Indexes ───────────────────────────────────────────────────────────────────
+// Partner dashboard lists its own camps sorted by date; status filters (upcoming/
+// ongoing) plus city browse are the other two read patterns. Previously the
+// Drive collection had zero indexes — every list query was a full collection scan.
+driveSchema.index({ organizationId: 1, date: 1 });
+driveSchema.index({ status: 1, date: 1 });
+driveSchema.index({ 'location.city': 1, date: -1 });
+
 const Drive = mongoose.model('Drive', driveSchema);
 
 module.exports = { Drive };

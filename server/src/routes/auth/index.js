@@ -15,6 +15,7 @@ const { User, ROLES }         = require('../../models/User');
 const { DonorProfile }        = require('../../models/DonorProfile');
 const { requireAuth }          = require('../../middleware/auth');
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../../utils/token');
+const { setAuthCookies, clearAuthCookies, REFRESH_COOKIE } = require('../../utils/authCookies');
 const { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendContactSupportEmail } = require('../../utils/email');
 
 const router = express.Router();
@@ -246,6 +247,11 @@ router.post('/login', async (req, res, next) => {
       console.error('[auth] Background refresh token save error:', err.message);
     });
 
+    // HTTP-only cookies for browser sessions (XSS-safe, auto-attached to every
+    // request). Tokens are still returned in the JSON body for REST/EMN clients
+    // that authenticate via the Authorization header.
+    setAuthCookies(res, accessToken, refreshToken);
+
     return res.status(200).json({
       success: true,
       message: 'Login successful.',
@@ -267,10 +273,12 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-// ── POST /api/auth/refresh ───────────────────────────────────────────────────
+// ── POST /api/auth/refresh ───────────────────────────────────────────────────────
 router.post('/refresh', async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    // Browser clients keep the refresh token in an HTTP-only cookie; REST
+    // clients may still pass it in the body. Cookie wins when both exist.
+    const refreshToken = req.cookies?.[REFRESH_COOKIE] || req.body?.refreshToken;
     if (!refreshToken) {
       return res.status(400).json({ success: false, message: 'Refresh token is required.' });
     }
@@ -304,6 +312,9 @@ router.post('/refresh', async (req, res, next) => {
       console.error('[auth] Background refresh token update error:', err.message);
     });
 
+    // Rotate the HTTP-only cookies alongside the body response.
+    setAuthCookies(res, newAccessToken, newRefreshToken);
+
     return res.status(200).json({
       success: true,
       data: { accessToken: newAccessToken, refreshToken: newRefreshToken },
@@ -316,7 +327,11 @@ router.post('/refresh', async (req, res, next) => {
 // ── POST /api/auth/logout ───────────────────────────────────────────────────
 router.post('/logout', async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    // Always expire the HTTP-only auth cookies, even if no refresh token was
+    // supplied (covers cookie-only browser sessions).
+    clearAuthCookies(res);
+
+    const refreshToken = req.cookies?.[REFRESH_COOKIE] || req.body?.refreshToken;
     if (!refreshToken) {
       return res.status(200).json({ success: true, message: 'Logged out.' });
     }

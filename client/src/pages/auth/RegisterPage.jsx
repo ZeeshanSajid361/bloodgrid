@@ -224,7 +224,7 @@ export default function RegisterPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              color: '#94a3b8',
+              color: '#e2e8f0',
               fontSize: '0.85rem',
               fontWeight: 600,
               textDecoration: 'none',

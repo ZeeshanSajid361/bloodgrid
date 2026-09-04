@@ -94,6 +94,14 @@ const organizationSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // Non-secret key prefix (first 10 chars, e.g. "bl_a3f9c1d") enabling an
+    // O(1) indexed lookup during API-key auth instead of a full bcrypt scan
+    // across every approved org. Cannot recreate the full key.
+    apiKeyLookup: {
+      type: String,
+      trim: true,
+      index: { sparse: true },
+    },
 
     // Admin notes on approval / rejection.
     adminNote: {
