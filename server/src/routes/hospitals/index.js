@@ -27,6 +27,7 @@ const { requireAuth, requireRole } = require('../../middleware/auth');
 const { Organization }             = require('../../models/Organization');
 const { Inventory, BLOOD_GROUPS }  = require('../../models/Inventory');
 const { generateApiKey, verifyApiKey } = require('../../utils/apiKey');
+const serverCache = require('../../utils/cache');
 const upload                       = require('../../middleware/upload');
 const { uploadBuffer }             = require('../../utils/cloudinaryUpload');
 
@@ -57,7 +58,10 @@ function isCodeRedActive(inv) {
 async function requireOrg(req, res, next) {
   try {
     const userId = req.user.id || req.user._id;
-    const org = await Organization.findOne({ owner: userId }).lean();
+    // NOTE: intentionally NOT .lean() — downstream routes call req.org.save()
+    // (profile updates, API key generation), which requires a real Mongoose
+    // document. The previous .lean() here caused 500s on those mutations.
+    const org = await Organization.findOne({ owner: userId });
     if (!org) {
       return res.status(404).json({
         success: false,
@@ -69,6 +73,16 @@ async function requireOrg(req, res, next) {
   } catch (err) {
     next(err);
   }
+}
+
+/**
+ * Invalidate the cached GET /hospitals/me payload for an org after any mutation.
+ * Prevents the 15s server cache serving stale profile/inventory data.
+ */
+function invalidateOrgCache(orgId) {
+  try {
+    serverCache.del(`hosp_me_${orgId}`);
+  } catch { /* non-fatal */ }
 }
 
 /**
@@ -84,29 +98,43 @@ async function requireApiKey(req, res, next) {
 
     // Support both "ApiKey bl_xxx" and "bl_xxx"
     const rawKey = header.startsWith('ApiKey ') ? header.slice(7).trim() : header;
-
-    // The hospital is identified by the key prefix lookup — we find the org
-    // whose hashed key matches. bcrypt.compare is used; it's safe to loop
-    // through approved hospitals because the set is small and we exit on first match.
-    const hospitals = await Organization.find(
-      { type: { $in: ['hospital', 'web_hospital', 'api_hospital'] }, status: 'approved' },
-      { apiKeyHash: 1 }   // select: false is on the field; explicit projection overrides
-    ).lean();
-
-    let matchedOrg = null;
-    for (const hosp of hospitals) {
-      if (hosp.apiKeyHash && await verifyApiKey(rawKey, hosp.apiKeyHash)) {
-        matchedOrg = hosp;
-        break;
-      }
-    }
-
-    if (!matchedOrg) {
+    if (!rawKey.startsWith('bl_')) {
       return res.status(401).json({ success: false, message: 'Invalid or revoked API key.' });
     }
 
-    req.apiHospitalId = matchedOrg._id;
-    next();
+    // Fast path — O(1) index lookup by the non-secret key prefix (first 10
+    // chars, e.g. "bl_a3f9c1d"), then a SINGLE bcrypt.compare. The prefix is
+    // safe to store in plain text: it cannot recreate the full key. This keeps
+    // EMN sync auth at ~100ms regardless of how many hospitals are registered
+    // (the previous implementation bcrypt-compared against EVERY approved org).
+    const lookup = rawKey.slice(0, 10);
+    const candidates = await Organization.find(
+      { apiKeyLookup: lookup, status: 'approved', type: { $in: ['hospital', 'web_hospital', 'api_hospital'] } },
+      { apiKeyHash: 1 }   // select:false on the field; explicit projection overrides
+    ).lean();
+
+    for (const hosp of candidates) {
+      if (hosp.apiKeyHash && (await verifyApiKey(rawKey, hosp.apiKeyHash))) {
+        req.apiHospitalId = hosp._id;
+        return next();
+      }
+    }
+
+    // Legacy fallback — orgs issued keys before apiKeyLookup existed have no
+    // prefix stored, so scan those only (set shrinks to zero as keys rotate).
+    const legacyOrgs = await Organization.find(
+      { type: { $in: ['hospital', 'web_hospital', 'api_hospital'] }, status: 'approved', apiKeyLookup: { $exists: false } },
+      { apiKeyHash: 1 }
+    ).lean();
+
+    for (const hosp of legacyOrgs) {
+      if (hosp.apiKeyHash && (await verifyApiKey(rawKey, hosp.apiKeyHash))) {
+        req.apiHospitalId = hosp._id;
+        return next();
+      }
+    }
+
+    return res.status(401).json({ success: false, message: 'Invalid or revoked API key.' });
   } catch (err) {
     next(err);
   }
@@ -133,27 +161,37 @@ router.post('/inventory/sync', requireApiKey, async (req, res, next) => {
     const results = [];
 
     for (const item of updates) {
-      const { bloodGroup, units } = item;
+      const { bloodGroup, units, expiresAt, lowStockThreshold } = item;
 
       if (!validBloodGroups.includes(bloodGroup) || typeof units !== 'number' || units < 0) {
         results.push({ bloodGroup, units, status: 'failed', error: 'Invalid blood group or units count' });
         continue;
       }
 
+      // Optional per-batch expiry (35-day shelf life) and low-stock threshold.
+      const $set = {
+        hospital:      req.apiHospitalId,
+        bloodGroup,
+        units,
+        lastUpdatedBy: 'api',
+        updatedAt:     new Date(),
+      };
+      if (expiresAt !== undefined && expiresAt !== null) $set.expiresAt = new Date(expiresAt);
+      if (lowStockThreshold !== undefined && lowStockThreshold !== null) {
+        $set.lowStockThreshold = Number(lowStockThreshold);
+      }
+
       const inv = await Inventory.findOneAndUpdate(
         { hospital: req.apiHospitalId, bloodGroup },
-        {
-          hospital:      req.apiHospitalId,
-          bloodGroup,
-          units,
-          lastUpdatedBy: 'api',
-          updatedAt:     new Date(),
-        },
-        { upsert: true, new: true }
+        { $set },
+        { upsert: true, new: true, runValidators: true }
       );
 
       results.push({ bloodGroup: inv.bloodGroup, units: inv.units, status: 'synced' });
     }
+
+    // Keep the server-side /me cache fresh for this hospital's dashboard.
+    invalidateOrgCache(req.apiHospitalId);
 
     // Update lastSyncedAt on Organisation
     await Organization.findByIdAndUpdate(req.apiHospitalId, { lastSyncedAt: new Date() });
@@ -179,7 +217,9 @@ router.post('/requests/:id/fulfill-api', requireApiKey, async (req, res, next) =
     const request = await Request.findOne({ _id: req.params.id, hospital: req.apiHospitalId, status: 'approved' });
 
     if (!request) {
-      return res.status(4404 || 404).json({ success: false, message: 'Approved request not found for this hospital.' });
+      // (was `res.status(4404 || 404)` — a typo that emitted an invalid HTTP
+      // status and crashed the response stream; must be a plain 404.)
+      return res.status(404).json({ success: false, message: 'Approved request not found for this hospital.' });
     }
 
     request.status       = 'fulfilled';
@@ -230,37 +270,10 @@ router.post('/inventory/discrepancy', requireAuth, requireRole(['hospital', 'adm
   }
 });
 
-/**
- * POST /api/hospitals/requests/:id/fulfill-api
- * Machine-to-machine REST API endpoint to fulfill a request for EMN hospitals.
- * Header: Authorization: ApiKey bl_xxx (or Authorization: bl_xxx)
- */
-router.post('/requests/:id/fulfill-api', requireApiKey, async (req, res, next) => {
-  try {
-    const { Request } = require('../../models/Request');
-    const reqDoc = await Request.findById(req.params.id);
-    if (!reqDoc) {
-      return res.status(404).json({ success: false, message: 'Request not found.' });
-    }
-
-    reqDoc.status = 'fulfilled';
-    reqDoc.fulfilledAt = new Date();
-    reqDoc.fulfilledVia = 'api';
-    await reqDoc.save();
-
-    await Organization.findByIdAndUpdate(req.apiHospitalId, { lastSyncedAt: new Date() });
-
-    res.json({
-      success: true,
-      message: 'Request marked as fulfilled via API.',
-      data: reqDoc,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
 /* ─── Registration ──────────────────────────────────────────────────────────── */
+/* NOTE: a second, less strict duplicate of POST /requests/:id/fulfill-api used
+   to live here. Express only ever matched the first registration (the scoped
+   one above), so the duplicate was dead code — removed for clarity. */
 
 /**
  * POST /api/hospitals/register
@@ -366,7 +379,9 @@ router.get(
         }
       });
 
-      const responseData = { org: req.org, inventory };
+      // req.org is a full Mongoose doc — toJSON() applies the schema transform
+      // (strips apiKeyHash) and keeps the cached payload plain & serialisable.
+      const responseData = { org: req.org.toJSON(), inventory };
       cache.set(cacheKey, responseData, 15);
 
       res.json({
@@ -406,8 +421,9 @@ router.put(
       if (email)     req.org.email             = email;
 
       await req.org.save();
+      invalidateOrgCache(req.org._id);
 
-      res.json({ success: true, message: 'Profile updated.', data: { org: req.org } });
+      res.json({ success: true, message: 'Profile updated.', data: { org: req.org.toJSON() } });
     } catch (err) {
       next(err);
     }
@@ -431,10 +447,12 @@ router.post(
         return res.status(403).json({ success: false, message: 'Organisation must be approved before issuing an API key.' });
       }
 
-      const { rawKey, hash } = await generateApiKey();
+      const { rawKey, hash, lookup } = await generateApiKey();
       req.org.apiKeyHash   = hash;
       req.org.apiKeyPrefix = `${rawKey.slice(0, 10)}...${rawKey.slice(-4)}`;
+      req.org.apiKeyLookup = lookup; // non-secret prefix for O(1) auth lookup
       await req.org.save();
+      invalidateOrgCache(req.org._id);
 
       res.json({
         success: true,
@@ -680,55 +698,11 @@ router.delete(
   }
 );
 
-/* ─── API-key sync endpoint (machine-to-machine) ────────────────────────────── */
-
-/**
- * POST /api/hospitals/inventory/sync
- *
- * Allows an approved hospital's information system (or a demo simulation
- * script) to push bulk stock updates via an API key.
- *
- * Body: { updates: [{ bloodGroup: 'O+', units: 12, expiresAt: '...' }, ...] }
- *
- * Authorization: ApiKey bl_<raw key>
- */
-router.post('/inventory/sync', requireApiKey, async (req, res, next) => {
-  try {
-    const { updates } = req.body;
-
-    if (!Array.isArray(updates) || updates.length === 0) {
-      return res.status(400).json({ success: false, message: '`updates` array is required.' });
-    }
-
-    const results = [];
-    for (const item of updates) {
-      const { bloodGroup, units, expiresAt } = item;
-
-      if (!BLOOD_GROUPS.includes(bloodGroup)) {
-        results.push({ bloodGroup, status: 'skipped', reason: 'Unknown blood group' });
-        continue;
-      }
-      if (typeof units !== 'number' || units < 0) {
-        results.push({ bloodGroup, status: 'skipped', reason: 'Invalid units value' });
-        continue;
-      }
-
-      await Inventory.findOneAndUpdate(
-        { hospital: req.apiHospitalId, bloodGroup },
-        { $set: { units, expiresAt: expiresAt || undefined, lastUpdatedBy: 'api' } },
-        { upsert: true, runValidators: true }
-      );
-
-      results.push({ bloodGroup, units, status: 'synced' });
-    }
-
-    res.json({ success: true, message: 'Sync complete.', data: { results } });
-  } catch (err) {
-    next(err);
-  }
-});
-
 /* ─── Code Red broadcast ────────────────────────────────────────────────────── */
+/* NOTE: a second duplicate of POST /inventory/sync used to live here (it was
+   never reachable — Express matched the first registration above). Its
+   per-item `expiresAt` + `runValidators` behaviour has been merged into the
+   live endpoint. Dead duplicate removed. */
 
 /**
  * POST /api/hospitals/broadcast
