@@ -27,7 +27,8 @@ import { useDonorProfile }  from '../../hooks/useDonorProfile';
 import useNotifications     from '../../hooks/useNotifications';
 import NotificationBell     from '../../components/NotificationBell';
 import QRCheckIn            from '../../components/QRCheckIn';
-import AppSpotlightTour     from '../../components/AppSpotlightTour';
+import AppSpotlightTour from '../../components/AppSpotlightTour';
+import { hasSeenTour } from '../../lib/tourStorage';
 import PhoneInput           from '../../components/PhoneInput';
 import api                  from '../../lib/api';
 import '../../styles/dashboard.css';
@@ -51,7 +52,7 @@ const DONOR_TOUR_STEPS = [
     preferredPos: 'top',
   },
   {
-    targetSelector: '#nav-requests',
+    targetSelector: ['#nav-requests', '#mnav-requests'],
     title: 'Live Blood Requests',
     description: 'Click here to view real-time patient blood requests matching your blood group. You can pledge to donate and open exact hospital directions!',
     icon: Droplets,
@@ -85,8 +86,7 @@ export default function DonorDashboard() {
 
   // Trigger onboarding modal on first login
   useEffect(() => {
-    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_donor');
-    if (!hasSeen) {
+    if (!hasSeenTour('donor')) {
       const timer = setTimeout(() => setShowOnboarding(true), 600);
       return () => clearTimeout(timer);
     }
@@ -233,6 +233,7 @@ export default function DonorDashboard() {
           {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
+              id={`mnav-${id}`}
               className={`mobile-nav-item${activeTab === id ? ' active' : ''}`}
               onClick={() => setActiveTab(id)}
             >

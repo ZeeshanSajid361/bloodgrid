@@ -15,34 +15,35 @@ import useAdminData from '../../hooks/useAdminData';
 import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import AppSpotlightTour from '../../components/AppSpotlightTour';
+import { hasSeenTour } from '../../lib/tourStorage';
 import { getViewableDocUrl, isPdfUrl } from '../../lib/docUrl';
 import '../../styles/dashboard.css';
 import '../../styles/admin.css';
 
 const ADMIN_TOUR_STEPS = [
   {
-    targetSelector: '#nav-overview',
+    targetSelector: ['#nav-overview', '#mnav-overview'],
     title: 'Platform Analytics & Overview',
     description: 'System-wide oversight: total registered donors/seekers, blood request fulfillment rates, and low-stock hospital alerts across Pakistan!',
     icon: TrendingUp,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-hospitals',
+    targetSelector: ['#nav-hospitals', '#mnav-hospitals'],
     title: 'Hospital & Partner Verification Queue',
     description: 'Review registration documents for hospitals and partner NGOs (PRCS, Edhi, Chhipa). Approve portal access or EMN API Keys!',
     icon: Building2,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-requests',
+    targetSelector: ['#nav-requests', '#mnav-requests'],
     title: 'Emergency Request Verification',
     description: 'Verify seeker blood request hospital slips before broadcasting live push notifications to matching blood-group donors!',
     icon: FileText,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-users',
+    targetSelector: ['#nav-users', '#mnav-users'],
     title: 'User Management & Security',
     description: 'View registered users, track verified donor contributions, monitor seeker fulfillment history, or block suspicious accounts!',
     icon: Users,
@@ -786,8 +787,7 @@ export default function AdminDashboard() {
   const notifs          = useNotifications();
 
   useEffect(() => {
-    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_admin');
-    if (!hasSeen) {
+    if (!hasSeenTour('admin')) {
       const timer = setTimeout(() => setShowOnboarding(true), 600);
       return () => clearTimeout(timer);
     }
@@ -938,6 +938,7 @@ export default function AdminDashboard() {
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
+              id={`mnav-${id}`}
               className={`mobile-nav-item${tab === id ? ' active' : ''}`}
               onClick={() => setTab(id)}
             >
