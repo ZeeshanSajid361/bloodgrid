@@ -130,7 +130,7 @@ export default function SeekerDashboard() {
       <aside className="sidebar">
         <a href="/" className="sidebar-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <div className="sidebar-logo-icon">🩸</div>
-          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
+          <span className="sidebar-logo-text">Blood<span>Grid</span></span>
         </a>
 
         <div className="sidebar-user" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
@@ -180,7 +180,7 @@ export default function SeekerDashboard() {
         <header className="mobile-header">
           <div className="mobile-header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
             <div className="mobile-header-logo-icon">🩸</div>
-            <div className="mobile-header-title">Blood<span>Sync</span></div>
+            <div className="mobile-header-title">Blood<span>Grid</span></div>
           </div>
 
           {/* Header Action Buttons */}
@@ -334,7 +334,7 @@ export default function SeekerDashboard() {
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>
               🏥 Holy Family Hospital — Emergency Ward Gate 2
             </div>
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+            <div style={{ fontSize: '0.78rem', color: '#e2e8f0' }}>
               📍 Rawalpindi (Exact GPS Location Attached)
             </div>
             <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -342,7 +342,7 @@ export default function SeekerDashboard() {
             </div>
           </div>
 
-          <p style={{ fontSize: '0.78rem', color: '#cbd5e1', margin: 0, lineHeight: 1.35 }}>
+          <p style={{ fontSize: '0.78rem', color: '#e2e8f0', margin: 0, lineHeight: 1.35 }}>
             💡 Direct Google Maps locations help volunteer donors arrive directly at your patient&apos;s hospital ward without delay!
           </p>
           <span style={{ fontSize: '0.725rem', color: '#f87171', fontWeight: 600, display: 'block', marginTop: '6px' }}>
@@ -1260,7 +1260,7 @@ function RequestCard({ request, onCancel }) {
               <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
                 Good news! A donor is on their way to {request.hospitalName}!
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+              <div style={{ fontSize: '0.8rem', color: '#e2e8f0', marginTop: '2px' }}>
                 Estimated travel time: ~{enRouteCommit.etaMinutes || 30} mins. Please make sure to be at the hospital counter to receive the donor.
               </div>
             </div>

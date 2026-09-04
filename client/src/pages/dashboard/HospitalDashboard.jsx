@@ -969,7 +969,7 @@ function ProfileTab({ profile, hooks }) {
               <div style={{ background: '#1e293b', padding: 12, borderRadius: 8 }}>
                 <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '0.82rem', marginBottom: 4 }}>1. Bulk Inventory Sync</div>
                 <code style={{ fontSize: '0.78rem', color: '#f8fafc', display: 'block' }}>POST /api/hospitals/inventory/sync</code>
-                <pre style={{ background: '#0f172a', padding: 8, borderRadius: 6, fontSize: '0.75rem', color: '#cbd5e1', marginTop: 6, margin: 0 }}>
+                <pre style={{ background: '#0f172a', padding: 8, borderRadius: 6, fontSize: '0.75rem', color: '#e2e8f0', marginTop: 6, margin: 0 }}>
 {`{
   "updates": [
     { "bloodGroup": "O+", "units": 45 },
@@ -982,7 +982,7 @@ function ProfileTab({ profile, hooks }) {
               <div style={{ background: '#1e293b', padding: 12, borderRadius: 8 }}>
                 <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '0.82rem', marginBottom: 4 }}>2. Fulfill Request via API</div>
                 <code style={{ fontSize: '0.78rem', color: '#f8fafc', display: 'block' }}>POST /api/hospitals/requests/:id/fulfill-api</code>
-                <pre style={{ background: '#0f172a', padding: 8, borderRadius: 6, fontSize: '0.75rem', color: '#cbd5e1', marginTop: 6, margin: 0 }}>
+                <pre style={{ background: '#0f172a', padding: 8, borderRadius: 6, fontSize: '0.75rem', color: '#e2e8f0', marginTop: 6, margin: 0 }}>
 {`{
   "unitsDelivered": 1,
   "notes": "EMN counter check-in"
@@ -1297,7 +1297,7 @@ function LiveCameraScannerModal({ onScan, onClose }) {
           <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Camera size={20} color="#3b82f6" /> Live Webcam QR Scanner
           </h3>
-          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ color: '#94a3b8' }}>
+          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ color: '#e2e8f0' }}>
             <X size={18} />
           </button>
         </div>
@@ -1462,7 +1462,7 @@ function RequestsTab({ profile, hooks, onNavigateToHistory }) {
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => setShowManualOverride(p => !p)}
-              style={{ fontSize: '0.78rem', color: '#94a3b8', background: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: 8 }}
+              style={{ fontSize: '0.78rem', color: '#e2e8f0', background: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: 8 }}
             >
               {showManualOverride ? '▲ Hide Manual Safety Net' : '⚙️ Not syncing? Mark fulfilled manually ▼'}
             </button>
@@ -1903,7 +1903,7 @@ export default function HospitalDashboard() {
           <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, var(--blue-600), var(--blue-800))' }}>
             <Building2 size={18} color="#fff" />
           </div>
-          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
+          <span className="sidebar-logo-text">Blood<span>Grid</span></span>
         </a>
 
         <div className="sidebar-user" id="hospital-profile-card" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>

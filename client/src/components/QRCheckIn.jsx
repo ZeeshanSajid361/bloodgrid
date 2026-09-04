@@ -308,7 +308,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
                 <button
                   className="btn btn-ghost btn-sm"
                   onClick={() => setShowEtaModal(false)}
-                  style={{ color: '#94a3b8', padding: '2px 4px' }}
+                  style={{ color: '#e2e8f0', padding: '2px 4px' }}
                 >
                   <X size={16} />
                 </button>
@@ -327,7 +327,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
                 {etaConfig.title}
               </div>
 
-              <p style={{ fontSize: '0.825rem', color: '#cbd5e1', marginBottom: '10px', lineHeight: 1.35 }}>
+              <p style={{ fontSize: '0.825rem', color: '#e2e8f0', marginBottom: '10px', lineHeight: 1.35 }}>
                 Select your estimated arrival time at <strong>{hospitalName}</strong>. This temporarily locks 1 blood unit slot for you.
               </p>
 
@@ -369,14 +369,14 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
                     onMouseLeave={e => e.currentTarget.style.borderColor = '#334155'}
                   >
                     <span style={{ fontWeight: 700, fontSize: '0.925rem', color: '#34d399' }}>{p.label}</span>
-                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Slot locked for {p.mins >= 60 ? `${p.mins / 60}h` : `${p.mins}m`}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#e2e8f0' }}>Slot locked for {p.mins >= 60 ? `${p.mins / 60}h` : `${p.mins}m`}</span>
                   </button>
                 ))}
               </div>
 
               {/* Custom ETA Entry */}
               <form onSubmit={handleCustomPledge} style={{ borderTop: '1px solid #2d374e', paddingTop: '10px', marginBottom: '10px' }}>
-                <label style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
+                <label style={{ fontSize: '0.78rem', color: '#e2e8f0', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
                   ✏️ Enter Custom Travel Time
                 </label>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -420,12 +420,12 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
                     {committing ? <Loader2 size={13} className="spin" /> : 'Set ETA'}
                   </button>
                 </div>
-                <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block', marginTop: '3px' }}>
+                <span style={{ fontSize: '0.7rem', color: '#e2e8f0', display: 'block', marginTop: '3px' }}>
                   Max limit: {etaConfig.maxLabel}
                 </span>
               </form>
 
-              <div style={{ fontSize: '0.725rem', color: '#64748b', textAlign: 'center', borderTop: '1px dashed #2d374e', paddingTop: '8px' }}>
+              <div style={{ fontSize: '0.725rem', color: '#e2e8f0', textAlign: 'center', borderTop: '1px dashed #2d374e', paddingTop: '8px' }}>
                 💡 Timer auto-releases if QR is not scanned at hospital counter before expiration.
               </div>
             </div>
@@ -509,7 +509,7 @@ export default function QRCheckIn({ requestId, requestStatus, hospitalName, hosp
                   gap: '12px'
                 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.68rem', color: '#e2e8f0', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
                       8-DIGIT VERIFICATION CODE TOKEN
                     </span>
                     <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#60a5fa', letterSpacing: '4px', fontFamily: 'monospace' }}>

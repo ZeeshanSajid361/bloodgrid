@@ -155,7 +155,7 @@ export default function OnboardingModal({ isOpen, onClose, role = 'donor', userN
           onClick={handleComplete}
           style={{
             position: 'absolute', top: '16px', right: '16px',
-            background: 'transparent', border: 'none', color: '#94a3b8',
+            background: 'transparent', border: 'none', color: '#e2e8f0',
             cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px',
             padding: '4px 8px', borderRadius: '6px'
           }}
