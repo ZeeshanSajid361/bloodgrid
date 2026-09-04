@@ -15,6 +15,7 @@ import {
   Plus, CheckCircle2, AlertCircle, FileText, Upload, LogOut, Loader2, ExternalLink, X, ShieldCheck, ChevronRight, Lock, HelpCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../../lib/api';
 import PhoneInput from '../../components/PhoneInput';
 import AppSpotlightTour from '../../components/AppSpotlightTour';
 import LocationPickerModal from '../../components/LocationPickerModal';
