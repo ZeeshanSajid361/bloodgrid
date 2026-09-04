@@ -22,6 +22,7 @@ import useNotifications from '../../hooks/useNotifications';
 import NotificationBell from '../../components/NotificationBell';
 import PhoneInput from '../../components/PhoneInput';
 import AppSpotlightTour from '../../components/AppSpotlightTour';
+import { hasSeenTour } from '../../lib/tourStorage';
 import LocationPickerModal from '../../components/LocationPickerModal';
 import api from '../../lib/api';
 import jsQR from 'jsqr';
@@ -1782,28 +1783,28 @@ function HistoryTab() {
 
 const HOSPITAL_TOUR_STEPS = [
   {
-    targetSelector: '#nav-overview',
+    targetSelector: ['#nav-overview', '#mnav-overview'],
     title: 'Hospital Overview & Stock Stats',
     description: 'Track total blood bags in stock, low-stock warnings, and real-time Code Red emergency alerts at a glance!',
     icon: Building2,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-inventory',
+    targetSelector: ['#nav-inventory', '#mnav-inventory'],
     title: 'Blood Stock & Code Red Alert',
     description: 'Add new blood batches with expiry tracking, set low-stock thresholds, or broadcast urgent 6-hour Code Red alerts to nearby donors!',
     icon: Droplets,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-requests',
+    targetSelector: ['#nav-requests', '#mnav-requests'],
     title: 'Counter Check-In & QR Verification',
     description: 'Verify donor check-in using live camera QR scan, image upload, or 8-digit verification tokens at your hospital reception counter!',
     icon: QrCode,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-profile',
+    targetSelector: ['#nav-profile', '#mnav-profile'],
     title: 'Profile & EMN API Key Sync',
     description: 'Configure hospital location maps pin, contact details, or generate your secure REST API key for automated EHR/HIS integration!',
     icon: Settings,
@@ -1831,8 +1832,7 @@ export default function HospitalDashboard() {
   const notifs = useNotifications();
 
   useEffect(() => {
-    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_hospital');
-    if (!hasSeen) {
+    if (!hasSeenTour('hospital')) {
       const timer = setTimeout(() => setShowOnboarding(true), 600);
       return () => clearTimeout(timer);
     }
@@ -2076,6 +2076,7 @@ export default function HospitalDashboard() {
             return (
               <button
                 key={id}
+                id={`mnav-${id}`}
                 className={`mobile-nav-item${tab === id ? ' active' : ''}`}
                 style={{
                   ...(tab === id ? { color: 'var(--blue-400)' } : {}),
