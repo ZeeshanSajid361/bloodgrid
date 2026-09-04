@@ -1,9 +1,16 @@
 /**
  * Authentication & RBAC middleware.
  *
- * requireAuth   — verifies the access token in the Authorization header and
- *                 attaches { id, role } to req.user. Returns 401 on any failure
- *                 so the client knows to attempt a token refresh.
+ * requireAuth   — verifies the access token and attaches { id, role } to
+ *                 req.user. Token is resolved in priority order:
+ *
+ *                   1. HTTP-only `bg_access` cookie (browser sessions — set by
+ *                      the server on login/refresh; invisible to JavaScript)
+ *                   2. Authorization: Bearer header (REST clients, EMN
+ *                      machine sync, test harnesses — fully backward compatible)
+ *
+ *                 Returns 401 on any failure so the client knows to attempt a
+ *                 token refresh.
  *
  * requireRole   — factory that returns a middleware accepting only specific
  *                 roles. Must be used after requireAuth in the middleware chain.
@@ -12,24 +19,39 @@
 'use strict';
 
 const { verifyAccessToken } = require('../utils/token');
+const { ACCESS_COOKIE } = require('../utils/authCookies');
 
 /**
- * Extracts and verifies the Bearer token from the Authorization header.
- * Populates req.user with { id, role } on success.
+ * Resolves the bearer token for a request: cookie first, header second.
+ * @param {import('express').Request} req
+ * @returns {string|null}
+ */
+function resolveAccessToken(req) {
+  const cookieToken = req.cookies?.[ACCESS_COOKIE];
+  if (cookieToken && typeof cookieToken === 'string') return cookieToken;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.slice(7); // remove "Bearer " prefix
+  }
+  return null;
+}
+
+/**
+ * Verifies the access token (cookie or Bearer header) and populates req.user
+ * with { id, role } on success.
  *
  * @type {import('express').RequestHandler}
  */
 function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
+  const token = resolveAccessToken(req);
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     return res.status(401).json({
       success: false,
       message: 'No access token provided. Please log in.',
     });
   }
-
-  const token = authHeader.slice(7); // remove "Bearer " prefix
 
   try {
     const decoded = verifyAccessToken(token);
