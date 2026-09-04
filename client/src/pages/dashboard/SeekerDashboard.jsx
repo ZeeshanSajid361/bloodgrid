@@ -22,7 +22,8 @@ import { useSeekerRequests, useDonorSearch } from '../../hooks/useSeekerData';
 import useNotifications                     from '../../hooks/useNotifications';
 import NotificationBell                     from '../../components/NotificationBell';
 import LocationPickerModal                  from '../../components/LocationPickerModal';
-import AppSpotlightTour                     from '../../components/AppSpotlightTour';
+import AppSpotlightTour              from '../../components/AppSpotlightTour';
+import { hasSeenTour } from '../../lib/tourStorage';
 import PhoneInput                           from '../../components/PhoneInput';
 import api                                  from '../../lib/api';
 import { getViewableDocUrl, isPdfUrl }      from '../../lib/docUrl';
@@ -41,14 +42,14 @@ const NAV_ITEMS = [
 
 const SEEKER_TOUR_STEPS = [
   {
-    targetSelector: '#nav-history',
+    targetSelector: ['#nav-history', '#mnav-history'],
     title: 'My Requests & Live Tracking',
     description: 'Your main dashboard! Track your submitted blood requests, verification status, and real-time donor travel pledges ("I\'m On My Way").',
     icon: ClipboardList,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-request',
+    targetSelector: ['#nav-request', '#mnav-request'],
     title: 'Post Emergency Blood Request',
     description: 'In an urgent trauma emergency? Click here to submit patient hospital details for team verification and instant broadcast to nearby donors!',
     icon: FilePlus,
@@ -91,8 +92,7 @@ export default function SeekerDashboard() {
 
   // Trigger onboarding modal on first login
   useEffect(() => {
-    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_seeker');
-    if (!hasSeen) {
+    if (!hasSeenTour('seeker')) {
       const timer = setTimeout(() => setShowOnboarding(true), 600);
       return () => clearTimeout(timer);
     }
@@ -231,6 +231,7 @@ export default function SeekerDashboard() {
           {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
+              id={`mnav-${id}`}
               className={`mobile-nav-item${activeTab === id ? ' active' : ''}`}
               onClick={() => setTab(id)}
             >

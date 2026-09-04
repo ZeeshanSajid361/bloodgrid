@@ -4,7 +4,11 @@
    and directional speech-bubble tooltips (matching high-end UI design)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Dark translucent mask overlay */
+/* Dark translucent mask overlay.
+   The actual page dim normally comes from the spotlight target box's huge
+   box-shadow — this element stays transparent then. When NO spotlight is
+   active (missing target / centered fallback), the .dimmed class provides
+   the backdrop instead so the page is never blocked by an invisible layer. */
 .spotlight-tour-overlay {
   position: fixed;
   top: 0;
@@ -13,7 +17,12 @@
   height: 100vh;
   z-index: 999990;
   pointer-events: auto;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.spotlight-tour-overlay.dimmed {
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(2px);
 }
 
 /* Clear window cutout over target element */
@@ -213,11 +222,15 @@
   gap: 5px;
 }
 
+/* Dots are clickable jump-to-step buttons */
 .spotlight-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  border: none;
+  padding: 0;
   background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
@@ -262,8 +275,36 @@
   transform: translateY(-1px);
 }
 
+/* ── Keyboard accessibility ─────────────────────────────────────── */
+.spotlight-close-btn:focus-visible,
+.spotlight-nav-btn:focus-visible,
+.spotlight-dot:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.spotlight-tooltip-card:focus {
+  outline: none;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-ripple-ring,
+  .spotlight-ripple-ring-delayed {
+    animation: none;
+    opacity: 0;
+  }
+
+  .spotlight-target-box,
+  .spotlight-tooltip-card {
+    transition: none;
+  }
+}
+
 /* ── Mobile & Tablet Responsiveness ───────────────────────────── */
 @media (max-width: 768px) {
+  /* Tooltip docks as a bottom sheet (inline style supplies bottom/left) so it
+     never covers the spotlighted element. Spotlight box + dim still render. */
   .spotlight-tooltip-card {
     width: 330px;
     max-width: calc(100vw - 24px);

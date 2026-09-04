@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import api from '../../lib/api';
 import PhoneInput from '../../components/PhoneInput';
 import AppSpotlightTour from '../../components/AppSpotlightTour';
+import { hasSeenTour } from '../../lib/tourStorage';
 import LocationPickerModal from '../../components/LocationPickerModal';
 import '../../styles/dashboard.css';
 import '../../styles/hospital.css';
@@ -27,28 +28,28 @@ const URGENCY_LEVELS = ['routine', 'urgent', 'critical'];
 
 const PARTNER_TOUR_STEPS = [
   {
-    targetSelector: '#nav-overview',
+    targetSelector: ['#nav-overview', '#mnav-overview'],
     title: 'Partner Impact & Statistics',
     description: 'Track active blood camps, total mobilized donors, and facilitated emergency patient requests across Pakistan!',
     icon: Building2,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-drives',
+    targetSelector: ['#nav-drives', '#mnav-drives'],
     title: 'Donation Camps & Drives',
     description: 'Schedule blood donation camps at universities, offices, and community centers. Donors can RSVP directly from their mobile app!',
     icon: Calendar,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-assisted',
+    targetSelector: ['#nav-assisted', '#mnav-assisted'],
     title: 'Assisted Patient Requests',
     description: 'Submit urgent blood requests on behalf of elderly or rural patients without smartphones. Admin reviews and dispatches nearby donors!',
     icon: HeartHandshake,
     preferredPos: 'right',
   },
   {
-    targetSelector: '#nav-profile',
+    targetSelector: ['#nav-profile', '#mnav-profile'],
     title: 'Profile & Verification Proof',
     description: 'Submit your SECP registration or Charity Commission license number to enable swift official partner verification!',
     icon: ShieldCheck,
@@ -64,8 +65,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    const hasSeen = localStorage.getItem('bloodsync_spotlight_tour_partner');
-    if (!hasSeen) {
+    if (!hasSeenTour('partner')) {
       const timer = setTimeout(() => setShowOnboarding(true), 600);
       return () => clearTimeout(timer);
     }
@@ -956,6 +956,7 @@ export default function PartnerDashboard({ profile, hooks, onLogout }) {
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
+            id={`mnav-${id}`}
             className={`mobile-bottom-nav-item${activeTab === id ? ' active' : ''}`}
             onClick={() => setActiveTab(id)}
           >
