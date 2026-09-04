@@ -135,7 +135,7 @@ export default function DonorDashboard() {
       <aside className="sidebar">
         <a href="/" className="sidebar-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
           <div className="sidebar-logo-icon">🩸</div>
-          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
+          <span className="sidebar-logo-text">Blood<span>Grid</span></span>
         </a>
 
         <div className="sidebar-user" id="donor-profile-card" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
@@ -185,7 +185,7 @@ export default function DonorDashboard() {
         <header className="mobile-header">
           <div className="mobile-header-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
             <div className="mobile-header-logo-icon">🩸</div>
-            <div className="mobile-header-title">Blood<span>Sync</span></div>
+            <div className="mobile-header-title">Blood<span>Grid</span></div>
           </div>
           
           {/* User Avatar Pill */}
@@ -347,7 +347,7 @@ export default function DonorDashboard() {
             padding: '8px 14px',
             marginBottom: '10px'
           }}>
-            <div style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+            <div style={{ fontSize: '0.68rem', color: '#e2e8f0', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
               8-DIGIT VERIFICATION TOKEN
             </div>
             <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#60a5fa', letterSpacing: '4px', fontFamily: 'monospace' }}>
@@ -355,7 +355,7 @@ export default function DonorDashboard() {
             </div>
           </div>
 
-          <p style={{ fontSize: '0.78rem', color: '#cbd5e1', margin: 0, lineHeight: 1.35 }}>
+          <p style={{ fontSize: '0.78rem', color: '#e2e8f0', margin: 0, lineHeight: 1.35 }}>
             💡 Present this QR code or 8-digit token at the hospital counter to confirm your donation instantly!
           </p>
           <span style={{ fontSize: '0.725rem', color: '#38bdf8', fontWeight: 600, display: 'block', marginTop: '6px' }}>
@@ -1065,7 +1065,7 @@ const STATUS_LABELS = {
   approved:       { label: 'Approved',        color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.3)' },
   fulfilled:      { label: 'Fulfilled',       color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)', border: 'rgba(59, 130, 246, 0.3)' },
   rejected:       { label: 'Rejected',        color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.3)' },
-  cancelled:      { label: 'Cancelled',       color: '#9ca3af', bg: 'rgba(156, 163, 175, 0.12)', border: 'rgba(156, 163, 175, 0.3)' },
+  cancelled:      { label: 'Cancelled',       color: '#cbd5e1', bg: 'rgba(156, 163, 175, 0.12)', border: 'rgba(156, 163, 175, 0.3)' },
 };
 
 class HistoryTabErrorBoundary extends Component {
@@ -1163,7 +1163,7 @@ function HistoryTabInner({ donor }) {
       {!loading && grouped.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {grouped.map(req => {
-            const meta = STATUS_LABELS[req.status] || { label: req.status, color: '#9ca3af', bg: 'rgba(156, 163, 175, 0.12)', border: 'rgba(156, 163, 175, 0.3)' };
+            const meta = STATUS_LABELS[req.status] || { label: req.status, color: '#cbd5e1', bg: 'rgba(156, 163, 175, 0.12)', border: 'rgba(156, 163, 175, 0.3)' };
             return (
               <div
                 key={req._id}

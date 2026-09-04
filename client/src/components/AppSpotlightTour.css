@@ -188,14 +188,14 @@
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: #e2e8f0;
   letter-spacing: 0.04em;
 }
 
 .spotlight-tooltip-body {
   font-size: 0.88rem;
   line-height: 1.5;
-  color: #cbd5e1;
+  color: #e2e8f0;
   margin-bottom: 16px;
 }
 
@@ -242,7 +242,7 @@
 .spotlight-btn-prev {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
+  color: #e2e8f0;
 }
 
 .spotlight-btn-prev:hover {

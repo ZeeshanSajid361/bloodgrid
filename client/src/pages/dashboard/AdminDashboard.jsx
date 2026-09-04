@@ -828,7 +828,7 @@ export default function AdminDashboard() {
           <div className="sidebar-logo-icon">
             <ShieldCheck size={18} />
           </div>
-          <span className="sidebar-logo-text">Blood<span>Sync</span></span>
+          <span className="sidebar-logo-text">Blood<span>Grid</span></span>
         </a>
 
         <div className="sidebar-user" id="admin-profile-card" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
@@ -892,7 +892,7 @@ export default function AdminDashboard() {
             <div className="mobile-header-logo-icon">
               <ShieldCheck size={16} color="#fff" />
             </div>
-            <div className="mobile-header-title">Blood<span>Sync</span></div>
+            <div className="mobile-header-title">Blood<span>Grid</span></div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
