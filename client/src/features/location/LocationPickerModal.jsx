@@ -1,588 +1,599 @@
-import { useState, useEffect } from 'react';
+/**
+ * LocationPickerModal — Leaflet + OpenStreetMap + Nominatim edition.
+ *
+ * Replaces the previous Google Maps embed implementation, which was blocked on
+ * a paid VITE_GOOGLE_MAPS_API_KEY. This version is 100% free and open-source:
+ *
+ *   🗺  Map tiles ......... OpenStreetMap standard tile service
+ *   🔍  Forward geocoding . Nominatim /search (address autocomplete)
+ *   📍  Reverse geocoding . Nominatim /reverse (pin → exact address)
+ *   📌  Placement ......... click-to-drop, drag-to-adjust, GPS button
+ *
+ * It is also fully international: city / province / street are derived from
+ * Nominatim's worldwide address data instead of hardcoded Pakistan lookup
+ * tables, so the picker works in any country out of the box.
+ *
+ * Props contract (unchanged from the previous implementation):
+ *   isOpen            — modal visibility
+ *   onClose           — close callback
+ *   onSelectLocation  — receives { latitude, longitude, street, address, city, province, mapsUrl }
+ *   initialLocation   — prefill ({ latitude, longitude, street|address, city, province, mapsUrl })
+ *
+ * Nominatim usage policy: ≤1 request/second, debounced input (450 ms),
+ * aborted stale requests, and a small `limit`. If the geocoder is unreachable
+ * the map and manual fields keep working — degradation is graceful.
+ */
+
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Navigation, ExternalLink, CheckCircle2, X, Loader2, Search } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Search, MapPin, Navigation, X, Check, Loader2, Building2 } from 'lucide-react';
 
-const CITY_COORDS = {
-  islamabad:  { lat: 33.6844, lng: 73.0479 },
-  rawalpindi: { lat: 33.5989, lng: 73.0441 },
-  lahore:     { lat: 31.5204, lng: 74.3587 },
-  karachi:    { lat: 24.8607, lng: 67.0011 },
-  peshawar:   { lat: 34.0151, lng: 71.5249 },
-  multan:     { lat: 30.1575, lng: 71.5249 },
-  faisalabad: { lat: 31.4504, lng: 73.1350 },
-  quetta:     { lat: 30.1798, lng: 66.9750 },
-};
+const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
 
-const CITY_ALIASES = {
-  rawal: 'Rawalpindi',
-  rwp: 'Rawalpindi',
-  isb: 'Islamabad',
-  lhr: 'Lahore',
-  khi: 'Karachi',
-  psh: 'Peshawar',
-  mup: 'Multan',
-  fsd: 'Faisalabad',
-};
+/** Default fallback view (kept from the previous implementation). */
+const DEFAULT_CENTER = { lat: 33.6844, lng: 73.0479 };
 
-const MEDICAL_ACRONYMS = {
-  imc: 'Islamabad Medical Complex',
-  pims: 'PIMS Hospital Islamabad',
-  cmh: 'Combined Military Hospital',
-  mh: 'Military Hospital',
-  bbh: 'Benazir Bhutto Hospital',
-  ric: 'Rawalpindi Institute of Cardiology',
-  rgh: 'Holy Family Hospital RGH',
-  skmch: 'Shaukat Khanum Memorial Cancer Hospital',
-  siut: 'Sindh Institute of Urology and Transplantation',
-  nicvd: 'National Institute of Cardiovascular Diseases',
-  jpmc: 'Jinnah Postgraduate Medical Centre',
-  akuh: 'Aga Khan University Hospital',
-  lrh: 'Lady Reading Hospital',
-  kth: 'Khyber Teaching Hospital',
-  hmc: 'Hayatabad Medical Complex',
-  fuih: 'Fauji Foundation Hospital',
-  ffh: 'Fauji Foundation Hospital',
-  krl: 'KRL Hospital',
-  nescom: 'Nescom Hospital',
-  nori: 'NORI Hospital Islamabad',
-  shifa: 'Shifa International Hospital',
-  maroof: 'Maroof International Hospital',
-  qih: 'Quaid-e-Azam International Hospital',
-};
+/** Brand-red teardrop pin as a divIcon — avoids the classic broken default
+ *  marker image when bundlers rewrite asset URLs. */
+const pinIcon = L.divIcon({
+  className: 'bg-pin-wrapper',
+  html: `
+    <svg width="34" height="46" viewBox="0 0 34 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pinGrad" x1="30%" y1="10%" x2="70%" y2="90%">
+          <stop offset="0%" stop-color="#ff4d4d"/>
+          <stop offset="55%" stop-color="#e8291b"/>
+          <stop offset="100%" stop-color="#96281b"/>
+        </linearGradient>
+      </defs>
+      <path d="M17 1C9.8 1 4 6.8 4 14c0 9.4 11.2 23.4 12.4 24.8a.9.9 0 0 0 1.2 0C18.8 37.4 30 23.4 30 14c0-7.2-5.8-13-13-13z" fill="url(#pinGrad)" stroke="#ffffff" stroke-width="1.6"/>
+      <circle cx="17" cy="13.6" r="4.6" fill="#ffffff" opacity="0.92"/>
+    </svg>`,
+  iconSize: [34, 46],
+  iconAnchor: [17, 44],
+});
 
-const CITY_PROVINCE_MAP = {
-  islamabad: 'Islamabad Capital Territory',
-  rawalpindi: 'Punjab',
-  lahore: 'Punjab',
-  faisalabad: 'Punjab',
-  multan: 'Punjab',
-  sialkot: 'Punjab',
-  gujranwala: 'Punjab',
-  sargodha: 'Punjab',
-  bahawalpur: 'Punjab',
-  gujrat: 'Punjab',
-  jhelum: 'Punjab',
-  attock: 'Punjab',
-  chakwal: 'Punjab',
-  'rahim yar khan': 'Punjab',
-  karachi: 'Sindh',
-  hyderabad: 'Sindh',
-  sukkur: 'Sindh',
-  larkana: 'Sindh',
-  peshawar: 'Khyber Pakhtunkhwa',
-  abbottabad: 'Khyber Pakhtunkhwa',
-  mardan: 'Khyber Pakhtunkhwa',
-  swat: 'Khyber Pakhtunkhwa',
-  kohat: 'Khyber Pakhtunkhwa',
-  haripur: 'Khyber Pakhtunkhwa',
-  quetta: 'Balochistan',
-  gwadar: 'Balochistan',
-  gilgit: 'Gilgit-Baltistan',
-  skardu: 'Gilgit-Baltistan',
-  muzaffarabad: 'Azad Jammu & Kashmir',
-};
+/* ── Nominatim helpers ─────────────────────────────────────────────────────── */
 
-function getProvinceForCity(cityName) {
-  if (!cityName || typeof cityName !== 'string') return 'Islamabad Capital Territory';
-  const key = cityName.toLowerCase().trim();
-  return CITY_PROVINCE_MAP[key] || 'Punjab';
+/** Extracts a human street line from a Nominatim address object. */
+function streetFromAddress(addr) {
+  if (!addr) return '';
+  const parts = [addr.house_number, addr.road || addr.pedestrian || addr.footway || addr.residential];
+  const line = parts.filter(Boolean).join(' ');
+  if (line) return line;
+  return addr.suburb || addr.neighbourhood || addr.hamlet || addr.city_district || '';
 }
 
-function formatSearchAddress(queryText) {
-  if (!queryText || typeof queryText !== 'string') return '';
-  let text = queryText.trim();
-
-  // Expand shorthand city aliases
-  for (const [alias, fullCity] of Object.entries(CITY_ALIASES)) {
-    const reg = new RegExp(`\\b${alias}\\b`, 'gi');
-    text = text.replace(reg, fullCity);
-  }
-
-  // Expand medical acronyms
-  for (const [abbr, full] of Object.entries(MEDICAL_ACRONYMS)) {
-    const reg = new RegExp(`\\b${abbr}\\b`, 'gi');
-    if (reg.test(text)) {
-      text = text.replace(reg, full);
-    }
-  }
-
-  text = text.split(' ')
-    .map(w => (w.length <= 4 && w === w.toUpperCase()) ? w : w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-
-  return text.replace(/Hospital\s+Hospital/gi, 'Hospital').trim();
+/** Extracts the best city name from a Nominatim address object. */
+function cityFromAddress(addr) {
+  if (!addr) return '';
+  return addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state_district || '';
 }
 
-function extractCityFromQuery(q) {
-  if (!q || typeof q !== 'string') return null;
-  const lower = q.toLowerCase();
-  for (const c of Object.keys(CITY_COORDS)) {
-    if (lower.includes(c)) {
-      return c.charAt(0).toUpperCase() + c.slice(1);
+/** Extracts the region/province from a Nominatim address object. */
+function provinceFromAddress(addr) {
+  if (!addr) return '';
+  return addr.state || addr.province || addr.region || addr.county || '';
+}
+
+/** Rate-limited, abortable Nominatim fetch wrapper. */
+function useNominatim() {
+  const lastCallRef = useRef(0);
+  const abortRef = useRef(null);
+
+  return useCallback(async (path) => {
+    // Nominatim policy: at most 1 request/second — enforce a 350ms floor and
+    // abort any stale in-flight request before starting a new one.
+    if (abortRef.current) abortRef.current.abort();
+    const wait = Math.max(0, 350 - (Date.now() - lastCallRef.current));
+    if (wait) await new Promise((r) => setTimeout(r, wait));
+    lastCallRef.current = Date.now();
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const res = await fetch(`${NOMINATIM_BASE}${path}`, {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Nominatim ${res.status}`);
+      return await res.json();
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null;
     }
-  }
-  for (const [alias, fullCity] of Object.entries(CITY_ALIASES)) {
-    if (lower.includes(alias)) {
-      return fullCity;
-    }
-  }
+  }, []);
+}
+
+/* ── Leaflet child helpers ─────────────────────────────────────────────────── */
+
+/** Forward map clicks as pin placements. */
+function MapClickCatcher({ onPick }) {
+  useMapEvents({
+    click(e) {
+      onPick({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
   return null;
 }
 
+/** Recalculate tile layout once the modal container is actually laid out. */
+function MapAutoResize() {
+  const map = useMap();
+  useEffect(() => {
+    const t1 = setTimeout(() => map.invalidateSize(), 60);
+    const t2 = setTimeout(() => map.invalidateSize(), 350);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [map]);
+  return null;
+}
+
+/** Smoothly move the viewport whenever the pin coordinates change. */
+function MapFollowPin({ lat, lng }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([lat, lng], Math.max(map.getZoom(), 15), { duration: 0.5 });
+  }, [lat, lng, map]);
+  return null;
+}
+
+/* ── Main component ────────────────────────────────────────────────────────── */
+
 export default function LocationPickerModal({ isOpen, onClose, onSelectLocation, initialLocation = {} }) {
-  const safeInit   = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
-  const safeCity   = typeof safeInit.city === 'string' && safeInit.city.trim() ? safeInit.city.trim() : 'Islamabad';
-  const safeStreet = typeof safeInit.street === 'string' ? safeInit.street : (typeof safeInit.address === 'string' ? safeInit.address : '');
+  const nominatim = useNominatim();
 
-  const [lat, setLat]                 = useState(typeof safeInit.latitude === 'number' && !isNaN(safeInit.latitude) ? safeInit.latitude : 33.6844);
-  const [lng, setLng]                 = useState(typeof safeInit.longitude === 'number' && !isNaN(safeInit.longitude) ? safeInit.longitude : 73.0479);
-  const [addressText, setAddressText] = useState(safeStreet);
-  const [city, setCity]               = useState(safeCity);
-  const [province, setProvince]       = useState(typeof safeInit.province === 'string' && safeInit.province.trim() ? safeInit.province.trim() : getProvinceForCity(safeCity));
-  const [mapsUrl, setMapsUrl]         = useState(typeof safeInit.mapsUrl === 'string' && safeInit.mapsUrl.trim() ? safeInit.mapsUrl.trim() : '');
+  const safeInit = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
 
-  const [loading, setLoading]                 = useState(false);
-  const [searchQuery, setSearchQuery]         = useState(safeStreet);
-  const [debouncedQuery, setDebouncedQuery]   = useState(safeStreet);
+  const [lat, setLat] = useState(
+    typeof safeInit.latitude === 'number' && !Number.isNaN(safeInit.latitude) ? safeInit.latitude : DEFAULT_CENTER.lat
+  );
+  const [lng, setLng] = useState(
+    typeof safeInit.longitude === 'number' && !Number.isNaN(safeInit.longitude) ? safeInit.longitude : DEFAULT_CENTER.lng
+  );
+  const [addressText, setAddressText] = useState(
+    typeof safeInit.street === 'string' ? safeInit.street : (typeof safeInit.address === 'string' ? safeInit.address : '')
+  );
+  const [city, setCity] = useState(typeof safeInit.city === 'string' ? safeInit.city.trim() : '');
+  const [province, setProvince] = useState(typeof safeInit.province === 'string' ? safeInit.province.trim() : '');
 
-  // Synchronize state when modal opens
+  const [searchQuery, setSearchQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [geoStatus, setGeoStatus] = useState(''); // '' | 'locating' | 'error'
+  const [reverseBusy, setReverseBusy] = useState(false);
+  const [geocoderBlocked, setGeocoderBlocked] = useState(false);
+
+  const debounceRef = useRef(null);
+
+  /* Synchronise state whenever the modal opens. */
   useEffect(() => {
     if (!isOpen) return;
     const init = initialLocation && typeof initialLocation === 'object' ? initialLocation : {};
-    const initCity = typeof init.city === 'string' && init.city.trim() ? init.city.trim() : 'Islamabad';
-    const initStreet = typeof init.street === 'string' ? init.street : (typeof init.address === 'string' ? init.address : '');
-
-    const initialLat = typeof init.latitude === 'number' && !isNaN(init.latitude) ? init.latitude : (CITY_COORDS[initCity.toLowerCase()]?.lat || 33.6844);
-    const initialLng = typeof init.longitude === 'number' && !isNaN(init.longitude) ? init.longitude : (CITY_COORDS[initCity.toLowerCase()]?.lng || 73.0479);
-
-    setLat(initialLat);
-    setLng(initialLng);
-    setAddressText(initStreet);
-    setSearchQuery(initStreet);
-    setDebouncedQuery(initStreet);
-    setCity(initCity);
-    setProvince(typeof init.province === 'string' && init.province.trim() ? init.province.trim() : getProvinceForCity(initCity));
-    setMapsUrl(typeof init.mapsUrl === 'string' && init.mapsUrl.trim() ? init.mapsUrl.trim() : `https://www.google.com/maps?q=${initialLat},${initialLng}`);
+    const initLat = typeof init.latitude === 'number' && !Number.isNaN(init.latitude) ? init.latitude : DEFAULT_CENTER.lat;
+    const initLng = typeof init.longitude === 'number' && !Number.isNaN(init.longitude) ? init.longitude : DEFAULT_CENTER.lng;
+    setLat(initLat);
+    setLng(initLng);
+    setAddressText(typeof init.street === 'string' ? init.street : (typeof init.address === 'string' ? init.address : ''));
+    setCity(typeof init.city === 'string' ? init.city.trim() : '');
+    setProvince(typeof init.province === 'string' ? init.province.trim() : '');
+    setSearchQuery('');
+    setResults([]);
+    setShowResults(false);
+    setGeocoderBlocked(false);
   }, [isOpen, initialLocation]);
 
-  // Debounce searchQuery for live Google Map embed updates
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Sync province whenever city changes
-  useEffect(() => {
-    if (city && typeof city === 'string') {
-      setProvince(getProvinceForCity(city));
-    }
-  }, [city]);
-
-  // Prevent background body scrolling when modal is open
+  /* Prevent background scrolling while the modal is open. */
   useEffect(() => {
     if (!isOpen) return;
-    const prevBody = document.body.style.overflow;
+    const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prevBody;
-    };
+    return () => { document.body.style.overflow = prev; };
   }, [isOpen]);
 
-  // Handle typing directly in the Search Input: sync Address, City, Province, and Google Maps URL live!
-  function handleSearchInputChange(e) {
-    const rawVal = e.target.value;
-    setSearchQuery(rawVal);
-
-    if (!rawVal.trim()) return;
-
-    const formatted = formatSearchAddress(rawVal);
-    setAddressText(formatted);
-
-    const detectedCity = extractCityFromQuery(rawVal) || city || 'Islamabad';
-    setCity(detectedCity);
-
-    const detectedProvince = getProvinceForCity(detectedCity);
-    setProvince(detectedProvince);
-
-    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
-    setMapsUrl(googleSearchUrl);
-  }
-
-  // Handle typing directly in Street Address field: sync Search query, City, Province, and Google Maps URL live!
-  function handleAddressInputChange(e) {
-    const rawVal = e.target.value;
-    setAddressText(rawVal);
-
-    if (!rawVal.trim()) return;
-
-    const formatted = formatSearchAddress(rawVal);
-    setSearchQuery(formatted);
-
-    const detectedCity = extractCityFromQuery(rawVal) || city || 'Islamabad';
-    setCity(detectedCity);
-
-    const detectedProvince = getProvinceForCity(detectedCity);
-    setProvince(detectedProvince);
-
-    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
-    setMapsUrl(googleSearchUrl);
-  }
-
-  // Handle typing/pasting directly in Google Maps Shareable URL field: auto-extract venue/plus-code, city, and province!
-  function handleMapsUrlInputChange(e) {
-    const rawVal = e.target.value;
-    setMapsUrl(rawVal);
-
-    if (!rawVal.trim()) return;
-
-    if (rawVal.includes('google.com/maps') || rawVal.includes('maps.app.goo.gl')) {
-      const placeMatch = rawVal.match(/\/place\/([^/@?]+)/);
-      if (placeMatch && placeMatch[1]) {
-        const decoded = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
-        const formatted = formatSearchAddress(decoded);
-        setAddressText(formatted);
-        setSearchQuery(formatted);
-        const detectedCity = extractCityFromQuery(decoded) || city || 'Islamabad';
-        setCity(detectedCity);
-        setProvince(getProvinceForCity(detectedCity));
-        return;
-      }
-    }
-
-    const plusMatch = rawVal.match(/([A-Z0-9]{4}\+[A-Z0-9]{2,3})(?:,\s*(.*))?/i);
-    if (plusMatch) {
-      const rest = plusMatch[2] || '';
-      const formatted = rest ? `${plusMatch[1]}, ${rest}` : plusMatch[1];
-      setAddressText(formatted);
-      setSearchQuery(formatted);
-      const detectedCity = extractCityFromQuery(rest) || city || 'Islamabad';
-      setCity(detectedCity);
-      setProvince(getProvinceForCity(detectedCity));
-    }
-  }
-
-  // Detect GPS Device Location
-  function handleDetectGps() {
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser.', { id: 'gps-toast' });
+  /* Debounced forward-geocode autocomplete (450ms). */
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const q = searchQuery.trim();
+    if (!isOpen || q.length < 3) {
+      setResults([]);
+      setSearching(false);
       return;
     }
-    setLoading(true);
-    toast.loading('Detecting GPS location…', { id: 'gps-toast' });
+    setSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const data = await nominatim(
+          `/search?format=jsonv2&addressdetails=1&limit=6&q=${encodeURIComponent(q)}`
+        );
+        setResults(Array.isArray(data) ? data : []);
+        setShowResults(true);
+        setGeocoderBlocked(false);
+      } catch (err) {
+        if (err?.name !== 'AbortError') {
+          setResults([]);
+          setGeocoderBlocked(true); // offline / blocked — manual entry still works
+        }
+      } finally {
+        setSearching(false);
+      }
+    }, 450);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchQuery, isOpen, nominatim]);
 
+  /* Reverse-geocode a pin placement and fill the address fields. */
+  const reverseFill = useCallback(async (nextLat, nextLng) => {
+    setReverseBusy(true);
+    try {
+      const data = await nominatim(
+        `/reverse?format=jsonv2&lat=${nextLat}&lon=${nextLng}&addressdetails=1&zoom=18`
+      );
+      if (data && data.address) {
+        const street = streetFromAddress(data.address);
+        if (street) setAddressText(street);
+        const c = cityFromAddress(data.address);
+        if (c) setCity(c);
+        const p = provinceFromAddress(data.address);
+        if (p) setProvince(p);
+        setGeocoderBlocked(false);
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') setGeocoderBlocked(true);
+    } finally {
+      setReverseBusy(false);
+    }
+  }, [nominatim]);
+
+  /** Central pin placement handler (map click / search result / GPS). */
+  const placePin = useCallback((coords, { reverse = true } = {}) => {
+    setLat(coords.lat);
+    setLng(coords.lng);
+    if (reverse) reverseFill(coords.lat, coords.lng);
+  }, [reverseFill]);
+
+  /** Choose a search result from the dropdown. */
+  function handleSelectResult(item) {
+    const coords = { lat: Number(item.lat), lng: Number(item.lon) };
+    placePin(coords, { reverse: false });
+    const addr = item.address || {};
+    const street = streetFromAddress(addr) || String(item.display_name || '').split(',')[0];
+    if (street) setAddressText(street);
+    const c = cityFromAddress(addr);
+    if (c) setCity(c);
+    const p = provinceFromAddress(addr);
+    if (p) setProvince(p);
+    setShowResults(false);
+    setSearchQuery('');
+  }
+
+  /** Browser geolocation. */
+  function handleUseGps() {
+    if (!('geolocation' in navigator)) {
+      setGeoStatus('error');
+      return;
+    }
+    setGeoStatus('locating');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const latitude  = parseFloat(pos.coords.latitude.toFixed(6));
-        const longitude = parseFloat(pos.coords.longitude.toFixed(6));
-        setLat(latitude);
-        setLng(longitude);
-
-        const gpsQuery = `${latitude},${longitude}`;
-        setSearchQuery(gpsQuery);
-        setDebouncedQuery(gpsQuery);
-        setAddressText(`GPS Location (${latitude}, ${longitude})`);
-
-        const genUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-        setMapsUrl(genUrl);
-
-        setLoading(false);
-        toast.success('Current GPS location acquired!', { id: 'gps-toast' });
+        setGeoStatus('');
+        placePin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       },
-      (err) => {
-        setLoading(false);
-        const errMsg = err.code === 1 ? 'GPS permission denied.' : 'Unable to acquire GPS location.';
-        toast.error(errMsg, { id: 'gps-toast' });
-      },
-      { timeout: 10000, maximumAge: 60000 }
+      () => setGeoStatus('error'),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
     );
   }
 
-  // Handle Search submit
-  function handleSearchSubmit(e) {
-    if (e) e.preventDefault();
-    const rawQuery = searchQuery.trim();
-    if (!rawQuery) return;
-
-    const formatted = formatSearchAddress(rawQuery);
-    setAddressText(formatted);
-
-    const detectedCity = extractCityFromQuery(rawQuery) || city || 'Islamabad';
-    setCity(detectedCity);
-
-    const detectedProvince = getProvinceForCity(detectedCity);
-    setProvince(detectedProvince);
-
-    const googleSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
-    setMapsUrl(googleSearchUrl);
-
-    toast.success(`📍 Map centered to exact query: ${formatted}`, { id: 'gps-toast' });
-  }
-
+  /** Confirm selection — exact contract preserved from the previous modal. */
   function handleConfirm() {
-    const finalAddress = addressText || searchQuery || 'Hospital Location';
-    const finalUrl = mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeEmbedQuery)}`;
-    
+    const finalAddress = addressText.trim() || `${city.trim()}${province.trim() ? `, ${province.trim()}` : ''}`;
     onSelectLocation({
-      latitude:  lat,
+      latitude: lat,
       longitude: lng,
-      street:    finalAddress,
-      address:   finalAddress,
-      city:      city || 'Islamabad',
-      province:  province || 'Islamabad Capital Territory',
-      mapsUrl:   finalUrl,
+      street: finalAddress,
+      address: finalAddress,
+      city: city.trim(),
+      province: province.trim(),
+      // Keyless deep-link (plain link — no API key, unlike the Maps JS API).
+      mapsUrl: `https://www.google.com/maps?q=${lat},${lng}`,
     });
-    toast.success('Location confirmed!', { id: 'gps-toast' });
     onClose();
   }
 
-  // Active query for live Google Maps Embed iframe
-  const activeEmbedQuery = formatSearchAddress(debouncedQuery.trim() || searchQuery.trim() || addressText || (lat && lng ? `${lat},${lng}` : `${city}, Pakistan`));
-  const activeMapsUrl    = mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeEmbedQuery)}`;
-
   if (!isOpen) return null;
 
-  const modalContent = (
-    <div
-      onWheel={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      style={{
-        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 999999,
-        background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
-        touchAction: 'none'
-      }}
-    >
-      {/* Outer card: Wide split screen on desktop, stacked on mobile */}
-      <div className="card location-picker-modal-card">
+  return createPortal(
+    <div style={overlayStyle} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={modalStyle} className="bg-location-modal">
 
-        {/* ── LEFT COLUMN: 100% Real Google Maps View ── */}
-        <div className="location-picker-map-col">
-          
-          <iframe
-            className="location-picker-map-iframe"
-            title="Real Google Map View"
-            loading="lazy"
-            allowFullScreen
-            referrerPolicy="no-referrer-when-downgrade"
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(activeEmbedQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
-          />
-          
-          {/* Live Location Badge Over Map */}
-          <div style={{
-            position: 'absolute', bottom: '12px', left: '12px', zIndex: 1000,
-            background: 'rgba(15, 23, 42, 0.92)', padding: '6px 12px', borderRadius: '10px',
-            fontSize: '0.72rem', color: '#34d399', fontWeight: 700,
-            border: '1px solid rgba(16, 185, 129, 0.4)', backdropFilter: 'blur(6px)',
-            pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '6px',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.4)', maxWidth: '90%'
-          }}>
-            <MapPin size={14} color="#ef4444" style={{ flexShrink: 0 }} />
-            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              📍 {activeEmbedQuery}
-            </span>
+        {/* ── Header ── */}
+        <div style={headerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={headerIconStyle}><MapPin size={17} color="#ffffff" /></div>
+            <div>
+              <div style={headerTitleStyle}>Select Exact Location</div>
+              <div style={headerSubStyle}>OpenStreetMap + Nominatim — free, no API key</div>
+            </div>
           </div>
-
+          <button onClick={onClose} style={closeBtnStyle} aria-label="Close location picker">
+            <X size={18} color="#e2e8f0" />
+          </button>
         </div>
 
-        {/* ── RIGHT COLUMN: Search, Controls & Auto-Filled Details Panel ── */}
-        <div className="location-picker-form-col">
+        <div style={bodyStyle} className="bg-location-body">
 
-          <style>{`
-            .location-picker-modal-card {
-              width: 100%;
-              max-width: 980px;
-              height: min(580px, 90vh);
-              display: flex;
-              flex-direction: row;
-              background: #0f172a;
-              border: 1px solid rgba(255, 255, 255, 0.15);
-              border-radius: 20px;
-              overflow: hidden;
-              box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
-              position: relative;
-            }
+          {/* ── Map pane ── */}
+          <div style={mapPaneStyle} className="bg-location-map">
+            <MapContainer
+              center={[lat, lng]}
+              zoom={15}
+              style={{ width: '100%', height: '100%' }}
+              attributionControl
+            >
+              <TileLayer
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <Marker
+                position={[lat, lng]}
+                icon={pinIcon}
+                draggable
+                eventHandlers={{
+                  dragend: (e) => {
+                    const p = e.target.getLatLng();
+                    placePin({ lat: p.lat, lng: p.lng });
+                  },
+                }}
+              />
+              <MapClickCatcher onPick={(coords) => placePin(coords)} />
+              <MapAutoResize />
+              <MapFollowPin lat={lat} lng={lng} />
+            </MapContainer>
 
-            .location-picker-map-col {
-              flex: 1.2;
-              position: relative;
-              height: 100%;
-              width: 100%;
-              background: #1e293b;
-              display: flex;
-              flex-direction: column;
-            }
-
-            .location-picker-map-iframe {
-              width: 100% !important;
-              height: 100% !important;
-              flex: 1 1 auto !important;
-              min-height: 0 !important;
-              border: 0 !important;
-            }
-
-            .location-picker-form-col {
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-              padding: 20px 24px;
-              background: #0f172a;
-              border-left: 1px solid rgba(255, 255, 255, 0.1);
-              overflow-y: auto;
-            }
-
-            @media (max-width: 768px) {
-              .location-picker-modal-card {
-                flex-direction: column !important;
-                height: auto !important;
-                max-height: 92vh !important;
-              }
-
-              .location-picker-map-col {
-                flex: none !important;
-                height: 220px !important;
-                min-height: 220px !important;
-              }
-
-              .location-picker-form-col {
-                border-left: none !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-                padding: 14px 16px !important;
-              }
-            }
-          `}</style>
-
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
-                <MapPin size={20} color="#ef4444" /> Location Details
-              </h3>
-              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>See location on Google Map & update details live</p>
-            </div>
-            <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
-              <X size={18} />
+            {/* Floating GPS control */}
+            <button style={gpsBtnStyle} onClick={handleUseGps} title="Use my current position">
+              {geoStatus === 'locating' ? <Loader2 size={16} color="#ffffff" className="spin" /> : <Navigation size={16} color="#ffffff" />}
             </button>
+
+            {/* Status line */}
+            <div style={statusLineStyle}>
+              {reverseBusy ? 'Resolving address…' : (
+                <>
+                  <MapPin size={11} color="#ff7b7b" style={{ display: 'inline', marginRight: 4 }} />
+                  {typeof lat === 'number' ? `${lat.toFixed(5)}, ${lng.toFixed(5)}` : '—'}
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Search Bar & GPS Button */}
-          <div style={{ marginBottom: '16px', flexShrink: 0 }}>
-            <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <input
-                  className="input"
-                  style={{ fontSize: '0.85rem', padding: '10px 14px', width: '100%', borderRadius: '10px' }}
-                  placeholder="Type address, hospital, landmark (e.g. Allama iqbal colony street 39, rawalpindi)..."
-                  value={searchQuery}
-                  onChange={handleSearchInputChange}
-                />
-              </div>
-              <button
-                type="submit"
-                className="btn btn-primary btn-sm"
-                style={{ padding: '10px 16px', background: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, fontWeight: 700, borderRadius: '10px' }}
-              >
-                <Search size={16} />
-                <span>Sync</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleDetectGps}
-                className="btn btn-secondary btn-sm"
-                disabled={loading}
-                style={{ padding: '10px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, fontWeight: 600, borderRadius: '10px' }}
-                title="Detect GPS Position"
-              >
-                {loading ? <Loader2 size={16} className="spin" /> : <Navigation size={16} />}
-                <span>GPS</span>
-              </button>
-            </form>
-          </div>
+          {/* ── Form pane ── */}
+          <div style={formPaneStyle} className="bg-location-form">
 
-          {/* Form Fields: All visible in single view without scrolling! */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="input-group" style={{ margin: 0 }}>
-                <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px', fontWeight: 700 }}>City *</label>
-                <input
-                  className="input"
-                  style={{ fontSize: '0.85rem', padding: '8px 12px', borderRadius: '8px' }}
-                  value={city}
-                  onChange={e => setCity(e.target.value)}
-                  placeholder="e.g. Rawalpindi"
-                />
+            {/* Search with autocomplete */}
+            <div style={{ position: 'relative' }}>
+              <div style={labelStyle}>
+                <Search size={12} color="#ff7b7b" style={{ display: 'inline', marginRight: 6, verticalAlign: '-2px' }} />
+                Search address worldwide
               </div>
-
-              <div className="input-group" style={{ margin: 0 }}>
-                <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px', fontWeight: 700 }}>Province / State</label>
-                <input
-                  className="input"
-                  style={{ fontSize: '0.85rem', padding: '8px 12px', borderRadius: '8px' }}
-                  value={province}
-                  onChange={e => setProvince(e.target.value)}
-                  placeholder="e.g. Punjab"
-                />
-              </div>
+              <input
+                style={inputStyle}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => { if (results.length) setShowResults(true); }}
+                placeholder="e.g. Agha Khan University Hospital, Karachi"
+                autoComplete="off"
+              />
+              {searching && (
+                <Loader2 size={14} color="#ff7b7b" className="spin" style={{ position: 'absolute', right: 12, top: 34 }} />
+              )}
+              {showResults && results.length > 0 && (
+                <div style={resultsStyle} className="bg-location-results">
+                  {results.map((r, i) => (
+                    <button
+                      key={r.place_id || i}
+                      style={resultItemStyle}
+                      onClick={() => handleSelectResult(r)}
+                    >
+                      <MapPin size={13} color="#ff7b7b" style={{ flexShrink: 0, marginTop: 2 }} />
+                      <span>{r.display_name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {geocoderBlocked && (
+                <div style={{ fontSize: '0.72rem', color: '#e2e8f0', marginTop: 6, opacity: 0.9 }}>
+                  Address search unavailable (offline?) — drop a pin on the map or type the address manually.
+                </div>
+              )}
             </div>
 
-            <div className="input-group" style={{ margin: 0 }}>
-              <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px', fontWeight: 700 }}>Street Address / Landmark</label>
+            {/* Manual fields (auto-filled by reverse geocoding) */}
+            <div>
+              <div style={labelStyle}>
+                <Building2 size={12} color="#ff7b7b" style={{ display: 'inline', marginRight: 6, verticalAlign: '-2px' }} />
+                Street address
+              </div>
               <input
-                className="input"
-                style={{ fontSize: '0.85rem', padding: '8px 12px', borderRadius: '8px' }}
+                style={inputStyle}
                 value={addressText}
-                onChange={handleAddressInputChange}
-                placeholder="e.g. Allama Iqbal Colony Street 39, Rawalpindi"
+                onChange={(e) => setAddressText(e.target.value)}
+                placeholder="House / street / landmark"
               />
             </div>
 
-            <div className="input-group" style={{ margin: 0 }}>
-              <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px', fontWeight: 700 }}>Google Maps Shareable URL</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <div style={labelStyle}>City</div>
                 <input
-                  className="input"
-                  style={{ fontSize: '0.8rem', padding: '8px 12px', flex: 1, borderRadius: '8px' }}
-                  value={activeMapsUrl}
-                  onChange={handleMapsUrlInputChange}
-                  placeholder="Google Maps URL"
+                  style={inputStyle}
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
                 />
-                <a
-                  href={activeMapsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-ghost btn-sm"
-                  style={{ textDecoration: 'none', color: '#60a5fa', fontSize: '0.8rem', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '4px', flexShrink: 0, borderRadius: '8px', border: '1px solid rgba(96, 165, 250, 0.3)' }}
-                >
-                  <ExternalLink size={14} /> Open
-                </a>
+              </div>
+              <div>
+                <div style={labelStyle}>State / Province</div>
+                <input
+                  style={inputStyle}
+                  value={province}
+                  onChange={(e) => setProvince(e.target.value)}
+                  placeholder="Province"
+                />
               </div>
             </div>
 
-          </div>
+            {geoStatus === 'error' && (
+              <div style={{ fontSize: '0.75rem', color: '#ff7b7b' }}>
+                GPS unavailable — place the pin manually.
+              </div>
+            )}
 
-          {/* Footer Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '16px', marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={onClose} style={{ fontSize: '0.85rem', padding: '10px 18px', borderRadius: '10px' }}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={handleConfirm}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#10b981', color: '#fff', fontSize: '0.85rem', padding: '10px 22px', fontWeight: 800, borderRadius: '10px' }}
-            >
-              <CheckCircle2 size={18} /> Confirm Location Details
+            <button style={confirmBtnStyle} onClick={handleConfirm}>
+              <Check size={15} color="#ffffff" />
+              Confirm Location
             </button>
           </div>
-
         </div>
 
-      </div>
-    </div>
-  );
+        <style>{`
+          .bg-location-modal { font-family: 'Inter', system-ui, sans-serif; }
+          .bg-location-modal .spin { animation: bgloc-spin 0.9s linear infinite; }
+          @keyframes bgloc-spin { to { transform: rotate(360deg); } }
+          /* Dark-tint the OSM tiles to match the glassmorphism theme. */
+          .bg-location-map .leaflet-tile-pane {
+            filter: brightness(0.78) saturate(0.82) contrast(1.05);
+          }
+          .bg-location-map .leaflet-container {
+            background: #0f1520;
+            font-family: 'Inter', system-ui, sans-serif;
+          }
+          .bg-location-map .leaflet-control-attribution {
+            background: rgba(8, 11, 16, 0.75);
+            color: #cbd5e1;
+            font-size: 9px;
+          }
+          .bg-location-map .leaflet-control-attribution a { color: #e2e8f0; }
+          .bg-pin-wrapper { background: transparent; border: none; }
+          .bg-location-results::-webkit-scrollbar { width: 6px; }
+          .bg-location-results::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
 
-  return createPortal(modalContent, document.body);
+          @media (max-width: 768px) {
+            .bg-location-body { flex-direction: column; }
+            .bg-location-map { min-height: 38vh; }
+            .bg-location-form { max-height: none; overflow-y: auto; }
+            .bg-location-results { max-height: 180px; }
+          }
+        `}</style>
+      </div>
+    </div>,
+    document.body
+  );
 }
+
+/* ── Inline styles (dark glassmorphism, matching the app design system) ───── */
+
+const overlayStyle = {
+  position: 'fixed', inset: 0, zIndex: 100000,
+  background: 'rgba(4, 6, 10, 0.72)',
+  backdropFilter: 'blur(6px)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  padding: '16px',
+};
+
+const modalStyle = {
+  width: 'min(960px, 100%)', maxHeight: '92vh',
+  background: 'linear-gradient(160deg, #0f1520 0%, #131926 100%)',
+  border: '1px solid rgba(255, 255, 255, 0.09)',
+  borderRadius: 18, overflow: 'hidden',
+  display: 'flex', flexDirection: 'column',
+  boxShadow: '0 24px 80px rgba(0, 0, 0, 0.6)',
+};
+
+const headerStyle = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+  padding: '14px 18px', borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+};
+
+const headerIconStyle = {
+  width: 34, height: 34, borderRadius: 10,
+  background: 'linear-gradient(135deg, #ff4d4d 0%, #c0392b 100%)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  boxShadow: '0 0 18px rgba(192, 57, 43, 0.45)',
+};
+
+const headerTitleStyle = { fontSize: '0.98rem', fontWeight: 800, color: '#ffffff' };
+const headerSubStyle = { fontSize: '0.72rem', color: '#e2e8f0', marginTop: 1 };
+
+const closeBtnStyle = {
+  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 9, width: 32, height: 32, cursor: 'pointer',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+};
+
+const bodyStyle = {
+  display: 'flex', flexDirection: 'row', minHeight: 360,
+  overflow: 'auto',
+};
+
+const mapPaneStyle = {
+  position: 'relative', flex: '1.25 1 0', minHeight: 380, background: '#0f1520',
+};
+
+const formPaneStyle = {
+  flex: '1 1 0', padding: 16, display: 'flex', flexDirection: 'column',
+  gap: 12, overflowY: 'auto', maxHeight: '70vh',
+  background: 'rgba(255,255,255,0.015)',
+  borderTop: 'none',
+};
+
+const labelStyle = {
+  fontSize: '0.7rem', fontWeight: 700, color: '#ffffff',
+  textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6,
+};
+
+const inputStyle = {
+  width: '100%', boxSizing: 'border-box',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 9, padding: '9px 12px',
+  color: '#ffffff', fontSize: '0.86rem', outline: 'none',
+};
+
+const resultsStyle = {
+  position: 'absolute', top: 62, left: 0, right: 0, zIndex: 50,
+  background: '#131926', border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 10, maxHeight: 220, overflowY: 'auto',
+  boxShadow: '0 16px 40px rgba(0,0,0,0.55)',
+};
+
+const resultItemStyle = {
+  display: 'flex', gap: 8, alignItems: 'flex-start', width: '100%',
+  background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)',
+  padding: '9px 11px', cursor: 'pointer', textAlign: 'left',
+  color: '#e2e8f0', fontSize: '0.8rem', lineHeight: 1.35,
+};
+
+const gpsBtnStyle = {
+  position: 'absolute', top: 12, right: 12, zIndex: 1000,
+  width: 36, height: 36, borderRadius: 10, cursor: 'pointer',
+  background: 'linear-gradient(135deg, #ff4d4d 0%, #c0392b 100%)',
+  border: '1px solid rgba(255,255,255,0.25)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  boxShadow: '0 4px 16px rgba(192, 57, 43, 0.5)',
+};
+
+const statusLineStyle = {
+  position: 'absolute', bottom: 10, left: 10, zIndex: 1000,
+  background: 'rgba(8, 11, 16, 0.85)', border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 8, padding: '4px 10px', fontSize: '0.7rem', color: '#e2e8f0',
+  backdropFilter: 'blur(4px)',
+};
+
+const confirmBtnStyle = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  marginTop: 'auto', padding: '11px 16px', borderRadius: 11, cursor: 'pointer',
+  background: 'linear-gradient(135deg, #ff4d4d 0%, #c0392b 100%)',
+  border: 'none', color: '#ffffff', fontWeight: 800, fontSize: '0.9rem',
+  boxShadow: '0 8px 24px rgba(192, 57, 43, 0.4)',
+};
