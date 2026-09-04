@@ -1,10 +1,13 @@
 /**
- * Auth context ΓÇö session state and authentication actions.
+ * Auth context — session state and authentication actions.
  *
- * Persists { user, accessToken, refreshToken } to localStorage so the session
- * survives page refreshes. The context provides login, logout, and a flag
- * indicating whether the initial auth check has completed (used by
- * ProtectedRoute to avoid flashing the login page on hard refresh).
+ * Auth tokens now live in HTTP-only cookies set by the server (see lib/api.js),
+ * so only the lightweight user *profile* is cached in localStorage for instant
+ * first paint on refresh — session credentials never touch JS-readable storage.
+ *
+ * Login / page-load hydration uses Promise.all() to fetch the profile and the
+ * role-specific dashboard data concurrently instead of sequentially — the
+ * dashboard's own hooks then hit the warm cache and render immediately.
  */
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -31,40 +34,110 @@ export function clearAllUserDataCache() {
   }
 }
 
+/**
+ * Role-specific dashboard endpoints to pre-warm. Each entry runs in parallel
+ * (Promise.all) the moment the session is established, so the dashboard mounts
+ * against warm caches instead of cold-fetching its data serially.
+ */
+const ROLE_PREWARM = {
+  hospital: () => [
+    api.get('/hospitals/me').then(res => {
+      if (res.data?.data) localStorage.setItem('bloodsync_hospital_profile_cache', JSON.stringify(res.data.data));
+    }),
+    api.get('/hospitals/requests').catch(() => {}),
+  ],
+  donor: () => [
+    api.get('/donors/me').then(res => {
+      if (res.data?.data) cacheService.set('donor_profile', res.data.data);
+    }),
+    api.get('/donors/requests').catch(() => {}),
+  ],
+  seeker: () => [
+    api.get('/seekers/requests/mine?limit=50').then(res => {
+      if (res.data?.data?.requests) localStorage.setItem('bloodsync_seeker_requests_cache', JSON.stringify(res.data.data.requests));
+    }),
+    api.get('/notifications/unread-count').catch(() => {}),
+  ],
+  admin: (userId) => [
+    api.get('/admin/analytics').then(res => {
+      if (res.data?.data) localStorage.setItem(`bloodsync_admin_analytics_${userId}`, JSON.stringify(res.data.data));
+    }),
+    api.get('/admin/requests?status=pending_review&limit=25').catch(() => {}),
+  ],
+  // Partner accounts authenticate with role 'hospital' but own a partner-type
+  // org — pre-warm both dashboards' primary feeds.
+  partner: () => [
+    api.get('/hospitals/me').then(res => {
+      if (res.data?.data) localStorage.setItem('bloodsync_hospital_profile_cache', JSON.stringify(res.data.data));
+    }).catch(() => {}),
+    api.get('/partners/drives').catch(() => {}),
+  ],
+};
+
+/** Fire-and-forget parallel pre-warm for the given user's role. */
+function prewarmRoleData(user) {
+  if (!user?.role) return;
+  const builders = ROLE_PREWARM[user.role] || [];
+  const userId = user?._id || user?.id;
+  // Own role first, plus the partner mirror when relevant.
+  const tasks = [
+    ...builders(userId),
+    ...(user.role === 'hospital' ? (ROLE_PREWARM.partner?.() || []) : []),
+  ];
+  // Promise.all: all requests leave at the same instant — total latency is the
+  // slowest single call, not the sum of sequential round-trips.
+  Promise.allSettled(tasks).catch(() => {});
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // true until initial hydration done
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
-    const token = localStorage.getItem('accessToken');
+
+    // Cached profile gives an instant (0ms) first paint while the real
+    // session check runs in the background.
     if (stored) {
       try {
         setUser(JSON.parse(stored));
-        setLoading(false); // Instant hydration from cache (0ms delay!)
+        setLoading(false);
       } catch {
         localStorage.removeItem('user');
       }
     }
-    if (token) {
-      api.get('/auth/me')
-        .then((res) => {
-          if (res.data?.data) {
-            setUser((prev) => {
-              const next = { ...prev, ...res.data.data };
-              localStorage.setItem('user', JSON.stringify(next));
-              return next;
-            });
-          }
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    } else {
+
+    // Hydrate: verify the cookie session AND pre-warm the role dashboard data
+    // in parallel. With HTTP-only cookies there is no localStorage token to
+    // gate on — if a session cookie exists, /auth/me resolves it.
+    const sessionEstablished = api.get('/auth/me')
+      .then((res) => res.data?.data)
+      .catch(() => null);
+
+    // Only pre-warm once we know a session exists — otherwise /auth/me's 401
+    // would have already told us there's nothing to warm.
+    sessionEstablished.then((profile) => {
+      if (!profile) {
+        // No valid session — drop any stale cached profile.
+        if (stored) {
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+        setLoading(false);
+        return;
+      }
+      // Parallel: merge fresh profile + kick off dashboard data pre-warm.
+      prewarmRoleData(profile);
+      setUser((prev) => {
+        const next = { ...prev, ...profile };
+        localStorage.setItem('user', JSON.stringify(next));
+        return next;
+      });
       setLoading(false);
-    }
+    });
   }, []);
 
-  const login = useCallback(({ user: userData, accessToken, refreshToken }) => {
+  const login = useCallback(({ user: userData }) => {
     const newUserId = userData?._id || userData?.id;
     let prevUserId = null;
     try {
@@ -75,48 +148,32 @@ export function AuthProvider({ children }) {
       }
     } catch {}
 
-    // Only clear cache if logging in as a DIFFERENT user account to prevent cross-account leak while keeping instant load
+    // Only clear cache if logging in as a DIFFERENT user account to prevent
+    // cross-account leak while keeping instant load.
     if (newUserId && prevUserId && String(newUserId) !== String(prevUserId)) {
       clearAllUserDataCache();
     }
 
+    // NOTE: accessToken/refreshToken are no longer persisted — the server set
+    // them as HTTP-only cookies in the login response. Only the profile is
+    // cached (for instant paint on refresh).
     localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
     setUser(userData);
 
-    // Fire parallel role data pre-fetch immediately upon login to pre-warm cache before dashboard mounts
-    setTimeout(() => {
-      try {
-        if (userData?.role === 'hospital') {
-          api.get('/hospitals/me').then(res => {
-            if (res.data?.data) localStorage.setItem('bloodsync_hospital_profile_cache', JSON.stringify(res.data.data));
-          }).catch(() => {});
-        } else if (userData?.role === 'donor') {
-          api.get('/donors/me').then(res => {
-            if (res.data?.data) cacheService.set('donor_profile', res.data.data);
-          }).catch(() => {});
-        } else if (userData?.role === 'seeker') {
-          api.get('/seekers/requests/mine?limit=50').then(res => {
-            if (res.data?.data?.requests) localStorage.setItem('bloodsync_seeker_requests_cache', JSON.stringify(res.data.data.requests));
-          }).catch(() => {});
-        } else if (userData?.role === 'admin' && newUserId) {
-          api.get('/admin/analytics').then(res => {
-            if (res.data?.data) localStorage.setItem(`bloodsync_admin_analytics_${newUserId}`, JSON.stringify(res.data.data));
-          }).catch(() => {});
-        }
-      } catch {}
-    }, 0);
+    // Pre-warm every dashboard endpoint for this role in parallel (Promise.all
+    // inside prewarmRoleData) so the dashboard mounts against warm caches.
+    setTimeout(() => prewarmRoleData(userData), 0);
   }, []);
 
   const logout = useCallback(async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    // Best-effort server-side invalidation — don't block on failure.
-    api.post('/auth/logout', { refreshToken }).catch(() => {});
+    // Best-effort server-side invalidation — the server also expires the
+    // HTTP-only auth cookies in this call. Don't block on failure.
+    api.post('/auth/logout', {}).catch(() => {});
 
-    localStorage.removeItem('user');
+    // Clean up any pre-migration tokens plus the cached profile.
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
     clearAllUserDataCache();
     setUser(null);
   }, []);
@@ -137,7 +194,7 @@ export function AuthProvider({ children }) {
 }
 
 /**
- * Convenience hook ΓÇö throws if used outside AuthProvider.
+ * Convenience hook — throws if used outside AuthProvider.
  */
 export function useAuth() {
   const ctx = useContext(AuthContext);
