@@ -116,8 +116,9 @@ const donorProfileSchema = new mongoose.Schema(
 // Blood-group + availability + city are the three axes of the donor search
 // query in Phase 3. City lives on the User document, so the compound index
 // here covers the DonorProfile side.
+// (The unique index on `user` is declared field-level above — do not re-declare
+// it here, mongoose warns on duplicate index definitions.)
 donorProfileSchema.index({ bloodGroup: 1, isAvailable: 1 });
-donorProfileSchema.index({ user: 1 }, { unique: true });
 
 const DonorProfile = mongoose.model('DonorProfile', donorProfileSchema);
 
