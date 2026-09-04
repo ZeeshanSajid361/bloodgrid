@@ -82,7 +82,7 @@ BloodGrid provides 5 dedicated user profiles, each built with tailored user inte
 **Purpose**: Gives blood donors a personalized dashboard to track their donation impact, view matching emergency requests, manage availability, and earn recognition.
 
 * **WHO Medical Cooldown Shield**: Automatically calculates a mandatory rest period (**90 days for males / 120 days for females**) following every donation. Travel pledges are automatically locked during cooldown to safeguard donor health.
-* **Live Emergency Request Matching**: Displays urgent blood requests matching the donor's exact blood group and location, complete with instant Google Maps navigation buttons.
+* **Live Emergency Request Matching**: Displays urgent blood requests matching the donor's exact blood group and location, complete with instant one-tap Google Maps navigation links.
 * **Gamified Donor Recognition Tiers**: Donors earn verified milestone badges as they donate:
   * 🌿 **Spark** (1 Donation)
   * ⚡ **Pulse** (3 Donations)
@@ -102,16 +102,16 @@ BloodGrid provides 5 dedicated user profiles, each built with tailored user inte
 
 * **Medical Slip Verification Upload**: Seekers submit blood requests along with hospital requisition slips for admin verification, ensuring only genuine cases are broadcasted.
 * **Smart Blood Compatibility Search**: Displays exact compatible blood types (e.g., B+ can receive from B+, B-, O+, O-) and locates nearby hospitals with ready freezer stock.
-* **Interactive Google Maps Picker**: Allows seekers to pinpoint exact hospital delivery locations using an embedded Google Maps modal.
+* **Interactive Map Location Picker**: Seekers pinpoint exact hospital delivery locations on a live OpenStreetMap view (Leaflet) with worldwide address search, drag-to-place pin, and GPS locate — zero third-party API keys or costs.
 * **Real-Time Request Progress Timeline**: Tracks request stages visually (*Submitted ➔ Approved ➔ Fulfilled*).
 
 | Seeker Dashboard & Timeline | Smart Compatibility & Freezer Stock Search |
 |---|---|
 | ![Seeker Dashboard](./images/seeker-dashboard.png) | ![Seeker Search](./images/seeker-search.png) |
 
-| Interactive Google Maps Location Picker |
+| Interactive OpenStreetMap Location Picker (Leaflet + Nominatim search) |
 |:---:|
-| ![Google Maps Location Picker](./images/location-picker.png) |
+| ![OpenStreetMap Location Picker](./images/location-picker.png) |
 
 ---
 
@@ -145,12 +145,12 @@ BloodGrid provides 5 dedicated user profiles, each built with tailored user inte
 
 ## 🛠 Tech Stack & Engineering Highlights
 
-* **Frontend**: React 18, Vite, Lucide React Icons, Custom Vanilla CSS Design System (Glassmorphism & Sleek Dark Mode).
+* **Frontend**: React 18, Vite, Leaflet + OpenStreetMap maps, Lucide React Icons, Custom Vanilla CSS Design System (Glassmorphism & Sleek Dark Mode).
 * **Backend**: Node.js, Express.js statelessly optimized for Vercel Serverless deployments.
-* **Database**: MongoDB Atlas with Mongoose ODM and transactional session support.
-* **Caching Layer**: Custom SWR (Stale-While-Revalidate) local RAM cache service backed by Upstash Redis.
-* **Security & Auth**: Dual-token JWT (Access & Refresh Tokens), bcryptjs password hashing, full PII data masking on public queries.
-* **Geolocation**: Google Maps API integration with interactive search, pin location sync, and direct navigation links.
+* **Database**: MongoDB Atlas with Mongoose ODM, transactional session support, and compound indexes tuned for city / blood-group / urgency query paths.
+* **Caching Layer**: Custom SWR (Stale-While-Revalidate) local RAM cache service with optional Upstash Redis backing.
+* **Security & Auth**: HTTP-only cookie sessions (short-lived access + rotating refresh tokens — tokens never touch `localStorage`), bcryptjs password hashing, full PII data masking on public queries, rate-limited auth routes.
+* **Geolocation**: Open-source Leaflet + OpenStreetMap tiles with Nominatim address search & reverse geocoding (zero API cost, works worldwide), plus Google Maps deep-links for donor navigation.
 
 ---
 
@@ -158,27 +158,48 @@ BloodGrid provides 5 dedicated user profiles, each built with tailored user inte
 
 ### 1. Repository Setup
 ```bash
-git clone https://github.com/ZeeshanSajid361/bloodsync.git
-cd bloodsync
+git clone https://github.com/ZeeshanSajid361/bloodgrid.git
+cd bloodgrid
 ```
 
 ### 2. Environment Setup
 
-Create `server/.env`:
+Create `server/.env` (see `server/.env.example` for the full annotated template):
 ```env
 PORT=5000
 NODE_ENV=development
 MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/bloodgrid
-JWT_SECRET=your_jwt_secret_key
-JWT_REFRESH_SECRET=your_jwt_refresh_secret_key
+
+# Auth — tokens are issued BOTH in the JSON response and as HTTP-only cookies
+JWT_ACCESS_SECRET=your_long_random_secret
+JWT_REFRESH_SECRET=your_different_long_random_secret
+
+# Must match the browser origin exactly (CORS + cookie auth)
+CLIENT_URL=http://localhost:5173
+
+# Optional
+CORS_ORIGINS=https://your-vercel-preview.vercel.app
 UPSTASH_REDIS_REST_URL=your_upstash_redis_url
 UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token
+
+# Feature integrations
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=your_gmail@gmail.com
+SMTP_PASS=your_16_char_app_password
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_SUBJECT=mailto:your_gmail@gmail.com
 ```
 
 Create `client/.env`:
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
+
+> 💡 No Google Maps API key is required — the location picker runs entirely on open-source Leaflet + OpenStreetMap.
 
 ### 3. Install & Start Application
 ```bash
@@ -201,5 +222,5 @@ npm run dev
 
 * **Developer**: Zeeshan Sajid
 * **Institution**: FAST National University of Computer and Emerging Sciences, Islamabad
-* **GitHub Repository**: [ZeeshanSajid361/bloodsync](https://github.com/ZeeshanSajid361/bloodsync)
+* **GitHub Repository**: [ZeeshanSajid361/bloodgrid](https://github.com/ZeeshanSajid361/bloodgrid)
 * **Live Deployment**: [blood-sync-app.vercel.app](https://blood-sync-app.vercel.app)
