@@ -40,7 +40,8 @@ async function sendMail({ to, subject, html }) {
   });
 }
 
-const PRODUCTION_CLIENT_URL = 'https://blood-sync-app.vercel.app';
+const PRODUCTION_CLIENT_URL = 'https://bloodgrid-alpha.vercel.app';
+
 
 const getBaseClientUrl = () => {
   const raw = clientUrl || '';

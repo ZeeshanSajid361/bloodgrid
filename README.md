@@ -223,4 +223,5 @@ npm run dev
 * **Developer**: Zeeshan Sajid
 * **Institution**: FAST National University of Computer and Emerging Sciences, Islamabad
 * **GitHub Repository**: [ZeeshanSajid361/bloodgrid](https://github.com/ZeeshanSajid361/bloodgrid)
-* **Live Deployment**: [blood-sync-app.vercel.app](https://blood-sync-app.vercel.app)
+* **Live Deployment**: [bloodgrid-alpha.vercel.app](https://bloodgrid-alpha.vercel.app)
+

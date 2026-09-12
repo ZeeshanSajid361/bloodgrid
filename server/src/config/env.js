@@ -43,7 +43,8 @@ module.exports = {
     from: process.env.EMAIL_FROM || 'BloodGrid <no-reply@bloodgrid.app>',
   },
 
-  clientUrl: process.env.CLIENT_URL || 'https://blood-sync-app.vercel.app',
+  clientUrl: process.env.CLIENT_URL || 'https://bloodgrid-alpha.vercel.app',
+
 
   cloudinary: {
     cloudName:  process.env.CLOUDINARY_CLOUD_NAME,
